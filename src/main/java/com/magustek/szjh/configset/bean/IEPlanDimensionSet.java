@@ -1,0 +1,27 @@
+package com.magustek.szjh.configset.bean;
+
+import com.magustek.szjh.utils.base.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+
+/**
+ * 配置表：维度指标
+ * */
+@Getter
+@Setter
+@Entity
+public class IEPlanDimensionSet extends BaseEntity{
+    @Column(nullable = false, unique = true, length = 4) private String dmart;//维度指标
+    @Column(length = 30) private String tbnam;//表名
+    @Column(length = 30) private String fdnam;//字段名
+    @Column(length = 1) private String dmtyp;//维度类型
+    @Column private String param;//参数
+    @Column(length = 2) private String zsort;//指标排序
+    @Column(length = 1) private String swith;//指标开关
+    @Column(length = 1) private String msgtype;//消息类型
+    @Column(length = 220) private String msgtext;//消息文本
+
+}

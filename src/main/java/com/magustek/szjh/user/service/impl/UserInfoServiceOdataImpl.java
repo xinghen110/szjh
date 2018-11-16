@@ -1,0 +1,73 @@
+package com.magustek.szjh.user.service.impl;
+
+import com.magustek.szjh.user.bean.UserInfo;
+import com.magustek.szjh.user.service.UserInfoServiceOdata;
+import com.magustek.szjh.utils.OdataUtils;
+import com.magustek.szjh.utils.http.HttpUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@Component("UserInfoServiceOdata")
+public class UserInfoServiceOdataImpl implements UserInfoServiceOdata {
+    private final HttpUtils httpUtils;
+
+    @Autowired
+    public UserInfoServiceOdataImpl(HttpUtils httpUtils) {
+        this.httpUtils = httpUtils;
+    }
+
+    @Override
+    public UserInfo userLogin(String Loginname, String Password, String Aflag) {
+        log.info("调用ODATA接口认证用户...");
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("Loginname", Loginname.toUpperCase());
+        map.put("Password", Password);
+        map.put("Aflag", Aflag);
+
+        //调用ODATA接口认证用户，并返回用户信息
+        try {
+            Map<String, Object> result = httpUtils.getMapByUrl(OdataUtils.UserLogonSet+"?", map, HttpMethod.POST);
+            return UserInfo.paresMap(result);
+        } catch (Exception e) {
+            log.error("调用ODATA接口认证用户失败："+e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public UserInfo getUserByLoginName(String Loginname) {
+        return this.userLogin(Loginname, "", "O001");
+    }
+
+    /**
+     * Locates the user based on the username. In the actual implementation, the search
+     * may possibly be case sensitive, or case insensitive depending on how the
+     * implementation instance is configured. In this case, the <code>UserDetails</code>
+     * object that comes back may have a username that is of a different case than what
+     * was actually requested..
+     *
+     * @param username the username identifying the user whose data is required.
+     * @return a fully populated user record (never <code>null</code>)
+     * @throws UsernameNotFoundException if the user could not be found or the user has no
+     *                                   GrantedAuthority
+     */
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserInfo userInfo = this.userLogin(username, "" , "O001");
+        if(userInfo == null){
+            throw new UsernameNotFoundException("用户不存在！");
+        }
+        return new User(userInfo.getLoginname(), userInfo.getPassword().toLowerCase(), new ArrayList<>());
+    }
+}

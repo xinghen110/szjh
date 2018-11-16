@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml" />
+
+<!--    <appender name="Mongo" class="com.cg.cm.log.appender.MongoDBAppender">
+    </appender>
+    &lt;!&ndash; 测试环境+开发环境. 多个使用逗号隔开. &ndash;&gt;
+    <springProfile name="test,dev">
+        <logger name="org.springframework.web" level="info">
+            <appender-ref ref="Mongo"/>
+        </logger>
+        <root level="info" >
+            <appender-ref ref="Mongo" />
+        </root>
+    </springProfile>-->
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%level] [%class:%line] - %m %n</pattern>
+        </encoder>
+    </appender>
+    <appender name="Mongo" class="com.magustek.szjh.log.appender.MongoDBAppender">
+    </appender>
+    <!--测试环境+开发环境. 多个使用逗号隔开.-->
+    <springProfile name="test,dev">
+        <logger name="org.springframework.web" level="warn">
+            <!--<appender-ref ref="Console"/>-->
+            <appender-ref ref="Mongo"/>
+        </logger>
+        <root level="info" >
+            <appender-ref ref="Console" />
+            <appender-ref ref="Mongo"/>
+        </root>
+    </springProfile>
+
+
+</configuration>
