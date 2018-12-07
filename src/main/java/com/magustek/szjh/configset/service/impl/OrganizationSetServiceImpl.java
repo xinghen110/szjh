@@ -1,0 +1,140 @@
+package com.magustek.szjh.configset.service.impl;
+
+import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
+import com.magustek.szjh.config.RedisConfig;
+import com.magustek.szjh.configset.bean.OrganizationSet;
+import com.magustek.szjh.configset.dao.OrganizationSetDAO;
+import com.magustek.szjh.configset.service.OrganizationSetService;
+import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.KeyValueBean;
+import com.magustek.szjh.utils.OdataUtils;
+import com.magustek.szjh.utils.http.HttpUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.*;
+
+@Slf4j
+@Service("OrganizationSetService")
+public class OrganizationSetServiceImpl implements OrganizationSetService {
+    private final HttpUtils httpUtils;
+    private final OrganizationSetDAO organizationSetDAO;
+    private RedisTemplate<String, Object> redisTemplate;
+
+    public OrganizationSetServiceImpl(HttpUtils httpUtils, OrganizationSetDAO organizationSetDAO, RedisTemplate<String, Object> redisTemplate) {
+        this.httpUtils = httpUtils;
+        this.organizationSetDAO = organizationSetDAO;
+        this.redisTemplate = redisTemplate;
+    }
+
+    @Override
+    public List<OrganizationSet> save(List<OrganizationSet> list) {
+        list.removeIf(item-> !item.getMsgtype().equals("S"));
+        if(list.size()>0){
+            organizationSetDAO.save(list);
+        }else{
+            log.error("IEPlanSelectDataSet 数据为空！");
+        }
+        organizationSetDAO.save(list);
+        return list;
+    }
+
+    @Override
+    public List<OrganizationSet> getAll(List<OrganizationSet> list) {
+        return Lists.newArrayList(organizationSetDAO.findAll());
+    }
+
+    @Override
+    public void deleteAll() {
+        organizationSetDAO.deleteAll();
+    }
+
+    @Override
+    public List<OrganizationSet> getAllFromDatasource() throws Exception {
+        String result = httpUtils.getResultByUrl(OdataUtils.OrginazationSet+"?", null, HttpMethod.GET);
+        List<OrganizationSet> list = OdataUtils.getListWithEntity(result, OrganizationSet.class);
+        organizationSetDAO.deleteAll();
+        this.save(list);
+        //初始化缓存
+        orgKeyValue();
+        return list;
+    }
+
+    @Override
+    public List<Object[]> getDpnumByBukrs(String bukrs){
+        return organizationSetDAO.findDistinctDpnumByBukrs(bukrs);
+    }
+
+    @Override
+    public List<Object[]> getPonumByBukrs(String bukrs){
+        return organizationSetDAO.findDistinctPonumByBukrs(bukrs);
+    }
+
+    @Override
+    public List<Object[]> getUnameByBukrs(String bukrs){
+        return organizationSetDAO.findDistinctUnameByBukrs(bukrs);
+    }
+
+    @Override
+    public List<Object[]> getPonumByDpnum(String dpnum){
+        return organizationSetDAO.findDistinctPonumByDpnum(dpnum);
+    }
+
+    @Override
+    public List<Object[]> getUnameByDpnum(String dpnum){
+        return organizationSetDAO.findDistinctUnameByDpnum(dpnum);
+    }
+
+    /**
+     * 获取需要取数的公司，及其起始、截止日期
+     * key : bukrs
+     * value: begin(yyyy-MM-dd)
+     * opera: end(yyyy-MM-dd)
+     * */
+    @Override
+    public List<KeyValueBean> getRangeList(){
+        List<Object[]> bukrsList = organizationSetDAO.findDistinctBukrs();
+        List<KeyValueBean> list = new ArrayList<>();
+        LocalDate now = LocalDate.now();
+        for(Object[] o : bukrsList){
+            KeyValueBean bean = new KeyValueBean();
+            LocalDate his = ClassUtils.getDate(now, o[1].toString(), Integer.parseInt(o[2].toString()), false);
+            bean.put(o[0].toString(), his.toString(), now.toString());
+            list.add(bean);
+        }
+        log.info("待取数公司，及其时间范围："+JSON.toJSONString(list));
+        return list;
+    }
+
+    @Override
+    public OrganizationSet getByBukrs(String bukrs){
+        return organizationSetDAO.findTopByBukrsOrderByCsortAsc(bukrs);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Map<String, String> orgKeyValue() {
+        Object object = redisTemplate.opsForValue().get(RedisConfig.ORG_MAP);
+        Map<String, String> map;
+        if(object==null){
+            List<OrganizationSet> bukrs = organizationSetDAO.findDistinctBukrsByOrderByCsort();
+            List<OrganizationSet> dpnum = organizationSetDAO.findDistinctDpnumByOrderByDsort();
+            List<OrganizationSet> ponum = organizationSetDAO.findDistinctPonumByOrderByDsort();
+            List<OrganizationSet> uname = organizationSetDAO.findDistinctUnameByOrderByDsort();
+            map = new HashMap<>(bukrs.size()+dpnum.size()+ponum.size()+uname.size());
+            bukrs.forEach(o-> map.put(o.getBukrs(), o.getButxt()));
+            dpnum.forEach(o-> map.put(o.getDpnum(), o.getDpnam()));
+            ponum.forEach(o-> map.put(o.getPonum(), o.getPonam()));
+            uname.forEach(o-> map.put(o.getUname(), o.getUsnam()));
+            redisTemplate.opsForValue().set(RedisConfig.ORG_MAP, map);
+        }else{
+            map = (Map<String, String>) object;
+        }
+
+        return map;
+    }
+}

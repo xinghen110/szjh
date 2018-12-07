@@ -47,7 +47,7 @@ public class IEPlanDimensionSetServiceImpl implements IEPlanDimensionSetService 
     @Override
     public List<IEPlanDimensionSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanDimensionSet+"?", null, HttpMethod.GET);
-        List<IEPlanDimensionSet> list = OdataUtils.getResultsWithEntity(result, IEPlanDimensionSet.class);
+        List<IEPlanDimensionSet> list = OdataUtils.getListWithEntity(result, IEPlanDimensionSet.class);
         iePlanDimensionSetDAO.deleteAll();
         this.save(list);
         return list;

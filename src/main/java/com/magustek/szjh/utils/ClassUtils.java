@@ -1,22 +1,22 @@
 package com.magustek.szjh.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * 日期、时间工具类
  *
  * */
-
+@Slf4j
 @SuppressWarnings("unused")
 public class ClassUtils {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClassUtils.class);
 
     public final static DateFormat dfDate = new SimpleDateFormat("yyyy-MM-dd");
     public final static DateFormat dfDateTime = new SimpleDateFormat("HH:mm:ss");
@@ -45,10 +45,19 @@ public class ClassUtils {
     public static String stringPlus(String s, int plus){
         long i = Long.parseLong(s);
         i += plus;
-
         return Long.toString(i);
     }
 
+    /**
+     * 判断列表是否为空
+     *
+     * @param o    待判断的列表
+     *
+     * @return 如果列表为空，则返回true
+     * */
+    public static boolean isEmpty(Object[] o) {
+        return o == null || o.length < 1;
+    }
     /**
      * 判断列表是否为空
      *
@@ -69,5 +78,123 @@ public class ClassUtils {
      * */
     public static boolean isEmpty(Long l) {
         return l == null || l.equals(0L);
+    }
+
+    /**
+     * 根据条件计算日期
+     * @param baseDate  基准日期
+     * @param type      类型（y/m/d）
+     * @param value     日期量
+     * @param forward   true向后/false向前
+     * @return          计算后的日期
+     */
+    public static LocalDate getDate(LocalDate baseDate, String type, Integer value, boolean forward){
+        switch (type) {
+            case "Y":
+                if(forward){
+                    baseDate = baseDate.plusYears(value);
+                }else{
+                    baseDate = baseDate.minusYears(value);
+                }
+                break;
+            case "M":
+                if(forward){
+                    baseDate = baseDate.plusMonths(value);
+                }else{
+                    baseDate = baseDate.minusMonths(value);
+                }
+                break;
+            case "D":
+                if(forward){
+                    baseDate = baseDate.plusDays(value);
+                }else{
+                    baseDate = baseDate.minusDays(value);
+                }
+                break;
+            default: log.error("日期类型【"+type+"】，格式不正确！");
+        }
+        return baseDate;
+    }
+
+    /**
+     * 根据条件计算日期
+     * @param baseDate  基准日期
+     * @param format    类型（y/m/d）
+     * @return          计算后的日期
+     */
+    public static String formatDate(LocalDate baseDate, String format) {
+        DateTimeFormatter formatter;
+        switch (format) {
+            case "Y":
+                formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                break;
+            case "M":
+                formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                break;
+            case "D":
+                formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                break;
+            default:
+                log.error("日期类型【"+format+"】，格式不正确！");
+                return "";
+        }
+        return baseDate.format(formatter);
+    }
+
+    /**
+     * 根据条件计算日期
+     * @param baseDate  基准日期
+     * @param format    类型（y/m/d）
+     * @return          计算后的日期
+     */
+    public static String shortFormatDate(LocalDate baseDate, String format){
+        DateTimeFormatter formatter;
+        switch (format) {
+            case "Y":
+                formatter = DateTimeFormatter.ofPattern("yyyy");
+                break;
+            case "M":
+                formatter = DateTimeFormatter.ofPattern("M");
+                break;
+            case "D":
+                formatter = DateTimeFormatter.ofPattern("dd");
+                break;
+            default:
+                log.error("日期类型【"+format+"】，格式不正确！");
+                return "";
+        }
+        return baseDate.format(formatter);
+    }
+
+    /**
+     * 将对象转换为map json格式，处理其中keyValueBean。
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String, String> coverToMapJson(Object o, String keyValueBeanName) throws Exception {
+        ArrayList<Field> fList = new ArrayList<>();
+        //递归遍历获取所有父类的字段
+        Class clazz = o.getClass();
+        for(; clazz != Object.class ; clazz = clazz.getSuperclass()) {
+            fList.addAll(Arrays.asList(clazz.getDeclaredFields()));
+        }
+
+        //根据字段名获取值
+        Map<String, String> map = new HashMap<>();
+        for(Field f : fList){
+            String name = f.getName();
+            Method method = o.getClass().getMethod("get" + name.substring(0, 1).toUpperCase() + name.substring(1));
+            if(!keyValueBeanName.equals(name)) {
+                Object value = method.invoke(o);
+                if(value != null){
+                    map.put(name, value.toString());
+                }
+            }else{
+                Collection<KeyValueBean> list = (Collection<KeyValueBean>) method.invoke(o);
+                for(KeyValueBean bean : list){
+                    map.put(bean.getKey(),bean.getValue());
+                }
+            }
+        }
+        return map;
     }
 }

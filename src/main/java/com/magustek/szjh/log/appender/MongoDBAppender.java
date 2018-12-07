@@ -7,6 +7,7 @@ import com.magustek.szjh.utils.ClassUtils;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 
@@ -22,11 +23,11 @@ import java.util.Date;
 @Component
 public class MongoDBAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
-    //@Value("${logger.mongodb.host}")
+    @Value("${logger.mongodb.host}")
     private String host = "127.0.0.1";
-    //@Value("${logger.mongodb.port}")
+    @Value("${logger.mongodb.port}")
     private int port = 27017;
-    //@Value("${logger.mongodb.database}")
+    @Value("${logger.mongodb.database}")
     private String database = "szjh";
 
     private MongoTemplate mongoTemplate;

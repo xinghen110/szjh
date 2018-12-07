@@ -4,6 +4,7 @@ import com.magustek.szjh.Holiday.bean.Holiday;
 import com.magustek.szjh.Holiday.dao.HolidayDAO;
 import com.magustek.szjh.Holiday.service.HolidayService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -41,7 +42,7 @@ public class HolidayServiceImpl implements HolidayService {
     @Override
     public Page<Holiday> listByYear(Integer year, Pageable pageable) {
         Assert.notNull(year, "年份不能为空！");
-        return holidayDao.findAllByYearOrderByMonthAscDayAsc(year, pageable);
+        return holidayDao.findAllByYearOrderByYyyymmddAsc(year, pageable);
     }
 
     @Override
@@ -60,6 +61,7 @@ public class HolidayServiceImpl implements HolidayService {
             holiday.setYear(year);
             holiday.setMonth(date.getMonthValue());
             holiday.setDay(date.getDayOfMonth());
+            holiday.setYyyymmdd(date.toString());
             //工作日、节假日
             DayOfWeek week = date.getDayOfWeek();
             if( week.equals(DayOfWeek.SATURDAY) || week.equals(DayOfWeek.SUNDAY)){
@@ -79,5 +81,28 @@ public class HolidayServiceImpl implements HolidayService {
     public Holiday getById(Holiday holiday) {
         Assert.notNull(holiday.getId(), "ID不能为空！");
         return holidayDao.findOne(holiday.getId());
+    }
+
+    /**
+     * 根据传入的基准日期、向前\向后、天数，返回工作日，例如：2018-04-03后第10个工作日是2018-04-17，之前第10个工作日是2018-03-20
+     * @param from  基准日期
+     * @param days  计算天数
+     * @param forward   true向后，false向前
+     * @return  工作日
+     */
+    @Override
+    public LocalDate getWordDay(LocalDate from, Integer days, boolean forward) throws Exception{
+        PageRequest page = new PageRequest(days-1, 1);
+        Page<Holiday> workDay;
+        if(forward){
+            workDay = holidayDao.findAllByYyyymmddGreaterThanAndTypeOrderByYyyymmddAsc(from.toString(), Holiday.work_day, page);
+        }else{
+            workDay = holidayDao.findAllByYyyymmddLessThanAndTypeOrderByYyyymmddDesc(from.toString(), Holiday.work_day, page);
+        }
+        if(workDay.getSize()<1){
+            throw new Exception("获取工作日失败！");
+        }else{
+            return LocalDate.parse(workDay.getContent().get(0).getYyyymmdd());
+        }
     }
 }

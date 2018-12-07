@@ -1,7 +1,9 @@
 package com.magustek.szjh.user.service.impl;
 
+import com.magustek.szjh.user.bean.CompanyModel;
 import com.magustek.szjh.user.bean.UserInfo;
 import com.magustek.szjh.user.service.UserInfoServiceOdata;
+import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +14,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -50,6 +54,19 @@ public class UserInfoServiceOdataImpl implements UserInfoServiceOdata {
         return this.userLogin(Loginname, "", "O001");
     }
 
+    @Override
+    public List<CompanyModel> getCompanyModelList(String loginName, String phone) {
+        String url = OdataUtils.OrgInforSet+"?&$filter=Loginname eq '" + loginName + "' and Phone eq '"+phone+"'";
+        //调用ODATA接口认证用户，并返回用户信息
+        try {
+            String result = httpUtils.getResultByUrl(url, null, HttpMethod.GET);
+            return OdataUtils.getListWithEntity(result, CompanyModel.class);
+        } catch (Exception e) {
+            log.error("调用ODATA接口认证用户失败："+e.getMessage());
+            return null;
+        }
+    }
+
     /**
      * Locates the user based on the username. In the actual implementation, the search
      * may possibly be case sensitive, or case insensitive depending on how the
@@ -67,6 +84,11 @@ public class UserInfoServiceOdataImpl implements UserInfoServiceOdata {
         UserInfo userInfo = this.userLogin(username, "" , "O001");
         if(userInfo == null){
             throw new UsernameNotFoundException("用户不存在！");
+        }
+        HttpSession session = ContextUtils.getSession();
+        //将用户所属公司列表存入session，用户登录成功后，可以直接使用。
+        if(session!=null){
+            session.setAttribute("CompanyList",this.getCompanyModelList(userInfo.getLoginname(), userInfo.getPhone()));
         }
         return new User(userInfo.getLoginname(), userInfo.getPassword().toLowerCase(), new ArrayList<>());
     }

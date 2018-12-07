@@ -47,7 +47,7 @@ public class IEPlanSelectDataSetServiceImpl implements IEPlanSelectDataSetServic
     @Override
     public List<IEPlanSelectDataSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanSelectDataSet+"?", null, HttpMethod.GET);
-        List<IEPlanSelectDataSet> list = OdataUtils.getResultsWithEntity(result, IEPlanSelectDataSet.class);
+        List<IEPlanSelectDataSet> list = OdataUtils.getListWithEntity(result, IEPlanSelectDataSet.class);
         iePlanSelectDataSetDAO.deleteAll();
         this.save(list);
         return list;

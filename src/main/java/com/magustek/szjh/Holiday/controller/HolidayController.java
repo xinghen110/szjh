@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpSession;
+import java.time.LocalDate;
 
 /**
  * 合同管理:节假日维护
@@ -77,6 +78,20 @@ public class HolidayController {
         try {
             Page<Holiday> list = holidayService.listByYear(holiday.getYear(), holiday.getPageRequest());
             return resp.setStateCode(BaseResponse.SUCCESS).setData(list).toJson();
+        }catch (Exception e){
+            return resp.setStateCode(BaseResponse.ERROR).setMsg(e.getMessage()).toJson();
+        }
+    }
+
+    @ApiOperation(value="测试API：根据year正负决定向前还是向后，以yyyymmdd（严格按照yyyy-mm-dd格式）为基准，取day天的工作日")
+    @RequestMapping("/getWorkDay")
+    public String getWorkDay(@RequestBody Holiday holiday){
+        try {
+            LocalDate date = holidayService.getWordDay(
+                    LocalDate.parse(holiday.getYyyymmdd()),
+                    holiday.getDay(),
+                    holiday.getYear()>0);
+            return resp.setStateCode(BaseResponse.SUCCESS).setData(date).toJson();
         }catch (Exception e){
             return resp.setStateCode(BaseResponse.ERROR).setMsg(e.getMessage()).toJson();
         }

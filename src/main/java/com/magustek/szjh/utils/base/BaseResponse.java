@@ -11,10 +11,12 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 public class BaseResponse {
 
     public static final int SUCCESS = 200;      //成功
+    public static final int ONEMORECOMPANY = 260;    //有多个公司
     public static final int ERROR = 600;        //出错
     public static final int REDIRECT = 601;     //跳转
     public static final int EMPTY = 602;        //无数据
     public static final int FORBIDDEN = 603;    //无权限
+
 
     private Object data;
     private int stateCode = SUCCESS;
@@ -50,6 +52,11 @@ public class BaseResponse {
          * */
         this.data = null;
         this.msg = "";
+        return this;
+    }
+
+    public BaseResponse changeStateCode(int stateCode){
+        this.stateCode = stateCode;
         return this;
     }
 

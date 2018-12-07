@@ -24,6 +24,8 @@ public class UserInfo implements Serializable{
     private String Aflag;               //动作标识
     private String Msgtext;             //消息文本
 
+    private CompanyModel companyModel;//用户当前公司
+
     public static UserInfo paresMap(Map<String, Object> result){
         UserInfo user;
         if( result!=null){

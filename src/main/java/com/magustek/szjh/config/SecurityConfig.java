@@ -1,9 +1,11 @@
 package com.magustek.szjh.config;
 
+import com.magustek.szjh.user.bean.CompanyModel;
 import com.magustek.szjh.user.bean.UserInfo;
 import com.magustek.szjh.user.service.UserInfoService;
 import com.magustek.szjh.utils.base.BaseResponse;
 import com.magustek.szjh.utils.ClassUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
@@ -19,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 /**
  *
@@ -26,6 +29,7 @@ import java.io.PrintWriter;
  *
  * */
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter{
@@ -40,9 +44,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
     private String LOGOUT_PROCESSOR;
 
     private UserInfoService userInfoService;
+    private InitConfigData initConfigData;
 
-    public SecurityConfig(UserInfoService userInfoService) {
+    public SecurityConfig(UserInfoService userInfoService, InitConfigData initConfigData) {
         this.userInfoService = userInfoService;
+        this.initConfigData = initConfigData;
     }
 
     @Override
@@ -52,7 +58,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
         //web.ignoring().antMatchers("/b/**"); //static 文件夹内b文件夹（静态资源）所有资源均允许匿名访问
         web.ignoring().antMatchers("/static/**");   //static 文件夹内b文件夹（静态资源）所有资源均允许匿名访问
         web.ignoring().antMatchers("/manage/**");   //tomcat管理资源允许匿名访问
-        web.ignoring().antMatchers("/swagger-ui.html");     //restapi允许匿名访问
+        web.ignoring().antMatchers("/swagger-ui.html/**");     //restapi允许匿名访问
+        web.ignoring().antMatchers("/swagger-resources/**");     //restapi允许匿名访问
+        web.ignoring().antMatchers("/webjars/**");     //restapi允许匿名访问
+        web.ignoring().antMatchers("/v2/**");     //restapi允许匿名访问
         web.ignoring().antMatchers("/**/*.html",
                 "/**/*.htm",
                 "/**/*.gif",
@@ -80,37 +89,50 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 
         //用户登录
         http.formLogin()
-                .loginPage(LOGIN_PAGE)   //全局默认login页面
-                .loginProcessingUrl(LOGIN_PROCESSOR)  //login页面提交的url
-                //登录成功后的处理
-                .successHandler((request, response, auth) -> {
-                    String name = auth.getName();
+            .loginPage(LOGIN_PAGE)   //全局默认login页面
+            .loginProcessingUrl(LOGIN_PROCESSOR)  //login页面提交的url
+            //登录成功后的处理
+            .successHandler((request, response, auth) -> {
+                String name = auth.getName();
 
-                    UserInfo userInfo = userInfoService.getUserByLoginName(name);
-                    userInfo.setPassword("");
-                    //设置session，供以后使用
-                    request.getSession().setAttribute("userInfo", userInfo);
+                UserInfo userInfo = userInfoService.userLogin(name, "" , "O001");
+                userInfo.setPassword("");
 
-                    BaseResponse baseResponse = new BaseResponse();
-                    baseResponse.setStateCode(BaseResponse.SUCCESS).setMsg("登录成功").setData(userInfo);
+                @SuppressWarnings("unchecked")
+                List<CompanyModel> companyList = (List<CompanyModel>)request.getSession().getAttribute("CompanyList");
 
-                    response.setContentType(ClassUtils.HTTP_HEADER);
-                    PrintWriter writer = response.getWriter();
-                    writer.write(baseResponse.toJson());
-                    writer.flush();
-                    writer.close();
-                })
-                //登录失败后的处理
-                .failureHandler((request, response, e) -> {
-                    BaseResponse baseResponse = new BaseResponse();
-                    baseResponse.setStateCode(BaseResponse.ERROR).setMsg("登录失败:"+e.getMessage());
+                //获得用户权限
+                //List<AuthoModel> userAuthoList = oDataAuthoService.getUserAutho(user);
+                //session.setAttribute("authoList", userAuthoList);
 
-                    response.setContentType(ClassUtils.HTTP_HEADER);
-                    PrintWriter writer = response.getWriter();
-                    writer.write(baseResponse.toJson());
-                    writer.flush();
-                    writer.close();
-                }).permitAll();
+                BaseResponse baseResponse = new BaseResponse();
+                baseResponse.setStateCode(BaseResponse.SUCCESS).setMsg("登录成功").setData(userInfo);
+                if(companyList!=null && companyList.size()>1){
+                    baseResponse.changeStateCode(BaseResponse.ONEMORECOMPANY);
+                }
+                if(companyList!=null && companyList.size()==1){
+                    userInfo.setCompanyModel(companyList.get(0));
+                }
+                //设置session，供以后使用
+                request.getSession().setAttribute("userInfo", userInfo);
+
+                response.setContentType(ClassUtils.HTTP_HEADER);
+                PrintWriter writer = response.getWriter();
+                writer.write(baseResponse.toJson());
+                writer.flush();
+                writer.close();
+            })
+            //登录失败后的处理
+            .failureHandler((request, response, e) -> {
+                BaseResponse baseResponse = new BaseResponse();
+                baseResponse.setStateCode(BaseResponse.ERROR).setMsg("登录失败:"+e.getMessage());
+
+                response.setContentType(ClassUtils.HTTP_HEADER);
+                PrintWriter writer = response.getWriter();
+                writer.write(baseResponse.toJson());
+                writer.flush();
+                writer.close();
+            }).permitAll();
         //用户注销
         http.logout()
             .logoutUrl(LOGOUT_PROCESSOR).logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(){

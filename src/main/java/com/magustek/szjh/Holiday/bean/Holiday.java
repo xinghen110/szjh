@@ -17,6 +17,7 @@ public class Holiday extends BaseEntity {
     @Column(nullable = false) private Integer year;                     //年
     @Column(nullable = false) private Integer month;                    //月
     @Column(nullable = false) private Integer day;                      //日
+    @Column(nullable = false, length = 10) private String yyyymmdd;     //日期字符串（格式yyyy-mm-dd）
     @Column(length = 4, nullable = false) private String week;          //星期
 
     @Column(length = 4, nullable = false) private String type;          //日期类型

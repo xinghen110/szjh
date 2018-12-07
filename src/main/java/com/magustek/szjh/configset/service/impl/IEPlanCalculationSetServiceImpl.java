@@ -47,7 +47,7 @@ public class IEPlanCalculationSetServiceImpl implements IEPlanCalculationSetServ
     @Override
     public List<IEPlanCalculationSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanCalculationSet+"?", null, HttpMethod.GET);
-        List<IEPlanCalculationSet> list = OdataUtils.getResultsWithEntity(result, IEPlanCalculationSet.class);
+        List<IEPlanCalculationSet> list = OdataUtils.getListWithEntity(result, IEPlanCalculationSet.class);
         iePlanCalculationSetDAO.deleteAll();
         this.save(list);
         return list;

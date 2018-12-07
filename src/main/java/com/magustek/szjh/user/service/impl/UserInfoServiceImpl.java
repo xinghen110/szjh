@@ -1,6 +1,7 @@
 package com.magustek.szjh.user.service.impl;
 
 import com.magustek.szjh.config.HttpConnectConfig;
+import com.magustek.szjh.user.bean.CompanyModel;
 import com.magustek.szjh.user.bean.UserInfo;
 import com.magustek.szjh.user.service.UserInfoService;
 import com.magustek.szjh.user.service.UserInfoServiceOdata;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Slf4j
 @Component("userInfoService")
@@ -34,6 +37,11 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Override
     public UserInfo getUserByLoginName(String Loginname) {
         return userInfoService.getUserByLoginName(Loginname);
+    }
+
+    @Override
+    public List<CompanyModel> getCompanyModelList(String loginName, String phone) {
+        return userInfoService.getCompanyModelList(loginName, phone);
     }
 
     @Override

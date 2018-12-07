@@ -39,8 +39,14 @@ public class HttpUtils {
         return getList(data);
     }
 
-    public String getResultByUrl(String url, Object params, HttpMethod method) throws Exception{
-        return getStringByUrl(url, params, method);
+    public String getResultByUrl(String url, Object params, HttpMethod method){
+        try {
+            return getStringByUrl(url, params, method);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            e.printStackTrace();
+        }
+        return "";
     }
 
     /**
