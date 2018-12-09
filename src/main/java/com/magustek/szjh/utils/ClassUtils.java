@@ -65,7 +65,17 @@ public class ClassUtils {
      *
      * @return 如果列表为空，则返回true
      * */
-    public static boolean isEmpty(List l) {
+    public static boolean isEmpty(Map l) {
+        return l == null || l.size() < 1;
+    }
+    /**
+     * 判断列表是否为空
+     *
+     * @param l    待判断的列表
+     *
+     * @return 如果列表为空，则返回true
+     * */
+    public static boolean isEmpty(Collection l) {
         return l == null || l.size() < 1;
     }
 

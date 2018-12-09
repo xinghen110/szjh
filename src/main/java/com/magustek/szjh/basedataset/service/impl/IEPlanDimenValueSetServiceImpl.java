@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,16 +42,15 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
     }
 
     @Override
-    public List<IEPlanDimenValueSet> getAll() {
-        return Lists.newArrayList(iePlanDimenValueSetDAO.findAll());
+    public List<IEPlanDimenValueSet> getAllByVersion(String version) {
+        return Lists.newArrayList(iePlanDimenValueSetDAO.findAllByVersion(version));
     }
 
     @Override
-    public void deleteAll() {
-        iePlanDimenValueSetDAO.deleteAll();
+    public void deleteAllByVersion(String version) {
+        iePlanDimenValueSetDAO.deleteAllByVersion(version);
     }
 
-    @Override
     public List<IEPlanDimenValueSet> getAllFromDatasource(String begin, String end, String bukrs) throws Exception {
         List<IEPlanDimenValueSet> list = new ArrayList<>();
         //获取所有取数指标
@@ -64,11 +64,18 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
     public List<IEPlanDimenValueSet> fetchData() throws Exception {
         List<IEPlanDimenValueSet> list = new ArrayList<>();
         List<KeyValueBean> reportList = organizationSetService.getRangeList();
-        for (KeyValueBean item : reportList){
-            list.addAll(getAllFromDatasource(item.getValue(), item.getOpera(), item.getKey()));
-        }
-        iePlanDimenValueSetDAO.deleteAll();
-        iePlanDimenValueSetDAO.save(list);
+        reportList.parallelStream().forEach(item-> {
+            try {
+                list.addAll(getAllFromDatasource(item.getValue(), item.getOpera(), item.getKey()));
+            } catch (Exception e) {
+                log.error(e.getMessage());
+                e.printStackTrace();
+            }
+        });
+        //清除今天的版本
+        deleteAllByVersion(LocalDate.now().toString());
+        //保存今天的新版本
+        save(list);
         return list;
     }
 
@@ -96,6 +103,7 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
                 item.setDmart(dimensionSet.getDmart());
                 item.setBegda(begin);
                 item.setEndda(end);
+                item.setVersion(LocalDate.now().toString());
             });
             return list;
         } catch (Exception e) {

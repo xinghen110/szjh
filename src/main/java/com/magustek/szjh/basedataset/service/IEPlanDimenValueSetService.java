@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface IEPlanDimenValueSetService {
     List<IEPlanDimenValueSet> save(List<IEPlanDimenValueSet> list);
-    List<IEPlanDimenValueSet> getAll();
-    void deleteAll();
-    List<IEPlanDimenValueSet> getAllFromDatasource(String begin, String end, String bukrs) throws Exception;
+    List<IEPlanDimenValueSet> getAllByVersion(String version);
+    void deleteAllByVersion(String version);
+    //List<IEPlanDimenValueSet> getAllFromDatasource(String begin, String end, String bukrs) throws Exception;
     List<IEPlanDimenValueSet> fetchData() throws Exception;
 }

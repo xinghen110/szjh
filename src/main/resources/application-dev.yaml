@@ -58,7 +58,7 @@ spring:
       port: 27017
   jpa:
     database: MYSQL
-    show-sql: false
+    show-sql: true
     hibernate.ddl-auto: update
     hibernate.use-new-id-generator-mappings: true
     properties.hibernate.dialect: org.hibernate.dialect.MySQL5Dialect

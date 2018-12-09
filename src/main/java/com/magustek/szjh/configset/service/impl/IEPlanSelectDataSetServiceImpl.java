@@ -10,7 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 @Slf4j
 @Service("IEPlanSelectDataSetService")
 public class IEPlanSelectDataSetServiceImpl implements IEPlanSelectDataSetService {
@@ -38,6 +42,15 @@ public class IEPlanSelectDataSetServiceImpl implements IEPlanSelectDataSetServic
     public List<IEPlanSelectDataSet> getAll() {
         return Lists.newArrayList(iePlanSelectDataSetDAO.findAll());
     }
+
+    @Override
+    public Map<String, IEPlanSelectDataSet> getMappedList() {
+
+        Map<String, IEPlanSelectDataSet> map = new HashMap<>();
+        getAll().forEach(i-> map.put(i.getSdart(), i));
+        return map;
+    }
+
 
     @Override
     public void deleteAll() {

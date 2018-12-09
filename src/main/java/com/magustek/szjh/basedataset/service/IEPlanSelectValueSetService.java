@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface IEPlanSelectValueSetService {
     List<IEPlanSelectValueSet> save(List<IEPlanSelectValueSet> list);
-    List<IEPlanSelectValueSet> getAll();
-    void deleteAll();
-    List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs) throws Exception;
+    List<IEPlanSelectValueSet> getAllByVersion(String version);
+    void deleteAllByVersion(String version);
+    //List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs) throws Exception;
     List<IEPlanSelectValueSet> fetchData() throws Exception;
 }

@@ -20,7 +20,15 @@ import java.util.Objects;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public class BaseEntity extends BasePage{
-    @Id @GeneratedValue private Long id;                                        //记录主键，自动生成
+    @TableGenerator(
+             name="ID_GENERATOR",
+             table = "jpa_id_generator",
+             pkColumnName = "id_name",
+             pkColumnValue = "custom_id",
+             valueColumnName = "value_id",
+             initialValue = 1,
+             allocationSize=100)
+    @GeneratedValue(generator = "ID_GENERATOR") @Id private Long id;                            //记录主键，自动生成
     @CreatedDate @Column(name = "CRTIME") protected Date createDate;//创建日期
     @CreatedBy @Column(name = "CRNAME",length = 40) protected String creator;//创建人
     @LastModifiedDate @Column(name = "CHDATE") protected Date updateDate;//最后修改日期

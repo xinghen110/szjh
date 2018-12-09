@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,16 +42,15 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
     }
 
     @Override
-    public List<IEPlanSelectValueSet> getAll() {
-        return Lists.newArrayList(iePlanSelectValueSetDAO.findAll());
+    public List<IEPlanSelectValueSet> getAllByVersion(String version) {
+        return Lists.newArrayList(iePlanSelectValueSetDAO.findAllByVersion(version));
     }
 
     @Override
-    public void deleteAll() {
-        iePlanSelectValueSetDAO.deleteAll();
+    public void deleteAllByVersion(String version) {
+        iePlanSelectValueSetDAO.deleteAllByVersion(version);
     }
 
-    @Override
     public List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs) {
         List<IEPlanSelectValueSet> list = new ArrayList<>();
         //获取所有取数指标
@@ -60,6 +61,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
     }
 
     //根据组织机构配置表中的配置，取出所有待处理的公司及其取数时间范围
+    @Transactional
     @Override
     public List<IEPlanSelectValueSet> fetchData() throws Exception {
         List<IEPlanSelectValueSet> list = new ArrayList<>();
@@ -67,9 +69,9 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
 
         reportList.parallelStream().forEach(item->list.addAll(getAllFromDatasource(item.getValue(), item.getOpera(), item.getKey())));
         //清除今天的版本
-        iePlanSelectValueSetDAO.deleteAll();
+        deleteAllByVersion(LocalDate.now().toString());
         //保存新的今天版本
-        iePlanSelectValueSetDAO.save(list);
+        save(list);
         return list;
     }
 
@@ -81,21 +83,22 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
                 "and endda le datetime'"+end+"T23:59:59' ";
         String result = httpUtils.getResultByUrl(url, null, HttpMethod.GET);
 
-        //如果指标返回类型是日期，则需要通过keys进行处理
-        String[] keys = IEPlanSelectDataConstant.RESULT_TYPE_DATS.equals(selectDataSet.getVtype()) ?
-                new String[]{selectDataSet.getSdart()}:
-                null;
-
         try {
             List<IEPlanSelectValueSet> list = OdataUtils.getListWithEntity(result,
-                    IEPlanSelectValueSet.class,
-                    keys,
-                    "yyyy-MM-dd");
+                    IEPlanSelectValueSet.class);
             list.forEach(item->{
-                item.setSdval(item.getSdval().trim());
+                String value = item.getSdval().trim();
+                //判断如果值的类型是日期，需要进行非空处理
+                if(IEPlanSelectDataConstant.RESULT_TYPE_DATS.equals(selectDataSet.getVtype())){
+                    item.setSdval(value.equals("00000000")?"":value);
+                }else{
+                    item.setSdval(value);
+                }
+
                 item.setSdart(selectDataSet.getSdart());
                 item.setBegda(begin);
                 item.setEndda(end);
+                item.setVersion(LocalDate.now().toString());
             });
             return list;
         } catch (Exception e) {
