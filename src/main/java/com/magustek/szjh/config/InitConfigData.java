@@ -32,7 +32,7 @@ public class InitConfigData {
     public void init() throws Exception{
         try {
             long start = System.currentTimeMillis();
-            log.error("配置信息初始化开始！");
+            log.warn("配置信息初始化开始！");
             iePlanOperationSetService.getAllFromDatasource();       //从Odata获取经营指标分类，并存入数据库。
             iePlanCalculationSetService.getAllFromDatasource();     //从Odata获取业务计算指标，并存入数据库。
             iePlanDimensionSetService.getAllFromDatasource();       //从Odata获取维度指标，并存入数据库。
@@ -41,7 +41,7 @@ public class InitConfigData {
             iePlanReportHeadSetService.getAllFromDatasource();      //从Odata获取报表抬头数据，并存入数据库。
             iePlanReportItemSetService.getAllFromDatasource();      //从Odata获取报表行项目数据，并存入数据库。
             configDataSourceSetService.fetchData();                 //从Odata获取数据源数据，并存入数据库。
-            log.error("配置信息初始化完成！耗时："+((System.currentTimeMillis()-start)/1000.00)+"秒");
+            log.warn("配置信息初始化完成！耗时："+((System.currentTimeMillis()-start)/1000.00)+"秒");
         } catch (Exception e) {
             log.error("配置信息初始化出错！"+e.getMessage());
             throw e;

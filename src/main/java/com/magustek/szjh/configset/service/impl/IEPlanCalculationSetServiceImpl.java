@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 @Slf4j
@@ -44,6 +45,7 @@ public class IEPlanCalculationSetServiceImpl implements IEPlanCalculationSetServ
         iePlanCalculationSetDAO.deleteAll();
     }
 
+    @Transactional
     @Override
     public List<IEPlanCalculationSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanCalculationSet+"?", null, HttpMethod.GET);

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 @Slf4j
@@ -24,6 +25,7 @@ public class ConfigDataSourceSetServiceImpl implements ConfigDataSourceSetServic
         this.configDataSourceSetDAO = configDataSourceSetDAO;
     }
 
+    @Transactional
     @Override
     public List<ConfigDataSourceSet> fetchData() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.ConfigDataSource+"?", null, HttpMethod.GET);

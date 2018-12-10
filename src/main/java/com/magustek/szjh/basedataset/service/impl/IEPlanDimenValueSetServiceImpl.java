@@ -1,12 +1,15 @@
 package com.magustek.szjh.basedataset.service.impl;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.magustek.szjh.basedataset.dao.IEPlanDimenValueSetDAO;
 import com.magustek.szjh.basedataset.entity.IEPlanDimenValueSet;
+import com.magustek.szjh.basedataset.entity.vo.IEPlanDimenValueSetVO;
 import com.magustek.szjh.basedataset.service.IEPlanDimenValueSetService;
 import com.magustek.szjh.configset.bean.IEPlanDimensionSet;
 import com.magustek.szjh.configset.service.IEPlanDimensionSetService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
+import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.KeyValueBean;
 import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.constant.IEPlanDimensionSetConstant;
@@ -15,9 +18,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service("IEPlanDimenValueSetService")
@@ -46,6 +52,7 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
         return Lists.newArrayList(iePlanDimenValueSetDAO.findAllByVersion(version));
     }
 
+    @Transactional
     @Override
     public void deleteAllByVersion(String version) {
         iePlanDimenValueSetDAO.deleteAllByVersion(version);
@@ -60,6 +67,7 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
         return list;
     }
 
+    @Transactional
     @Override
     public List<IEPlanDimenValueSet> fetchData() throws Exception {
         List<IEPlanDimenValueSet> list = new ArrayList<>();
@@ -77,6 +85,41 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
         //保存今天的新版本
         save(list);
         return list;
+    }
+
+    @Override
+    public List<IEPlanDimenValueSetVO> getContractByHtsno(String htsno, String version) throws Exception {
+        //获取指标列表（用来匹配指标值类型）
+        Map<String, IEPlanDimensionSet> dimensionSetMap = iePlanDimensionSetService.getMappedList();
+        if(Strings.isNullOrEmpty(version)){
+            version = LocalDate.now().toString();
+        }
+        //根据合同流水号及版本号返回所有单据
+        List<IEPlanDimenValueSet> valueSetList = iePlanDimenValueSetDAO.findAllByHtsnoAndVersion(htsno, version);
+        Map<String, List<IEPlanDimenValueSet>> collect = valueSetList.stream().collect(Collectors.groupingBy(IEPlanDimenValueSet::getHtnum));
+        List<IEPlanDimenValueSetVO> voList = new ArrayList<>(collect.size());
+        //根据htnum分组遍历
+        collect.forEach((k, v)->{
+            if(!ClassUtils.isEmpty(v)){
+                IEPlanDimenValueSetVO vo = new IEPlanDimenValueSetVO();
+                vo.setHtnum(k);
+                vo.setHtsno(v.get(0).getHtsno());
+                vo.setVersion(v.get(0).getVersion());
+                List<KeyValueBean> kvList = new ArrayList<>(v.size());
+                //组装指标信息
+                v.forEach(i->{
+                    KeyValueBean kv = new KeyValueBean();
+                    kv.put(
+                            i.getDmart(),//维度名称
+                            dimensionSetMap.get(i.getDmart()).getDmnam(),//维度描述
+                            i.getDmval());//维度值
+                    kvList.add(kv);
+                });
+                vo.setDmList(kvList);
+                voList.add(vo);
+            }
+        });
+        return voList;
     }
 
     private List<IEPlanDimenValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanDimensionSet dimensionSet){

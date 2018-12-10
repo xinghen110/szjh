@@ -8,4 +8,5 @@ import java.util.List;
 public interface IEPlanSelectValueSetDAO extends CrudRepository<IEPlanSelectValueSet, Long>{
     void deleteAllByVersion(String version);
     List<IEPlanSelectValueSet> findAllByVersion(String version);
+    List<IEPlanSelectValueSet> findAllByHtsnoAndVersion(String htsno, String version);
 }

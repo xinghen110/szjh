@@ -45,18 +45,18 @@ public class IEPlanSelectDataSetServiceImpl implements IEPlanSelectDataSetServic
 
     @Override
     public Map<String, IEPlanSelectDataSet> getMappedList() {
-
         Map<String, IEPlanSelectDataSet> map = new HashMap<>();
         getAll().forEach(i-> map.put(i.getSdart(), i));
         return map;
     }
 
-
+    @Transactional
     @Override
     public void deleteAll() {
         iePlanSelectDataSetDAO.deleteAll();
     }
 
+    @Transactional
     @Override
     public List<IEPlanSelectDataSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanSelectDataSet+"?", null, HttpMethod.GET);

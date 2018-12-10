@@ -1,17 +1,21 @@
 package com.magustek.szjh.basedataset.service.impl;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.magustek.szjh.basedataset.dao.IEPlanSelectValueSetDAO;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
+import com.magustek.szjh.basedataset.entity.vo.IEPlanSelectValueSetVO;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.configset.bean.IEPlanSelectDataSet;
 import com.magustek.szjh.configset.service.IEPlanSelectDataSetService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
+import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.KeyValueBean;
 import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.constant.IEPlanSelectDataConstant;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +23,9 @@ import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service("IEPlanSelectValueSetService")
@@ -46,6 +53,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         return Lists.newArrayList(iePlanSelectValueSetDAO.findAllByVersion(version));
     }
 
+    @Transactional
     @Override
     public void deleteAllByVersion(String version) {
         iePlanSelectValueSetDAO.deleteAllByVersion(version);
@@ -73,6 +81,41 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         //保存新的今天版本
         save(list);
         return list;
+    }
+
+    @Override
+    public List<IEPlanSelectValueSetVO> getContractByHtsno(String htsno, String version) throws Exception {
+        //获取指标列表（用来匹配指标值类型）
+        Map<String, IEPlanSelectDataSet> selectDataSetMap = iePlanSelectDataSetService.getMappedList();
+        if(Strings.isNullOrEmpty(version)){
+            version = LocalDate.now().toString();
+        }
+        //根据合同流水号及版本号返回所有单据
+        List<IEPlanSelectValueSet> valueSetList = iePlanSelectValueSetDAO.findAllByHtsnoAndVersion(htsno, version);
+        Map<String, List<IEPlanSelectValueSet>> collect = valueSetList.stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtnum));
+        List<IEPlanSelectValueSetVO> voList = new ArrayList<>(collect.size());
+        //根据htnum分组遍历
+        collect.forEach((k, v)->{
+            if(!ClassUtils.isEmpty(v)){
+                IEPlanSelectValueSetVO vo = new IEPlanSelectValueSetVO();
+                vo.setHtnum(k);
+                vo.setHtsno(v.get(0).getHtsno());
+                vo.setVersion(v.get(0).getVersion());
+                List<KeyValueBean> kvList = new ArrayList<>(v.size());
+                //组装指标信息
+                v.forEach(i->{
+                    KeyValueBean kv = new KeyValueBean();
+                    kv.put(
+                            i.getSdart(),//指标名称
+                            selectDataSetMap.get(i.getSdart()).getSdnam(),//指标描述
+                            i.getSdval());//指标值
+                    kvList.add(kv);
+                });
+                vo.setSdList(kvList);
+                voList.add(vo);
+            }
+        });
+        return voList;
     }
 
     private List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanSelectDataSet selectDataSet) {

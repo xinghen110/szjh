@@ -60,6 +60,7 @@ public class CalculateResultServiceImpl implements CalculateResultService {
         return Lists.newArrayList(calculateResultDAO.findAllByVersion(version));
     }
 
+    @Transactional
     @Override
     public void deleteAllByVersion(String version) {
         calculateResultDAO.deleteAllByVersion(version);
@@ -68,7 +69,7 @@ public class CalculateResultServiceImpl implements CalculateResultService {
     @Transactional
     @Override
     public List<CalculateResult> calculateByVersion(String version) {
-        List<CalculateResult> list = Collections.synchronizedList(new ArrayList<>());
+        List<CalculateResult> list;
         //设置版本默认值
         if(Strings.isNullOrEmpty(version)){
             version = LocalDate.now().toString();
@@ -82,27 +83,30 @@ public class CalculateResultServiceImpl implements CalculateResultService {
 
         int size = calculationSetList.size();
         int[] count = {0};
-        long begin = System.currentTimeMillis();
+        long l1 = System.currentTimeMillis();
         computeCount = 0;
+        List<Object[]> calcList = new ArrayList<>();
 
         calculationSetList.forEach(c->{
-            //lock.lock();
             try {
                 log.warn("开始："+c.getCanam());
-                List<CalculateResult> calc = calc(c, selectValueSetList);
-                list.addAll(calc);
+                List<Object[]> calc = calc(c, selectValueSetList);
+                calcList.addAll(calc);
             }catch (Exception e){
                 log.error(e.getMessage());
                 e.printStackTrace();
             }finally {
                 log.warn("完成："+c.getCanam()+"  完成进度："+(++count[0])+"/"+size);
-                //lock.unlock();
             }
 
         });
-        long end = System.currentTimeMillis();
+        long l2 = System.currentTimeMillis();
+        log.warn("指标组合完成，结果数量：{}，计算次数{}，耗时：{}秒。",calcList.size(), computeCount, ((l2-l1)/1000));
+        list = groovyCalc(calcList);
 
-        log.warn("指标计算完成，结果数量：{}，计算次数{}，耗时：{}秒。",list.size(), computeCount, ((end-begin)/1000));
+        long l3 = System.currentTimeMillis();
+
+        log.warn("指标计算完成，结果数量：{}，计算次数{}，耗时：{}秒。",list.size(), computeCount, ((l3-l2)/1000));
 
         //清除今天的版本
         deleteAllByVersion(LocalDate.now().toString());
@@ -112,8 +116,8 @@ public class CalculateResultServiceImpl implements CalculateResultService {
         return list;
     }
 
-    private List<CalculateResult> calc(IEPlanCalculationSet calcSet, List<IEPlanSelectValueSet> selectValueSetList){
-        List<CalculateResult> list = new ArrayList<>();
+    private List<Object[]> calc(IEPlanCalculationSet calcSet, List<IEPlanSelectValueSet> selectValueSetList){
+        List<Object[]> list = new ArrayList<>();
         //根据htnum分组
         Map<String, List<IEPlanSelectValueSet>> grouped = selectValueSetList
                 .stream()
@@ -174,11 +178,11 @@ public class CalculateResultServiceImpl implements CalculateResultService {
                     continue;
                 }
 
-                GroovyShell shell = new GroovyShell(binding);
-                Object exec = shell.evaluate(calcSet.getCalcu());
-                result.setCaval(exec.toString());
-                log.debug("计算结果："+JSON.toJSONString(result));
-                list.add(result);
+                //GroovyShell shell = new GroovyShell(binding);
+                //Object exec = shell.evaluate(calcSet.getCalcu());
+                //result.setCaval(exec.toString());
+                //log.debug("计算结果："+JSON.toJSONString(result));
+                list.add(new Object[]{binding,calcSet.getCalcu(),result});
                 computeCount++;
             }catch (MissingPropertyException e){
                 log.debug(e.getMessage());
@@ -188,6 +192,17 @@ public class CalculateResultServiceImpl implements CalculateResultService {
                 log.error(e.getMessage());
             }
         }
+        return list;
+    }
+
+    private List<CalculateResult> groovyCalc(List<Object[]> calcList){
+        List<CalculateResult> list = new ArrayList<>(calcList.size());
+        calcList.forEach(c->{
+            GroovyShell shell = new GroovyShell((Binding)c[0]);
+            Object exec = shell.evaluate((String)c[1]);
+            ((CalculateResult)c[2]).setCaval(exec.toString());
+            list.add((CalculateResult)c[2]);
+        });
         return list;
     }
 }

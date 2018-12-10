@@ -10,7 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service("IEPlanDimensionSetService")
@@ -40,10 +43,19 @@ public class IEPlanDimensionSetServiceImpl implements IEPlanDimensionSetService 
     }
 
     @Override
+    public Map<String, IEPlanDimensionSet> getMappedList() {
+        Map<String, IEPlanDimensionSet> map = new HashMap<>();
+        getAll().forEach(i-> map.put(i.getDmart(), i));
+        return map;
+    }
+
+    @Transactional
+    @Override
     public void deleteAll() {
         iePlanDimensionSetDAO.deleteAll();
     }
 
+    @Transactional
     @Override
     public List<IEPlanDimensionSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanDimensionSet+"?", null, HttpMethod.GET);

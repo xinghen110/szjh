@@ -1,5 +1,6 @@
 package com.magustek.szjh.utils;
 
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
@@ -77,6 +78,20 @@ public class ClassUtils {
      * */
     public static boolean isEmpty(Collection l) {
         return l == null || l.size() < 1;
+    }
+    /**
+     * 判断版本是否为空
+     *
+     * @param version    待判断的版本
+     *
+     * @return 如果列表为空，则返回当天的字符串
+     * */
+    public static String checkVersion(String version) {
+        if(Strings.isNullOrEmpty(version)){
+            return LocalDate.now().toString();
+        }else{
+            return version;
+        }
     }
 
     /**

@@ -15,6 +15,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -48,11 +49,13 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
         return Lists.newArrayList(organizationSetDAO.findAll());
     }
 
+    @Transactional
     @Override
     public void deleteAll() {
         organizationSetDAO.deleteAll();
     }
 
+    @Transactional
     @Override
     public List<OrganizationSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.OrginazationSet+"?", null, HttpMethod.GET);

@@ -23,6 +23,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +73,7 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         iePlanReportHeadSetDAO.deleteAll();
     }
 
+    @Transactional
     @Override
     public List<IEPlanReportHeadSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanReportHeadSet+"?", null, HttpMethod.GET);

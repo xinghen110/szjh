@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -53,6 +54,7 @@ public class IEPlanOperationSetServiceImpl implements IEPlanOperationSetService 
         iePlanOperationSetDAO.deleteAll();
     }
 
+    @Transactional
     @Override
     public List<IEPlanOperationSet> getAllFromDatasource() throws Exception{
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanOperationSet+"?", null, HttpMethod.GET);
