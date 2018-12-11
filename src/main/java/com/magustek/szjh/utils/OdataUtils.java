@@ -31,6 +31,8 @@ public class OdataUtils {
     public static final String IEPlanDimensionSet = "ZCM_ODATA_PLAN_SRV/IEPlanDimensionSet";
     public static final String IEPlanDimenValueSet = "ZCM_ODATA_PLAN_SRV/IEPlanDimenValueSet";
 
+    public static final String IEPlanPaymentSet = "ZCM_ODATA_PLAN_SRV/IEPlanPaymentSet";
+
     //public static final String IEPlanContractHeadSet = "ZCM_ODATA_PLAN_SRV/IEPlanContractHeadSet";
 
     /**

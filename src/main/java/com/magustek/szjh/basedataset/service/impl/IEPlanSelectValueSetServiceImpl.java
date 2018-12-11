@@ -50,7 +50,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
 
     @Override
     public List<IEPlanSelectValueSet> getAllByVersion(String version) {
-        return Lists.newArrayList(iePlanSelectValueSetDAO.findAllByVersion(version));
+        return iePlanSelectValueSetDAO.findAllByVersion(version);
     }
 
     @Transactional

@@ -18,8 +18,10 @@ import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.MissingPropertyException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -62,6 +64,7 @@ public class CalculateResultServiceImpl implements CalculateResultService {
     public void deleteAllByVersion(String version) {
         calculateResultDAO.deleteAllByVersion(version);
     }
+
 
     @Override
     public List<CalculateResult> calculateByVersion(String version) {
@@ -143,8 +146,6 @@ public class CalculateResultServiceImpl implements CalculateResultService {
                 if(!Strings.isNullOrEmpty(i.getSdval())){
                     try {
                         if(IEPlanSelectDataConstant.RESULT_TYPE_DATS.equals(vtype)){
-
-                            //log.error("IEPlanSelectValueSet:"+JSON.toJSONString(i));
                             binding.setVariable(i.getSdart(), ClassUtils.dfYMD.parse(i.getSdval()));
                         }else{
                             binding.setVariable(i.getSdart(), i.getSdval());
