@@ -20,11 +20,9 @@ import groovy.lang.MissingPropertyException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,13 +58,11 @@ public class CalculateResultServiceImpl implements CalculateResultService {
         return Lists.newArrayList(calculateResultDAO.findAllByVersion(version));
     }
 
-    @Transactional
     @Override
     public void deleteAllByVersion(String version) {
         calculateResultDAO.deleteAllByVersion(version);
     }
 
-    @Transactional
     @Override
     public List<CalculateResult> calculateByVersion(String version) {
         List<CalculateResult> list;
@@ -197,7 +193,7 @@ public class CalculateResultServiceImpl implements CalculateResultService {
 
     private List<CalculateResult> groovyCalc(List<Object[]> calcList){
         List<CalculateResult> list = new ArrayList<>(calcList.size());
-        calcList.forEach(c->{
+        calcList.parallelStream().forEach(c->{
             GroovyShell shell = new GroovyShell((Binding)c[0]);
             Object exec = shell.evaluate((String)c[1]);
             ((CalculateResult)c[2]).setCaval(exec.toString());

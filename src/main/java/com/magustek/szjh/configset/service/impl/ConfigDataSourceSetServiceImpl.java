@@ -25,13 +25,13 @@ public class ConfigDataSourceSetServiceImpl implements ConfigDataSourceSetServic
         this.configDataSourceSetDAO = configDataSourceSetDAO;
     }
 
-    @Transactional
+
     @Override
     public List<ConfigDataSourceSet> fetchData() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.ConfigDataSource+"?", null, HttpMethod.GET);
         List<ConfigDataSourceSet> list = OdataUtils.getListWithEntity(result, ConfigDataSourceSet.class);
         configDataSourceSetDAO.deleteAll();
-        list = Lists.newArrayList(configDataSourceSetDAO.save(list));
+        configDataSourceSetDAO.save(list);
         log.info("数据源获取:"+JSON.toJSONString(list));
         return list;
     }

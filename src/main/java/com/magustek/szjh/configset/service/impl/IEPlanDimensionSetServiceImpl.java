@@ -7,8 +7,10 @@ import com.magustek.szjh.configset.service.IEPlanDimensionSetService;
 import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.transaction.Transactional;
 import java.util.HashMap;
@@ -49,19 +51,19 @@ public class IEPlanDimensionSetServiceImpl implements IEPlanDimensionSetService 
         return map;
     }
 
-    @Transactional
     @Override
     public void deleteAll() {
         iePlanDimensionSetDAO.deleteAll();
     }
 
-    @Transactional
     @Override
     public List<IEPlanDimensionSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanDimensionSet+"?", null, HttpMethod.GET);
         List<IEPlanDimensionSet> list = OdataUtils.getListWithEntity(result, IEPlanDimensionSet.class);
-        iePlanDimensionSetDAO.deleteAll();
-        this.save(list);
+        //清除现有数据
+        deleteAll();
+        //保存新数据
+        save(list);
         return list;
     }
 }

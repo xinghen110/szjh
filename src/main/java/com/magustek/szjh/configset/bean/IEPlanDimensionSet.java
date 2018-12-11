@@ -14,7 +14,7 @@ import javax.persistence.Entity;
 @Setter
 @Entity
 public class IEPlanDimensionSet extends BaseEntity{
-    @Column(nullable = false, unique = true, length = 4) private String dmart;//维度指标
+    @Column(length = 4)  private String dmart;//维度指标
     @Column(length = 50) private String dmnam;//维度指标描述
     @Column(length = 1)  private String dmtyp;//维度类型
     @Column(length = 30) private String fmnam;//取值函数名

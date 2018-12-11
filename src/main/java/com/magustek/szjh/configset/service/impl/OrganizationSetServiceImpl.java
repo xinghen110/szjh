@@ -55,13 +55,14 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
         organizationSetDAO.deleteAll();
     }
 
-    @Transactional
     @Override
     public List<OrganizationSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.OrginazationSet+"?", null, HttpMethod.GET);
         List<OrganizationSet> list = OdataUtils.getListWithEntity(result, OrganizationSet.class);
-        organizationSetDAO.deleteAll();
-        this.save(list);
+        //清除现有数据
+        deleteAll();
+        //保存新数据
+        save(list);
         //初始化缓存
         orgKeyValue();
         return list;

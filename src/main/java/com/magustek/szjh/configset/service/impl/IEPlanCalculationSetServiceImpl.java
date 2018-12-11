@@ -45,13 +45,15 @@ public class IEPlanCalculationSetServiceImpl implements IEPlanCalculationSetServ
         iePlanCalculationSetDAO.deleteAll();
     }
 
-    @Transactional
+
     @Override
     public List<IEPlanCalculationSet> getAllFromDatasource() throws Exception {
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanCalculationSet+"?", null, HttpMethod.GET);
         List<IEPlanCalculationSet> list = OdataUtils.getListWithEntity(result, IEPlanCalculationSet.class);
-        iePlanCalculationSetDAO.deleteAll();
-        this.save(list);
+        //清除现有数据
+        deleteAll();
+        //保存新数据
+        save(list);
         return list;
     }
 }

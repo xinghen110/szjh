@@ -54,13 +54,14 @@ public class IEPlanOperationSetServiceImpl implements IEPlanOperationSetService 
         iePlanOperationSetDAO.deleteAll();
     }
 
-    @Transactional
     @Override
     public List<IEPlanOperationSet> getAllFromDatasource() throws Exception{
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanOperationSet+"?", null, HttpMethod.GET);
         List<IEPlanOperationSet> list = OdataUtils.getListWithEntity(result, IEPlanOperationSet.class);
-        iePlanOperationSetDAO.deleteAll();
-        this.save(list);
+        //清除现有数据
+        deleteAll();
+        //保存新数据
+        save(list);
         return list;
     }
 

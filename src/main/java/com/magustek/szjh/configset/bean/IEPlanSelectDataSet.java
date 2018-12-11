@@ -14,7 +14,7 @@ import javax.persistence.Entity;
 @Setter
 @Entity
 public class IEPlanSelectDataSet extends BaseEntity{
-    @Column(nullable = false, unique = true, length = 4) private String sdart;//业务取数指标
+    @Column(length = 4)  private String sdart;//业务取数指标
     @Column(length = 50) private String sdnam;//业务取数指标描述
     @Column(length = 4)  private String zbart;//经营指标分类（一期暂不启用）
     @Column(length = 4)  private String psdar;//前业务取数指标
