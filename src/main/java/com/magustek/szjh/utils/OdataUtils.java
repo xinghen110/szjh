@@ -24,6 +24,7 @@ public class OdataUtils {
 
     public static final String IEPlanReportHeadSet = "ZCM_ODATA_PLAN_SRV/IEPlanReportHeadSet";
     public static final String IEPlanReportItemSet = "ZCM_ODATA_PLAN_SRV/IEPlanReportItemSet";
+    public static final String IEPlanStatisticSet = "ZCM_ODATA_PLAN_SRV/IEPlanStatisticSet";
 
     public static final String IEPlanSelectDataSet = "ZCM_ODATA_PLAN_SRV/IEPlanSelectDataSet";
     public static final String IEPlanSelectValueSet = "ZCM_ODATA_PLAN_SRV/IEPlanSelectValueSet";
@@ -32,6 +33,7 @@ public class OdataUtils {
     public static final String IEPlanDimenValueSet = "ZCM_ODATA_PLAN_SRV/IEPlanDimenValueSet";
 
     public static final String IEPlanPaymentSet = "ZCM_ODATA_PLAN_SRV/IEPlanPaymentSet";
+    public static final String IEPlanTermsSet = "ZCM_ODATA_PLAN_SRV/IEPlanTermsSet";
 
     //public static final String IEPlanContractHeadSet = "ZCM_ODATA_PLAN_SRV/IEPlanContractHeadSet";
 

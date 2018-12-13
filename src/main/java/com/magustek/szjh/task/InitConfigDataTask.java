@@ -16,7 +16,7 @@ public class InitConfigDataTask {
         this.initConfigData = initConfigData;
     }
 
-    @Scheduled(cron = "0 0 */1 * * ?")
+    //@Scheduled(cron = "0 0 */1 * * ?")
     public void executeInitConfig(){
         try {
             initConfigData.init();
@@ -24,5 +24,6 @@ public class InitConfigDataTask {
             log.error(e.getMessage());
             e.printStackTrace();
         }
+        System.gc();
     }
 }

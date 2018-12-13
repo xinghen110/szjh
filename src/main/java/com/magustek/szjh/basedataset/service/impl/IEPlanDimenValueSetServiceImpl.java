@@ -58,7 +58,7 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
         iePlanDimenValueSetDAO.deleteAllByVersion(version);
     }
 
-    public List<IEPlanDimenValueSet> getAllFromDatasource(String begin, String end, String bukrs) throws Exception {
+    public List<IEPlanDimenValueSet> getAllFromDatasource(String begin, String end, String bukrs) {
         List<IEPlanDimenValueSet> list = new ArrayList<>();
         //获取所有取数指标
         List<IEPlanDimensionSet> dimensionSetList = iePlanDimensionSetService.getAll();
@@ -88,7 +88,7 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
     }
 
     @Override
-    public List<IEPlanDimenValueSetVO> getContractByHtsno(String htsno, String version) throws Exception {
+    public List<IEPlanDimenValueSetVO> getContractByHtsno(String htsno, String version) {
         //获取指标列表（用来匹配指标值类型）
         Map<String, IEPlanDimensionSet> dimensionSetMap = iePlanDimensionSetService.getMappedList();
         if(Strings.isNullOrEmpty(version)){

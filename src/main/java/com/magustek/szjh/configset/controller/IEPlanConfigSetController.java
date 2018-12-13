@@ -36,9 +36,10 @@ public class IEPlanConfigSetController {
     private OrganizationSetService organizationSetService;
     private IEPlanReportHeadSetService iePlanReportHeadSetService;
     private IEPlanReportItemSetService iePlanReportItemSetService;
+    private IEPlanStatisticSetService iePlanStatisticSetService;
     private BaseResponse resp;
 
-    public IEPlanConfigSetController(IEPlanOperationSetService iePlanOperationSetService, IEPlanCalculationSetService iePlanCalculationSetService, IEPlanDimensionSetService iePlanDimensionSetService, IEPlanSelectDataSetService iePlanSelectDataSetService, ConfigDataSourceSetService configDataSourceSetService, OrganizationSetService organizationSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService) {
+    public IEPlanConfigSetController(IEPlanOperationSetService iePlanOperationSetService, IEPlanCalculationSetService iePlanCalculationSetService, IEPlanDimensionSetService iePlanDimensionSetService, IEPlanSelectDataSetService iePlanSelectDataSetService, ConfigDataSourceSetService configDataSourceSetService, OrganizationSetService organizationSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanStatisticSetService iePlanStatisticSetService) {
         this.iePlanOperationSetService = iePlanOperationSetService;
         this.iePlanCalculationSetService = iePlanCalculationSetService;
         this.iePlanDimensionSetService = iePlanDimensionSetService;
@@ -47,8 +48,9 @@ public class IEPlanConfigSetController {
         this.organizationSetService = organizationSetService;
         this.iePlanReportHeadSetService = iePlanReportHeadSetService;
         this.iePlanReportItemSetService = iePlanReportItemSetService;
+        this.iePlanStatisticSetService = iePlanStatisticSetService;
         resp = new BaseResponse();
-        log.info("初始化 IEPlanOperationSetController");
+        log.info("初始化 IEPlanConfigSetController");
     }
 
     @ApiOperation(value="从Odata获取经营指标分类，并存入数据库。")
@@ -147,5 +149,25 @@ public class IEPlanConfigSetController {
         List<ConfigDataSourceSet> list = configDataSourceSetService.fetchData();
         log.warn("获取数据源：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
+    }
+
+    @ApiOperation(value="从Odata获取统计指标配置数据。")
+    @RequestMapping("/getIEPlanStatisticSet")
+    public String getIEPlanStatisticSet() throws Exception {
+        List<IEPlanStatisticSet> list = iePlanStatisticSetService.getAllFromDatasource();
+        log.warn("从Odata获取统计指标配置数据：{}", JSON.toJSONString(list));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
+    }
+
+    public void initAll() throws Exception {
+        getIEPlanOperationSet();
+        getIEPlanCalculationSet();
+        getIEPlanDimensionSet();
+        getIEPlanSelectDataSet();
+        getOrganizationSet();
+        getIEPlanReportHeadSet();
+        getIEPlanReportItemSet();
+        fetchDatasourceSet();
+        getIEPlanStatisticSet();
     }
 }

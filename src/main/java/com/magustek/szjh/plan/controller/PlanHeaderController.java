@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpSession;
 import java.util.Map;
 
 /**
@@ -36,7 +35,7 @@ public class PlanHeaderController {
         resp = new BaseResponse();
     }
 
-    @ApiOperation(value="保存计划抬头", notes = "参数：参考PlanHeader结构")
+    @ApiOperation(value="保存计划抬头（保存抬头后，会自动生成报表布局并初始化数据）", notes = "参数：参考PlanHeader结构")
     @RequestMapping("/save")
     public String savePlanHeader(@RequestBody PlanHeader header) throws Exception {
         header = planHeaderService.save(header);
@@ -47,7 +46,7 @@ public class PlanHeaderController {
 
     @ApiOperation(value="根据id删除计划", notes = "参数：id")
     @RequestMapping("/deletePlanHeader")
-    public String deletePlanHeader(@RequestBody PlanHeader header) throws Exception {
+    public String deletePlanHeader(@RequestBody PlanHeader header) {
         header = planHeaderService.delete(header);
         String userName = ContextUtils.getUserName();
         log.warn("{}删除计划：{}", userName, JSON.toJSONString(header));
@@ -74,7 +73,7 @@ public class PlanHeaderController {
 
     @ApiOperation(value="根据计划抬头ID代码获取报表布局信息，参数：1、id。")
     @RequestMapping("/getLayoutByHeaderId")
-    public String getLayoutByHeaderId(HttpSession session, @RequestBody PlanHeaderVO vo) throws Exception {
+    public String getLayoutByHeaderId(@RequestBody PlanHeaderVO vo) {
         IEPlanReportHeadVO config = planHeaderService.getLayoutByHeaderId(vo.getId());
         log.warn("根据计划抬头ID代码获取报表布局信息：{}", JSON.toJSONString(config));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(config).setMsg("成功！").toJson();

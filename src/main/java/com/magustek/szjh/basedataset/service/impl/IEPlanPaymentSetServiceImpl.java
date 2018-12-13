@@ -52,11 +52,14 @@ public class IEPlanPaymentSetServiceImpl implements IEPlanPaymentSetService {
     @Override
     public List<IEPlanPaymentSet> fetchData() throws Exception {
         List<IEPlanPaymentSet> list = new ArrayList<>();
+        String version = LocalDate.now().toString();
         List<KeyValueBean> bukrsList = organizationSetService.getRangeList();
 
         bukrsList.forEach(item->list.addAll(getAllFromDatasource(item.getKey())));
+
+        list.forEach(i->i.setVersion(version));
         //清除今天的版本
-        deleteAllByVersion(LocalDate.now().toString());
+        deleteAllByVersion(version);
         //保存新的今天版本
         save(list);
         return list;

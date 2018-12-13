@@ -3,14 +3,12 @@ package com.magustek.szjh.configset.service.impl;
 import com.google.common.collect.Lists;
 import com.magustek.szjh.configset.bean.IEPlanReportHeadSet;
 import com.magustek.szjh.configset.bean.IEPlanReportItemSet;
+import com.magustek.szjh.configset.bean.IEPlanStatisticSet;
 import com.magustek.szjh.configset.bean.OrganizationSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportItemVO;
 import com.magustek.szjh.configset.dao.IEPlanReportHeadSetDAO;
-import com.magustek.szjh.configset.service.IEPlanOperationSetService;
-import com.magustek.szjh.configset.service.IEPlanReportHeadSetService;
-import com.magustek.szjh.configset.service.IEPlanReportItemSetService;
-import com.magustek.szjh.configset.service.OrganizationSetService;
+import com.magustek.szjh.configset.service.*;
 import com.magustek.szjh.plan.utils.PlanConstant;
 import com.magustek.szjh.user.bean.CompanyModel;
 import com.magustek.szjh.utils.ClassUtils;
@@ -23,7 +21,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,13 +34,15 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
     private final IEPlanReportItemSetService iePlanReportItemSetService;
     private final IEPlanOperationSetService iePlanOperationSetService;
     private final OrganizationSetService organizationSetService;
+    private final IEPlanStatisticSetService iePlanStatisticSetService;
     private final HttpUtils httpUtils;
 
-    public IEPlanReportHeadSetServiceImpl(IEPlanReportHeadSetDAO iePlanReportHeadSetDAO, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanOperationSetService iePlanOperationSetService, OrganizationSetService organizationSetService, HttpUtils httpUtils) {
+    public IEPlanReportHeadSetServiceImpl(IEPlanReportHeadSetDAO iePlanReportHeadSetDAO, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanOperationSetService iePlanOperationSetService, OrganizationSetService organizationSetService, IEPlanStatisticSetService iePlanStatisticSetService, HttpUtils httpUtils) {
         this.iePlanReportHeadSetDAO = iePlanReportHeadSetDAO;
         this.iePlanReportItemSetService = iePlanReportItemSetService;
         this.iePlanOperationSetService = iePlanOperationSetService;
         this.organizationSetService = organizationSetService;
+        this.iePlanStatisticSetService = iePlanStatisticSetService;
         this.httpUtils = httpUtils;
     }
 
@@ -148,13 +147,14 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         axis.add(vo.getYaxis());
         axis.add(vo.getZaxis());
 
+
         for(String s : axis){
             switch (s){
                 case PlanConstant.AXIS_ORG:
                     value.add(getORG(vo.getBukrs(), vo.getOrgdp(), orgdp));
                     break;
                 case PlanConstant.AXIS_TIM:
-                    value.add(getTIM(vo.getPunit(), vo.getPvalu(), startDate, true));
+                    value.add(getTIM(vo.getPunit(), vo.getPvalu(), startDate, vo.getBukrs(), vo.getRptyp()));
                     break;
                 case PlanConstant.AXIS_ZB:
                     value.add(getZB(vo));
@@ -229,16 +229,25 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         return keyValueBeans;
     }
     //返回指定日期列表
-    private ArrayList<KeyValueBean> getTIM(String punit, String pvalue, LocalDate rpdat, boolean forward){
+    private ArrayList<KeyValueBean> getTIM(String punit, String pvalue, LocalDate rpdat, String bukrs, String rptyp){
         int i = Integer.parseInt(pvalue);
-        ArrayList<KeyValueBean> keyValueBeans = new ArrayList<>(i);
+        ArrayList<KeyValueBean> keyValueBeans = new ArrayList<>();
+
+        //获取统计指标配置数据，统计指标需要加在时间轴前面
+        List<IEPlanStatisticSet> statisticSetList = iePlanStatisticSetService
+                .getAllByBukrsAndRptyp(bukrs, rptyp);
+        statisticSetList.forEach(st->{
+            KeyValueBean bean = new KeyValueBean();
+            bean.put(st.getTmart(), st.getTmnam(), "S");//统计指标不可编辑
+            keyValueBeans.add(bean);
+        });
 
         for (;i>=0;i--){
             KeyValueBean item = new KeyValueBean();
             String date = ClassUtils.formatDate(rpdat, punit);
             item.put(date, date);
             keyValueBeans.add(item);
-            rpdat = ClassUtils.getDate(rpdat, punit, 1, forward);
+            rpdat = ClassUtils.getDate(rpdat, punit, 1, true);
         }
         return keyValueBeans;
     }

@@ -14,14 +14,14 @@ import com.magustek.szjh.configset.service.IEPlanCalculationSetService;
 import com.magustek.szjh.configset.service.IEPlanSelectDataSetService;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.constant.IEPlanSelectDataConstant;
-import groovy.lang.Binding;
-import groovy.lang.GroovyShell;
-import groovy.lang.MissingPropertyException;
+import groovy.lang.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Modifying;
+import org.codehaus.groovy.reflection.ClassInfo;
+import org.codehaus.groovy.reflection.GroovyClassValue;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
+import java.beans.Introspector;
+import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -36,7 +36,6 @@ public class CalculateResultServiceImpl implements CalculateResultService {
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
     private IEPlanSelectDataSetService iePlanSelectDataSetService;
     private IEPlanCalculationSetService iePlanCalculationSetService;
-    //private static Lock lock = new ReentrantLock();
     private int computeCount;
 
     private Map<String, IEPlanSelectDataSet> selectDataSetMap;
@@ -100,12 +99,19 @@ public class CalculateResultServiceImpl implements CalculateResultService {
 
         });
         long l2 = System.currentTimeMillis();
-        log.warn("指标组合完成，结果数量：{}，计算次数{}，耗时：{}秒。",calcList.size(), computeCount, ((l2-l1)/1000));
+        log.warn("V0.5_指标组合完成，结果数量：{}，计算次数{}，耗时：{}秒。",calcList.size(), computeCount, ((l2-l1)/1000.00));
+
         list = groovyCalc(calcList);
+        for(int i=0;i<10000;i++){
+            groovyCalc(calcList);
+            long l3 = System.currentTimeMillis();
+            log.warn("第【{}】次计算完成，耗时：{}秒。", i+1, ((l3-l2)/1000.00));
+            l2 = l3;
+        }
 
-        long l3 = System.currentTimeMillis();
 
-        log.warn("指标计算完成，结果数量：{}，计算次数{}，耗时：{}秒。",list.size(), computeCount, ((l3-l2)/1000));
+
+        //log.warn("指标计算完成，结果数量：{}，计算次数{}，耗时：{}秒。",list.size(), computeCount, ((l3-l2)/1000));
 
         //清除今天的版本
         deleteAllByVersion(LocalDate.now().toString());
@@ -175,10 +181,6 @@ public class CalculateResultServiceImpl implements CalculateResultService {
                     continue;
                 }
 
-                //GroovyShell shell = new GroovyShell(binding);
-                //Object exec = shell.evaluate(calcSet.getCalcu());
-                //result.setCaval(exec.toString());
-                //log.debug("计算结果："+JSON.toJSONString(result));
                 list.add(new Object[]{binding,calcSet.getCalcu(),result});
                 computeCount++;
             }catch (MissingPropertyException e){
@@ -194,12 +196,46 @@ public class CalculateResultServiceImpl implements CalculateResultService {
 
     private List<CalculateResult> groovyCalc(List<Object[]> calcList){
         List<CalculateResult> list = new ArrayList<>(calcList.size());
+        List<GroovyClassLoader> classLoaderList = new ArrayList<>(calcList.size());
+        //执行groovy计算
         calcList.parallelStream().forEach(c->{
             GroovyShell shell = new GroovyShell((Binding)c[0]);
             Object exec = shell.evaluate((String)c[1]);
             ((CalculateResult)c[2]).setCaval(exec.toString());
             list.add((CalculateResult)c[2]);
+            shell.resetLoadedClasses();
+            classLoaderList.add(shell.getClassLoader());
+            exec = null;
+            shell = null;
         });
+
+
+        //释放内存
+        classLoaderList.forEach(loader->{
+            for (Class c : loader.getLoadedClasses()) {
+                GroovySystem.getMetaClassRegistry().removeMetaClass(c);
+                loader.clearCache();//TODO
+                try {
+                    Field globalClassValue = ClassInfo.class.getDeclaredField("globalClassValue");
+                    globalClassValue.setAccessible(true);
+                    GroovyClassValue classValueBean = (GroovyClassValue) globalClassValue.get(null);
+                    classValueBean.remove(c);
+                } catch (Exception e) {
+                    log.error("groovy内存释放错误："+e.getMessage());
+                }
+                c = null;
+            }
+            loader = null;
+        });
+        //classLoaderList = null;
+        ClassInfo.clearModifiedExpandos();
+        /*
+         * Using java beans (e.g. Groovy does it) results in all referenced class infos being cached in ThreadGroupContext. A valid fix
+         * would be to hold BeanInfo objects on soft references, but that should be done in JDK. So let's clear this cache manually for now,
+         * in clients that are known to create bean infos.
+         */
+        Introspector.flushCaches();
+        System.gc();
         return list;
     }
 }

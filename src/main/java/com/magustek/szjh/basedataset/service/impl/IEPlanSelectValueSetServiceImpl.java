@@ -1,7 +1,6 @@
 package com.magustek.szjh.basedataset.service.impl;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.magustek.szjh.basedataset.dao.IEPlanSelectValueSetDAO;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.entity.vo.IEPlanSelectValueSetVO;
@@ -15,7 +14,6 @@ import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.constant.IEPlanSelectDataConstant;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +22,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -84,7 +81,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
     }
 
     @Override
-    public List<IEPlanSelectValueSetVO> getContractByHtsno(String htsno, String version) throws Exception {
+    public List<IEPlanSelectValueSetVO> getContractByHtsno(String htsno, String version) {
         //获取指标列表（用来匹配指标值类型）
         Map<String, IEPlanSelectDataSet> selectDataSetMap = iePlanSelectDataSetService.getMappedList();
         if(Strings.isNullOrEmpty(version)){
