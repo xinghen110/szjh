@@ -5,4 +5,5 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface DmCalcStatisticsDAO extends CrudRepository<DmCalcStatistics, Long> {
     void deleteAllByVersion(String version);
+    DmCalcStatistics findFirstByVersionAndDmartAndDmvalAndCaart(String version, String dmart, String dmval, String caart);
 }

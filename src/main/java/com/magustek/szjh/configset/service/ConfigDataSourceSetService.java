@@ -6,6 +6,6 @@ import java.util.List;
 
 public interface ConfigDataSourceSetService {
     List<ConfigDataSourceSet> fetchData() throws Exception;
-    List<ConfigDataSourceSet> getListByQcgrp(String qcgrp) throws Exception;
-    String getDescByQcgrpAndQcode(String qcgrp, String qcode) throws Exception;
+    List<ConfigDataSourceSet> getListByQcgrp(String qcgrp);
+    String getDescByQcgrpAndQcode(String qcgrp, String qcode);
 }

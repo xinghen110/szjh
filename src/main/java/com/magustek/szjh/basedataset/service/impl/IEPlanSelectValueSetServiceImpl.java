@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -113,6 +114,11 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
             }
         });
         return voList;
+    }
+
+    @Override
+    public List<IEPlanSelectValueSet> getAllByVersionAndSdartListAndPflag(String version, Collection<String> sdartList, String pflag) {
+        return iePlanSelectValueSetDAO.findAllByVersionAndSdartInAndPflag(version, sdartList, pflag);
     }
 
     private List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanSelectDataSet selectDataSet) {

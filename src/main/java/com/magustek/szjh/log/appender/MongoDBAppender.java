@@ -24,7 +24,8 @@ import java.util.Date;
 public class MongoDBAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     @Value("${logger.mongodb.host}")
-    private String host = "127.0.0.1";
+    //private String host = "127.0.0.1";
+    private String host = "10.154.96.70";
     @Value("${logger.mongodb.port}")
     private int port = 27017;
     @Value("${logger.mongodb.database}")

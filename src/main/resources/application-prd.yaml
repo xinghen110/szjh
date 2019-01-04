@@ -23,7 +23,7 @@ spring:
       #url: jdbc:mysql://118.31.14.156:20003/szjh?useUnicode=true&amp;characterEncoding=utf8
       #url: jdbc:mysql://localhost:3306/szjh?useUnicode=true&amp;characterEncoding=utf8
       #url: jdbc:mysql://localhost:3306/szjh?userSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=CST
-      url: jdbc:mysql://10.154.96.70:3306/szjh?userSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=CST
+      url: jdbc:mysql://10.154.70.121:3306/szjh?userSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=CST
 #      username: cm
       username: root
 #      password: cm123!@#
@@ -54,7 +54,7 @@ spring:
   data:
     mongodb:
 #      host: 127.0.0.1
-      host: 10.154.96.70
+      host: 10.154.70.121
 #      host: 47.100.207.243
       database: szjh
       port: 27017
@@ -69,7 +69,7 @@ spring:
   redis:
     database: 12
 #    host: 127.0.0.1
-    host: 10.154.96.70
+    host: 10.154.70.121
     port: 6379
     password: Passw0rd
 #    host: 118.31.14.156

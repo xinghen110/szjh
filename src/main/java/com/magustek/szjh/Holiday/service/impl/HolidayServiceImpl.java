@@ -87,7 +87,7 @@ public class HolidayServiceImpl implements HolidayService {
      * 根据传入的基准日期、向前\向后、天数，返回工作日，例如：2018-04-03后第10个工作日是2018-04-17，之前第10个工作日是2018-03-20
      * @param from  基准日期
      * @param days  计算天数
-     * @param forward   true向后，false向前
+     * @param forward   true未来，false历史
      * @return  工作日
      */
     @Override

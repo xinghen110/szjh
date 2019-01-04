@@ -148,4 +148,16 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
         dmCalcStatisticsDAO.save(statisticsList);
         return statisticsList.size();
     }
+
+    @Override
+    public String getCaval(String version, String dmart, String dmval, String caart) {
+
+        DmCalcStatistics dm = dmCalcStatisticsDAO.findFirstByVersionAndDmartAndDmvalAndCaart(
+                version,
+                dmart,
+                dmval,
+                caart);
+
+        return dm.getCaval();
+    }
 }

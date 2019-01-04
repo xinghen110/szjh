@@ -15,6 +15,7 @@ public class OdataUtils {
     public static final String Token = "ZCM_ODATA_ORG_SRV/PartnerAddressSet";
 
     public static final String UserLogonSet = "ZCM_ODATA_ORG_SRV/UserLogonSet";
+    public static final String UserAuthSet = "ZCM_ODATA_ORG_SRV/UserAuthSet";
     public static final String OrgInforSet = "ZCM_ODATA_ORG_SRV/OrgInforSet";
     public static final String ConfigDataSource = "ZCM_ODATA_CONFIG_SRV/ConfigDataSourceSet";
     public static final String OrginazationSet = "ZCM_ODATA_ORG_SRV/OrginazationSet";
@@ -34,6 +35,9 @@ public class OdataUtils {
 
     public static final String IEPlanPaymentSet = "ZCM_ODATA_PLAN_SRV/IEPlanPaymentSet";
     public static final String IEPlanTermsSet = "ZCM_ODATA_PLAN_SRV/IEPlanTermsSet";
+
+    public static final String IEPlanBusinessHeadSet = "ZCM_ODATA_PLAN_SRV/IEPlanBusinessHeadSet";
+    public static final String IEPlanBusinessItemSet = "ZCM_ODATA_PLAN_SRV/IEPlanBusinessItemSet";
 
     //public static final String IEPlanContractHeadSet = "ZCM_ODATA_PLAN_SRV/IEPlanContractHeadSet";
 

@@ -14,17 +14,16 @@ import com.magustek.szjh.configset.service.IEPlanCalculationSetService;
 import com.magustek.szjh.configset.service.IEPlanSelectDataSetService;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.constant.IEPlanSelectDataConstant;
+import com.magustek.szjh.utils.groovy.GroovyBean;
+import com.magustek.szjh.utils.groovy.GroovyUtils;
 import groovy.lang.*;
 import lombok.extern.slf4j.Slf4j;
-import org.codehaus.groovy.reflection.ClassInfo;
-import org.codehaus.groovy.reflection.GroovyClassValue;
 import org.springframework.stereotype.Service;
 
-import java.beans.Introspector;
-import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,9 +35,9 @@ public class CalculateResultServiceImpl implements CalculateResultService {
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
     private IEPlanSelectDataSetService iePlanSelectDataSetService;
     private IEPlanCalculationSetService iePlanCalculationSetService;
-    private int computeCount;
+    private int computeCount;//计算次数
 
-    private Map<String, IEPlanSelectDataSet> selectDataSetMap;
+    private Map<String, IEPlanSelectDataSet> selectDataSetMap;//取数指标列表
 
     public CalculateResultServiceImpl(CalculateResultDAO calculateResultDAO, IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanSelectDataSetService iePlanSelectDataSetService, IEPlanCalculationSetService iePlanCalculationSetService) {
         this.calculateResultDAO = calculateResultDAO;
@@ -65,6 +64,7 @@ public class CalculateResultServiceImpl implements CalculateResultService {
     }
 
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<CalculateResult> calculateByVersion(String version) {
         List<CalculateResult> list;
@@ -88,8 +88,7 @@ public class CalculateResultServiceImpl implements CalculateResultService {
         calculationSetList.forEach(c->{
             try {
                 log.warn("开始："+c.getCanam());
-                List<Object[]> calc = calc(c, selectValueSetList);
-                calcList.addAll(calc);
+                calcList.addAll(calc(c, selectValueSetList));
             }catch (Exception e){
                 log.error(e.getMessage());
                 e.printStackTrace();
@@ -99,22 +98,29 @@ public class CalculateResultServiceImpl implements CalculateResultService {
 
         });
         long l2 = System.currentTimeMillis();
-        log.warn("V0.5_指标组合完成，结果数量：{}，计算次数{}，耗时：{}秒。",calcList.size(), computeCount, ((l2-l1)/1000.00));
+        log.warn("指标组合完成，结果数量：{}，计算次数{}，耗时：{}秒。",calcList.size(), computeCount, ((l2-l1)/1000.00));
 
-        list = groovyCalc(calcList);
-        for(int i=0;i<10000;i++){
-            groovyCalc(calcList);
-            long l3 = System.currentTimeMillis();
-            log.warn("第【{}】次计算完成，耗时：{}秒。", i+1, ((l3-l2)/1000.00));
-            l2 = l3;
+        //组装groovy计算条件
+        GroovyUtils groovyUtils = new GroovyUtils();
+        ArrayList<GroovyBean> beanList = new ArrayList<>();
+        calcList.forEach(o->{
+            GroovyBean bean = new GroovyBean();
+            bean.setBinding((Map<String, Object>) o[0]);
+            bean.setCommand((String)o[1]);
+            beanList.add(bean);
+        });
+        //运行计算
+        List<GroovyBean> groovyResult = groovyUtils.exec(beanList);
+        list = new ArrayList<>(calcList.size());
+        //处理计算结果
+        for (int i = 0; i < calcList.size(); i++) {
+            CalculateResult calculateResult = (CalculateResult) calcList.get(i)[2];
+            calculateResult.setCaval(groovyResult.get(i).getResult().toString());
+            list.add(calculateResult);
         }
 
-
-
-        //log.warn("指标计算完成，结果数量：{}，计算次数{}，耗时：{}秒。",list.size(), computeCount, ((l3-l2)/1000));
-
         //清除今天的版本
-        deleteAllByVersion(LocalDate.now().toString());
+        deleteAllByVersion(version);
         //保存今天的新版本
         save(list);
 
@@ -145,16 +151,16 @@ public class CalculateResultServiceImpl implements CalculateResultService {
             result.setVersion(value.get(0).getVersion());
             result.setCaart(calcSet.getCaart());
 
-            Binding binding = new Binding();
+            Map<String, Object> binding = new HashMap<>();
             //根据htnum分组遍历取数明细列表，取出所有的指标，及指标值。
             value.forEach(i->{
                 String vtype = selectDataSetMap.get(i.getSdart()).getVtype();
                 if(!Strings.isNullOrEmpty(i.getSdval())){
                     try {
                         if(IEPlanSelectDataConstant.RESULT_TYPE_DATS.equals(vtype)){
-                            binding.setVariable(i.getSdart(), ClassUtils.dfYMD.parse(i.getSdval()));
+                            binding.put(i.getSdart(), ClassUtils.dfYMD.parse(i.getSdval()));
                         }else{
-                            binding.setVariable(i.getSdart(), i.getSdval());
+                            binding.put(i.getSdart(), i.getSdval());
                         }
                     } catch (ParseException e) {
                         log.error(e.getMessage()+JSON.toJSONString(i));
@@ -167,17 +173,16 @@ public class CalculateResultServiceImpl implements CalculateResultService {
             //使用groovy引擎进行计算，如果抛出【MissingPropertyException】异常，说明单据无该计算值，设置默认为0。
             try{
                 //如果计算公式所需变量为空，则跳过计算。
-                Map variables = binding.getVariables();
                 String[] split = calcSet.getCalcu().split("-");
                 boolean breakFlag = false;
                 for(String s : split){
-                    if(!variables.containsKey(s)){
+                    if(!binding.containsKey(s)){
                         breakFlag = true;
                         break;
                     }
                 }
                 if(breakFlag){
-                    log.debug("跳过计算逻辑，Calcu：{}，variables：{}",calcSet.getCalcu(), JSON.toJSONString(variables));
+                    log.debug("跳过计算逻辑，Calcu：{}，variables：{}",calcSet.getCalcu(), JSON.toJSONString(binding));
                     continue;
                 }
 
@@ -191,51 +196,6 @@ public class CalculateResultServiceImpl implements CalculateResultService {
                 log.error(e.getMessage());
             }
         }
-        return list;
-    }
-
-    private List<CalculateResult> groovyCalc(List<Object[]> calcList){
-        List<CalculateResult> list = new ArrayList<>(calcList.size());
-        List<GroovyClassLoader> classLoaderList = new ArrayList<>(calcList.size());
-        //执行groovy计算
-        calcList.parallelStream().forEach(c->{
-            GroovyShell shell = new GroovyShell((Binding)c[0]);
-            Object exec = shell.evaluate((String)c[1]);
-            ((CalculateResult)c[2]).setCaval(exec.toString());
-            list.add((CalculateResult)c[2]);
-            shell.resetLoadedClasses();
-            classLoaderList.add(shell.getClassLoader());
-            exec = null;
-            shell = null;
-        });
-
-
-        //释放内存
-        classLoaderList.forEach(loader->{
-            for (Class c : loader.getLoadedClasses()) {
-                GroovySystem.getMetaClassRegistry().removeMetaClass(c);
-                loader.clearCache();//TODO
-                try {
-                    Field globalClassValue = ClassInfo.class.getDeclaredField("globalClassValue");
-                    globalClassValue.setAccessible(true);
-                    GroovyClassValue classValueBean = (GroovyClassValue) globalClassValue.get(null);
-                    classValueBean.remove(c);
-                } catch (Exception e) {
-                    log.error("groovy内存释放错误："+e.getMessage());
-                }
-                c = null;
-            }
-            loader = null;
-        });
-        //classLoaderList = null;
-        ClassInfo.clearModifiedExpandos();
-        /*
-         * Using java beans (e.g. Groovy does it) results in all referenced class infos being cached in ThreadGroupContext. A valid fix
-         * would be to hold BeanInfo objects on soft references, but that should be done in JDK. So let's clear this cache manually for now,
-         * in clients that are known to create bean infos.
-         */
-        Introspector.flushCaches();
-        System.gc();
         return list;
     }
 }

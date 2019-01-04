@@ -37,14 +37,14 @@ public class ConfigDataSourceSetServiceImpl implements ConfigDataSourceSetServic
     }
 
     @Override
-    public List<ConfigDataSourceSet> getListByQcgrp(String qcgrp) throws Exception{
+    public List<ConfigDataSourceSet> getListByQcgrp(String qcgrp){
         List<ConfigDataSourceSet> list = configDataSourceSetDAO.findAllByQcgrp(qcgrp);
         log.info("数据源获取qcgrp="+qcgrp+":"+JSON.toJSONString(list));
         return list;
     }
 
     @Override
-    public String getDescByQcgrpAndQcode(String qcgrp, String qcode) throws Exception {
+    public String getDescByQcgrpAndQcode(String qcgrp, String qcode) {
         ConfigDataSourceSet config = configDataSourceSetDAO.findTopByQcgrpAndQcode(qcgrp, qcode);
         if(config == null){
             return "";

@@ -1,6 +1,7 @@
-package com.magustek.szjh.utils;
+package com.magustek.szjh.utils.groovy;
 
 import com.google.common.base.Strings;
+import com.magustek.szjh.utils.ClassUtils;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 
@@ -17,7 +18,7 @@ public class GroovyShellExample {
             e.printStackTrace();
         }
 
-        //b();
+        c();
     }
 
     public static void a(){
@@ -44,11 +45,25 @@ public class GroovyShellExample {
             Object value = shell.evaluate("y-x");
 
             System.err.println(value);
-            //System.err.println(binding.getVariable("y") +", " + binding.getVariable("y").equals(20));
-            //System.err.println(binding.getVariable("z") +", " + binding.getVariable("z").equals(30));
         } catch (ParseException e) {
             e.printStackTrace();
         }
 
     }
+
+    public static void c(){
+        Binding binding = new Binding();
+        try {
+            binding.setVariable("x", "abc");
+
+            GroovyShell shell = new GroovyShell(binding);
+            Object value = shell.evaluate("x==\"abc\"");
+
+            System.err.println(value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }

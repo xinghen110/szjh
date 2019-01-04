@@ -23,6 +23,7 @@ public class UserInfo implements Serializable{
     private String Msgtype;             //消息类型
     private String Aflag;               //动作标识
     private String Msgtext;             //消息文本
+    private UserAuthSet[] authList;     //权限列表
 
     private CompanyModel companyModel;//用户当前公司
 

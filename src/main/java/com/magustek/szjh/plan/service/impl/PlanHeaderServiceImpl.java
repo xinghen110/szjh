@@ -100,6 +100,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         //级联删除
         planItemService.deleteByHeaderId(header.getId());
         planHeaderDAO.delete(header.getId());
+        planLayoutDAO.deleteAllByHeaderId(header.getId());
         return header;
     }
 

@@ -1,6 +1,7 @@
 package com.magustek.szjh.user.service.impl;
 
 import com.magustek.szjh.user.bean.CompanyModel;
+import com.magustek.szjh.user.bean.UserAuthSet;
 import com.magustek.szjh.user.bean.UserInfo;
 import com.magustek.szjh.user.service.UserInfoServiceOdata;
 import com.magustek.szjh.utils.ContextUtils;
@@ -41,7 +42,13 @@ public class UserInfoServiceOdataImpl implements UserInfoServiceOdata {
 
         //调用ODATA接口认证用户，并返回用户信息
         try {
+            //获取用户
             Map<String, Object> result = httpUtils.getMapByUrl(OdataUtils.UserLogonSet+"?", map, HttpMethod.POST);
+            //获取该用户权限
+            List<Map<String, Object>> authResult = httpUtils.getListByUrl(OdataUtils.UserAuthSet + "?&$filter=Loginname eq '" + Loginname.toUpperCase() + "' and Usersource eq 'I'", null, HttpMethod.GET);
+
+            UserInfo userInfo = UserInfo.paresMap(result);
+            userInfo.setAuthList(UserAuthSet.paresMap(authResult));
             return UserInfo.paresMap(result);
         } catch (Exception e) {
             log.error("调用ODATA接口认证用户失败："+e.getMessage());

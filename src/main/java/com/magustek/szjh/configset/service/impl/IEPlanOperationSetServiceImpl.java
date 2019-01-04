@@ -59,6 +59,7 @@ public class IEPlanOperationSetServiceImpl implements IEPlanOperationSetService 
         String result = httpUtils.getResultByUrl(OdataUtils.IEPlanOperationSet+"?", null, HttpMethod.GET);
         List<IEPlanOperationSet> list = OdataUtils.getListWithEntity(result, IEPlanOperationSet.class);
         //清除现有数据
+        flushZbnamMapCache();
         deleteAll();
         //保存新数据
         save(list);
@@ -83,5 +84,9 @@ public class IEPlanOperationSetServiceImpl implements IEPlanOperationSetService 
         }
 
         return map;
+    }
+
+    private void flushZbnamMapCache(){
+        redisTemplate.delete(RedisConfig.ZB_MAP);
     }
 }

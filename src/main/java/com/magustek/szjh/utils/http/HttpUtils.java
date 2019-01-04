@@ -157,7 +157,7 @@ public class HttpUtils {
         //从http header中获取token
         List<String> headerList = responseEntity.getHeaders().get(odataTokenHeader);
         String token = headerList.get(headerList.size() - 1);
-        log.debug(odataTokenHeader + ":" + token);
+        log.info(odataTokenHeader + ":" + token);
         return token;
     }
 

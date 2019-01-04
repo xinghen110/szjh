@@ -44,11 +44,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
     private String LOGOUT_PROCESSOR;
 
     private UserInfoService userInfoService;
-    private InitConfigData initConfigData;
 
-    public SecurityConfig(UserInfoService userInfoService, InitConfigData initConfigData) {
+    public SecurityConfig(UserInfoService userInfoService) {
         this.userInfoService = userInfoService;
-        this.initConfigData = initConfigData;
     }
 
     @Override
@@ -101,10 +99,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
                 @SuppressWarnings("unchecked")
                 List<CompanyModel> companyList = (List<CompanyModel>)request.getSession().getAttribute("CompanyList");
 
-                //获得用户权限
-                //List<AuthoModel> userAuthoList = oDataAuthoService.getUserAutho(user);
-                //session.setAttribute("authoList", userAuthoList);
-
                 BaseResponse baseResponse = new BaseResponse();
                 baseResponse.setStateCode(BaseResponse.SUCCESS).setMsg("登录成功").setData(userInfo);
                 if(companyList!=null && companyList.size()>1){
@@ -155,6 +149,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
             }).permitAll();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception{
         //注册用户登录服务
