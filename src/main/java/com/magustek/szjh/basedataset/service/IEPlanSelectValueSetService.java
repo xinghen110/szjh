@@ -14,5 +14,5 @@ public interface IEPlanSelectValueSetService {
     List<IEPlanSelectValueSet> fetchData() throws Exception;
     List<IEPlanSelectValueSetVO> getContractByHtsno(String htsno, String version) throws Exception;
 
-    List<IEPlanSelectValueSet> getAllByVersionAndSdartListAndPflag(String version, Collection<String> sdartList, String pflag);
+    List<IEPlanSelectValueSet> getAllByVersionAndPflag(String version, String pflag);
 }

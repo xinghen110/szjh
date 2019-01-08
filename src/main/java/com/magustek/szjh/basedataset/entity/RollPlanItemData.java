@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.math.BigDecimal;
 
 /**
  * 计划业务表：滚动计划明细-日期项目
@@ -21,5 +20,6 @@ public class RollPlanItemData extends BaseEntity {
     @Column(length = 10)   private String dtval;      //日期
     @Column(length = 1000) private String stval;      //合同条款
     @Column(length = 1)    private String ctdtp;      //值类型（C|G）
+    @Column(length = 1)    private String odue;       //是否超过合同约定时间（O）
     @Column private Integer caval;                    //参考能力值
 }

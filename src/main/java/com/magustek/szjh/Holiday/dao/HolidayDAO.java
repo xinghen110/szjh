@@ -11,4 +11,5 @@ public interface HolidayDAO extends CrudRepository<Holiday, Long> {
     Long countByYear(Integer year);
     Page<Holiday> findAllByYyyymmddGreaterThanAndTypeOrderByYyyymmddAsc(String yyyymmdd, String type, Pageable pageable);
     Page<Holiday> findAllByYyyymmddLessThanAndTypeOrderByYyyymmddDesc(String yyyymmdd, String type, Pageable pageable);
+    Holiday findTopByYyyymmdd(String yyyymmdd);
 }

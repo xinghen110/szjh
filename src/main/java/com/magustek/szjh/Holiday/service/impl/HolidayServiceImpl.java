@@ -91,7 +91,7 @@ public class HolidayServiceImpl implements HolidayService {
      * @return  工作日
      */
     @Override
-    public LocalDate getWordDay(LocalDate from, Integer days, boolean forward) throws Exception{
+    public LocalDate getWorkDay(LocalDate from, Integer days, boolean forward) throws Exception{
         PageRequest page = new PageRequest(days-1, 1);
         Page<Holiday> workDay;
         if(forward){
@@ -104,5 +104,33 @@ public class HolidayServiceImpl implements HolidayService {
         }else{
             return LocalDate.parse(workDay.getContent().get(0).getYyyymmdd());
         }
+    }
+
+    /*返回最近的工作日*/
+    @Override
+    public LocalDate skipHoliday(LocalDate day, boolean future) {
+        while(true){
+            if(isHoliday(day)){
+                if(future){
+                    day = day.plusDays(1);
+                }else{
+                    day = day.minusDays(1);
+                }
+            }else{
+                return day;
+            }
+        }
+    }
+    //xx个工作日，转换成xx个自然日
+    @Override
+    public long getNatureDays(LocalDate from, Integer workDays) throws Exception {
+        LocalDate workDay = getWorkDay(from, workDays, true);
+        return workDay.toEpochDay()-from.toEpochDay();
+    }
+
+    //默认返回false
+    private boolean isHoliday(LocalDate day) {
+        Holiday topByYyyymmdd = holidayDao.findTopByYyyymmdd(day.toString());
+        return topByYyyymmdd != null && Holiday.holiday_day.equals(topByYyyymmdd.getType());
     }
 }

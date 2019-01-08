@@ -32,8 +32,8 @@ public class SpringUtils implements ApplicationContextAware {
     public static Object getBean(String name){
         return getApplicationContext().getBean(name);
     }
-    //通过name设置 Bean.
-    public static void setBean(String name, Object bean){
-        BeanFactory parentBeanFactory = getApplicationContext().getParentBeanFactory();
+    //通过class获取 Bean.
+    public static <T> T getBean(Class<T> clz){
+        return getApplicationContext().getBean(clz);
     }
 }

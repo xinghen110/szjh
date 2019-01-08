@@ -7,6 +7,8 @@ import groovy.lang.GroovyShell;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 public class GroovyShellExample {
     public static void main(String args[]) {
@@ -54,10 +56,10 @@ public class GroovyShellExample {
     public static void c(){
         Binding binding = new Binding();
         try {
-            binding.setVariable("x", "abc");
+            binding.setVariable("G111", "9990.00");
 
             GroovyShell shell = new GroovyShell(binding);
-            Object value = shell.evaluate("x==\"abc\"");
+            Object value = shell.evaluate("G111>'0'");
 
             System.err.println(value);
         } catch (Exception e) {

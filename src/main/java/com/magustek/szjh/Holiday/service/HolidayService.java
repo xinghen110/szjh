@@ -11,5 +11,7 @@ public interface HolidayService {
     Page<Holiday> listByYear(Integer year, Pageable pageable);
     Iterable<Holiday> addYear(Integer year);
     Holiday getById(Holiday holiday);
-    LocalDate getWordDay(LocalDate from, Integer days, boolean forward) throws Exception;
+    LocalDate getWorkDay(LocalDate from, Integer days, boolean forward) throws Exception;
+    LocalDate skipHoliday(LocalDate day, boolean future);
+    long getNatureDays(LocalDate from, Integer workDays) throws Exception;
 }

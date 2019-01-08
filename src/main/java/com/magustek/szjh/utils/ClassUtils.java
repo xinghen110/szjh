@@ -6,8 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -189,6 +192,18 @@ public class ClassUtils {
                 return "";
         }
         return baseDate.format(formatter);
+    }
+
+    /**
+     * yyyyMMdd转LocalDate
+     * @param yyyyMMdd    yyyyMMdd
+     * @return          计算后的日期
+     */
+    public static LocalDate StringToLocalDate(String yyyyMMdd) throws ParseException {
+        Date parse = dfYMD.parse(yyyyMMdd);
+        Instant instant = parse.toInstant();
+        ZoneId zoneId = ZoneId.systemDefault();
+        return instant.atZone(zoneId).toLocalDate();
     }
 
     /**

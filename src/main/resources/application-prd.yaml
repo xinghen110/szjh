@@ -1,5 +1,3 @@
-debug: true
-
 server:
   port: 21010
   tomcat.uri-encoding: UTF-8
@@ -24,9 +22,7 @@ spring:
       #url: jdbc:mysql://localhost:3306/szjh?useUnicode=true&amp;characterEncoding=utf8
       #url: jdbc:mysql://localhost:3306/szjh?userSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=CST
       url: jdbc:mysql://10.154.70.121:3306/szjh?userSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=CST
-#      username: cm
       username: root
-#      password: cm123!@#
       password: P@ssw0rd
       driver-class-name: com.mysql.cj.jdbc.Driver
       # 初始化大小，最小，最大
@@ -53,9 +49,7 @@ spring:
 
   data:
     mongodb:
-#      host: 127.0.0.1
       host: 10.154.70.121
-#      host: 47.100.207.243
       database: szjh
       port: 27017
   jpa:
@@ -68,16 +62,21 @@ spring:
   session.store-type: redis
   redis:
     database: 12
-#    host: 127.0.0.1
     host: 10.154.70.121
     port: 6379
     password: Passw0rd
-#    host: 118.31.14.156
-#    port: 26379
-#    password: 1e2e9fc2002b002d75198b7503210c05a1baac4560916a3c6d93bcce3a50d7f00fd395bf1647b9abb8d1afcc9c76c289b0c9383ba386a956da4b38934417789e
     pool:
       max-active: 8
       max-idle: 8
       max-wait: -1
       min-idle: 0
 
+#esb/odata
+zconnection:
+  type: odata
+  odataIp: http://10.154.2.41
+  odataPort: 8000
+  odataUser: zn_odata
+  odataPasswd: zn_odata
+  odataClient: 300
+  esbIp: http://10.154.97.1:8010/

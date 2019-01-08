@@ -64,7 +64,12 @@ public class IEPlanBusinessHeadSetVO extends IEPlanBusinessHeadSet {
         bean.setCommand(super.getCondi());
         GroovyUtils groovyUtils = new GroovyUtils();
 
-        //返回是否显示的计算结果
-        return Boolean.valueOf((String)groovyUtils.exec(bean));
+        Object exec = groovyUtils.exec(bean);
+        if(exec==null){
+            return false;
+        }else{
+            //返回是否显示的计算结果
+            return Boolean.valueOf(exec.toString());
+        }
     }
 }

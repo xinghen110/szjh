@@ -87,7 +87,7 @@ public class HolidayController {
     @RequestMapping("/getWorkDay")
     public String getWorkDay(@RequestBody Holiday holiday){
         try {
-            LocalDate date = holidayService.getWordDay(
+            LocalDate date = holidayService.getWorkDay(
                     LocalDate.parse(holiday.getYyyymmdd()),
                     holiday.getDay(),
                     holiday.getYear()>0);

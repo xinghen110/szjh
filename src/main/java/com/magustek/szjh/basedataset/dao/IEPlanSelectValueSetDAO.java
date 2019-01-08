@@ -13,5 +13,5 @@ public interface IEPlanSelectValueSetDAO extends CrudRepository<IEPlanSelectValu
     List<IEPlanSelectValueSet> findAllByVersion(String version);
     List<IEPlanSelectValueSet> findAllByHtsnoAndVersion(String htsno, String version);
 
-    List<IEPlanSelectValueSet> findAllByVersionAndSdartInAndPflag(String version, Collection<String> sdart, String pflag);
+    List<IEPlanSelectValueSet> findAllByVersionAndPflag(String version, String pflag);
 }

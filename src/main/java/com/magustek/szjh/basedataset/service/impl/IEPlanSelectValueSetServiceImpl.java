@@ -117,8 +117,8 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
     }
 
     @Override
-    public List<IEPlanSelectValueSet> getAllByVersionAndSdartListAndPflag(String version, Collection<String> sdartList, String pflag) {
-        return iePlanSelectValueSetDAO.findAllByVersionAndSdartInAndPflag(version, sdartList, pflag);
+    public List<IEPlanSelectValueSet> getAllByVersionAndPflag(String version, String pflag) {
+        return iePlanSelectValueSetDAO.findAllByVersionAndPflag(version, pflag);
     }
 
     private List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanSelectDataSet selectDataSet) {

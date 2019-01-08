@@ -23,7 +23,8 @@ public class Holiday extends BaseEntity {
     @Column(length = 4, nullable = false) private String type;          //日期类型
     public transient static String work_day = "W";                      //工作日
     public transient static String work_day_txt = "工作日";             //工作日
-    public transient static String holiday_day = "H";                   //节假日
+    public transient static String holiday_day = "H";                  //节假日
+    public transient static String nature_day = "N";                   //自然日
     public transient static String holiday_day_txt = "节假日";          //节假日
     @Column(length = 40, nullable = false) private String typeDesc;     //日期类型描述
 
