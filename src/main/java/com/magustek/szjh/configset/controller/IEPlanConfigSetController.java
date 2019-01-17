@@ -4,9 +4,11 @@ import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
 import com.magustek.szjh.configset.bean.*;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
+import com.magustek.szjh.configset.bean.vo.IEPlanScreenVO;
 import com.magustek.szjh.configset.service.*;
 import com.magustek.szjh.user.bean.UserInfo;
 import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.base.BaseResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -39,9 +41,10 @@ public class IEPlanConfigSetController {
     private IEPlanStatisticSetService iePlanStatisticSetService;
     private IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
     private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
+    private IEPlanScreenService iePlanScreenService;
     private BaseResponse resp;
 
-    public IEPlanConfigSetController(IEPlanOperationSetService iePlanOperationSetService, IEPlanCalculationSetService iePlanCalculationSetService, IEPlanDimensionSetService iePlanDimensionSetService, IEPlanSelectDataSetService iePlanSelectDataSetService, ConfigDataSourceSetService configDataSourceSetService, OrganizationSetService organizationSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanStatisticSetService iePlanStatisticSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService) {
+    public IEPlanConfigSetController(IEPlanOperationSetService iePlanOperationSetService, IEPlanCalculationSetService iePlanCalculationSetService, IEPlanDimensionSetService iePlanDimensionSetService, IEPlanSelectDataSetService iePlanSelectDataSetService, ConfigDataSourceSetService configDataSourceSetService, OrganizationSetService organizationSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanStatisticSetService iePlanStatisticSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanScreenService iePlanScreenService) {
         this.iePlanOperationSetService = iePlanOperationSetService;
         this.iePlanCalculationSetService = iePlanCalculationSetService;
         this.iePlanDimensionSetService = iePlanDimensionSetService;
@@ -53,6 +56,7 @@ public class IEPlanConfigSetController {
         this.iePlanStatisticSetService = iePlanStatisticSetService;
         this.iePlanBusinessHeadSetService = iePlanBusinessHeadSetService;
         this.iePlanBusinessItemSetService = iePlanBusinessItemSetService;
+        this.iePlanScreenService = iePlanScreenService;
         resp = new BaseResponse();
         log.info("初始化 IEPlanConfigSetController");
     }
@@ -134,7 +138,7 @@ public class IEPlanConfigSetController {
 
     @ApiOperation(value="根据qcgrp，获取数据源列表。")
     @RequestMapping("/getDatasourceSet")
-    public String getDatasourceSet(@RequestBody ConfigDataSourceSet configDataSourceSet) throws Exception {
+    public String getDatasourceSet(@RequestBody ConfigDataSourceSet configDataSourceSet) {
         String qcgrp = configDataSourceSet.getQcgrp();
         List<ConfigDataSourceSet> list;
 
@@ -179,6 +183,24 @@ public class IEPlanConfigSetController {
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
+    @ApiOperation(value="从Odata获取屏幕配置数据。")
+    @RequestMapping("/getIEPlanScreen")
+    public String getIEPlanScreen() throws Exception {
+        iePlanScreenService.getAllFromDatasource();
+        log.warn("从Odata获取屏幕配置配置数据");
+        return resp.setStateCode(BaseResponse.SUCCESS).setMsg("成功！").toJson();
+    }
+
+    @ApiOperation(value="根据bukrs、rptyp、hview屏幕配置抬头数据列表。")
+    @RequestMapping("/getIEPlanScreenHeadSetList")
+    public String getIEPlanScreenHeadSetList(@RequestBody IEPlanScreenHeadSet headSet) throws Exception {
+        String bukrs = ContextUtils.getCompany().getOrgcode();
+        IEPlanScreenVO vo = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, headSet.getRptyp(), headSet.getHview());
+        log.warn("根据bukrs、rptyp、hview屏幕配置抬头数据列表：{}", JSON.toJSONString(vo));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(vo).setMsg("成功！").toJson();
+    }
+
+
     @ApiOperation(value="刷新所有配置数据。")
     @RequestMapping("/initAll")
     public void initAll() throws Exception {
@@ -193,5 +215,6 @@ public class IEPlanConfigSetController {
         getIEPlanStatisticSet();
         getIEPlanBusinessHeadSet();
         getIEPlanBusinessItemSet();
+        getIEPlanScreen();
     }
 }

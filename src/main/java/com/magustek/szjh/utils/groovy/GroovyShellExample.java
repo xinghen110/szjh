@@ -56,10 +56,10 @@ public class GroovyShellExample {
     public static void c(){
         Binding binding = new Binding();
         try {
-            binding.setVariable("G111", "9990.00");
+            binding.setVariable("G111", "ICM03");
 
             GroovyShell shell = new GroovyShell(binding);
-            Object value = shell.evaluate("G111>'0'");
+            Object value = shell.evaluate("G111 != 'ICM09'");
 
             System.err.println(value);
         } catch (Exception e) {

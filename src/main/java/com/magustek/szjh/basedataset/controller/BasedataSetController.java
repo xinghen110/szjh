@@ -64,7 +64,7 @@ public class BasedataSetController {
     @ApiOperation(value="根据htsno、version获取合同指标数据。参数1、htsno，2、version（如果不指定，默认是当天）。")
     @RequestMapping("/getContractSdByHtsno")
     public String getContractSdByHtsno(@RequestBody IEPlanSelectValueSetVO vo) throws Exception {
-        List<IEPlanSelectValueSetVO> list = iePlanSelectValueSetService.getContractByHtsno(vo.getHtsno(), vo.getVersion());
+        List<IEPlanSelectValueSetVO> list = iePlanSelectValueSetService.getContractByHtsnoAndVersionGroupByHtnum(vo.getHtsno(), vo.getVersion());
         log.warn("合同指标数据：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
@@ -126,21 +126,27 @@ public class BasedataSetController {
         String version = version(result);
 
         List<RollPlanHeadData> list = rollPlanDataService.calculateByVersion(version);
-        log.warn("从Odata获取合同合同收付款条款明细：{}", JSON.toJSONString(list));
+        log.warn("根据版本号，计算滚动计划数据：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list.size()).setMsg("成功！").toJson();
     }
 
     @ApiOperation(value="从Odata获取所有配置及业务数据，并存入数据库。")
     @RequestMapping("/fetchAllBaseData")
-    public void fetchBaseData() throws Exception {
+    public void fetchBaseData(@RequestBody DmCalcStatistics result) throws Exception {
         iePlanConfigSetController.initAll();//获取所有配置数据
         getIEPlanSelectValueSet();
         getIEPlanDimenValueSet();
-        statisticByVersion(null);
         getIEPlanPaymentSet();
         getIEPlanTermsSet();
-        calculate(null);
-        calcRollPlanData(null);
+        executeAllCalc(result);
+    }
+
+    @ApiOperation(value="执行所有计算。")
+    @RequestMapping("/executeAllCalc")
+    private void executeAllCalc(DmCalcStatistics result){
+        calculate(result);//计算合同指标
+        statisticByVersion(result);//将合同指标的计算结果，根据维度进行统计，形成历史能力值
+        calcRollPlanData(result);//根据历史能力值，计算滚动计划
     }
 
     private String version(DmCalcStatistics result){

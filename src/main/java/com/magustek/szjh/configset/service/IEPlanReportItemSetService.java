@@ -10,4 +10,6 @@ public interface IEPlanReportItemSetService {
     void deleteAll();
     List<IEPlanReportItemSet> getAllFromDatasource() throws Exception;
     List<IEPlanReportItemSet> getByBukrsAndRptyp(String bukrs, String rptyp) throws Exception;
+
+    List<IEPlanReportItemSet> getAllByIetyp();
 }

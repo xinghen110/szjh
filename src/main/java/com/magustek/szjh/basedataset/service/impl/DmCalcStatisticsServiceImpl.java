@@ -158,6 +158,10 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
                 dmval,
                 caart);
 
-        return dm.getCaval();
+        if(dm != null){
+            return dm.getCaval();
+        }else{
+            return "";
+        }
     }
 }

@@ -34,7 +34,7 @@ public class InitConfigDataTask {
     public void executeFetchBaseData(){
         try {
             long b = System.currentTimeMillis();
-            basedataSetController.fetchBaseData();
+            basedataSetController.fetchBaseData(null);
             long e = System.currentTimeMillis();
             log.warn("计划任务{}执行完毕，耗时：{}s", "executeFetchBaseData", (e-b)/1000.00);
         } catch (Exception e) {

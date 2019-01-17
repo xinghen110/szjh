@@ -2,27 +2,32 @@ package com.magustek.szjh.basedataset.service.impl;
 
 import com.google.common.base.Strings;
 import com.magustek.szjh.Holiday.service.HolidayService;
-import com.magustek.szjh.basedataset.dao.RollPlanDataDAO;
 import com.magustek.szjh.basedataset.dao.RollPlanHeadDataDAO;
 import com.magustek.szjh.basedataset.dao.RollPlanItemDataDAO;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.entity.RollPlanHeadData;
 import com.magustek.szjh.basedataset.entity.RollPlanItemData;
 import com.magustek.szjh.basedataset.entity.helper.RollPlanDataHelper;
+import com.magustek.szjh.basedataset.entity.vo.RollPlanHeaderVO;
+import com.magustek.szjh.basedataset.entity.vo.RollPlanItemVO;
 import com.magustek.szjh.basedataset.service.DmCalcStatisticsService;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.basedataset.service.RollPlanDataService;
+import com.magustek.szjh.configset.bean.IEPlanBusinessHeadSet;
 import com.magustek.szjh.configset.bean.IEPlanBusinessItemSet;
 import com.magustek.szjh.configset.bean.IEPlanReportHeadSet;
+import com.magustek.szjh.configset.bean.IEPlanReportItemSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanBusinessHeadSetVO;
 import com.magustek.szjh.configset.bean.vo.IEPlanBusinessItemSetVO;
 import com.magustek.szjh.configset.service.IEPlanBusinessHeadSetService;
 import com.magustek.szjh.configset.service.IEPlanBusinessItemSetService;
 import com.magustek.szjh.configset.service.IEPlanReportHeadSetService;
+import com.magustek.szjh.configset.service.IEPlanReportItemSetService;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.constant.IEPlanSelectDataConstant;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -33,7 +38,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service("RollPlanDataService")
 public class RollPlanDataServiceImpl implements RollPlanDataService {
-    private RollPlanDataDAO rollPlanDataDAO;
     private RollPlanHeadDataDAO rollPlanHeadDataDAO;
     private RollPlanItemDataDAO rollPlanItemDataDAO;
 
@@ -41,6 +45,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
     private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
     private IEPlanReportHeadSetService iePlanReportHeadSetService;
+    private IEPlanReportItemSetService iePlanReportItemSetService;
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
     private DmCalcStatisticsService dmCalcStatisticsService;
     private HolidayService holidayService;
@@ -50,13 +55,13 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
 
     private String version;//全局变量
 
-    public RollPlanDataServiceImpl(RollPlanDataDAO rollPlanDataDAO, RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanItemDataDAO rollPlanItemDataDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, DmCalcStatisticsService dmCalcStatisticsService, HolidayService holidayService) {
-        this.rollPlanDataDAO = rollPlanDataDAO;
+    public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanItemDataDAO rollPlanItemDataDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, DmCalcStatisticsService dmCalcStatisticsService, HolidayService holidayService) {
         this.rollPlanHeadDataDAO = rollPlanHeadDataDAO;
         this.rollPlanItemDataDAO = rollPlanItemDataDAO;
         this.iePlanBusinessHeadSetService = iePlanBusinessHeadSetService;
         this.iePlanBusinessItemSetService = iePlanBusinessItemSetService;
         this.iePlanReportHeadSetService = iePlanReportHeadSetService;
+        this.iePlanReportItemSetService = iePlanReportItemSetService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
         this.dmCalcStatisticsService = dmCalcStatisticsService;
         this.holidayService = holidayService;
@@ -75,19 +80,27 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     }
 
     @Override
-    public List<RollPlanHeadData> save(List<RollPlanHeadData> list) {
-        rollPlanDataDAO.save(list);
+    public List<RollPlanHeadData> saveHead(List<RollPlanHeadData> list) {
+        rollPlanHeadDataDAO.save(list);
+        return list;
+    }
+
+    @Override
+    public List<RollPlanItemData> saveItem(List<RollPlanItemData> list) {
+        rollPlanItemDataDAO.save(list);
         return list;
     }
 
     @Override
     public List<RollPlanHeadData> getAllByVersion(String version) {
-        return rollPlanDataDAO.findAllByVersion(version);
+        return rollPlanHeadDataDAO.findAllByVersion(version);
     }
 
     @Override
     public void deleteAllByVersion(String version) {
-        rollPlanDataDAO.deleteAllByVersion(version);
+        List<RollPlanHeadData> headDataList = getAllByVersion(version);
+        rollPlanItemDataDAO.deleteAllByHeadIdIn(headDataList);
+        rollPlanHeadDataDAO.delete(headDataList);
     }
 
     @Override
@@ -113,17 +126,27 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         Map<String, List<IEPlanBusinessHeadSetVO>> htsnoHeadList = new HashMap<>(valueListByHtsno.size());
         valueListByHtsno.forEach((htsno, valueList)->{
             List<IEPlanBusinessHeadSetVO> headList = new ArrayList<>();
+            //TODO debug only
+            if("60101800000695".equals(htsno)){
+                System.out.println("debug point");
+            }
             headSetList.forEach(h->{
                 if(h.calc(valueList)){
                     h.setItemVOList(businessItemMap.get(h.getHdnum()));
                     headList.add(h);
                 }
             });
-            htsnoHeadList.put(htsno, headList);
+            if(!ClassUtils.isEmpty(headList)){
+                htsnoHeadList.put(htsno, headList);
+            }
         });
 
         /* 计算滚动计划明细单 */
         htsnoHeadList.forEach((htsno, headSetList)->{
+            //TODO debug only
+            if("60101800000695".equals(htsno)){
+                System.out.println("debug point");
+            }
             List<RollPlanDataHelper> rollPlanDataHelperList = new ArrayList<>();//同一个合同的计划列表
             Map<String, List<IEPlanSelectValueSet>> sdartValueMap = valueListByHtsno
                     .get(htsno)
@@ -131,6 +154,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     .collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
             /* 根据明细配置，计算明细单 */
             headSetList.forEach(head->{
+                List<RollPlanDataHelper> localHelperList = new ArrayList<>();//同一个类型（抬头一致）的计划列表
                 //获取明细配置列表
                 List<IEPlanBusinessItemSetVO> itemVOList = head.getItemVOList();
 
@@ -138,12 +162,16 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 Map<String, List<IEPlanBusinessItemSetVO>> groupBySdtyp = itemVOList
                         .stream()
                         .collect(Collectors.groupingBy(IEPlanBusinessItemSetVO::getSdtyp));
+                //TODO debug only
+                if("60101800000695".equals(htsno)){
+                    System.out.println("debug point");
+                }
                 //处理类型为【G】的指标
                 GetPlanData(groupBySdtyp,
                         htsno,
                         head,
                         sdartValueMap,
-                        rollPlanDataHelperList);
+                        localHelperList);
                 //处理类型为【C】的指标
 
                 //获取计算值的项目
@@ -153,8 +181,8 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 }
                 //计算起始节点
                 IEPlanBusinessItemSetVO startItem = null;
-                //获取开始、结束环节
-                for(IEPlanBusinessItemSetVO i : getItem){
+                //获取开始环节（开始环节类型为【G】）
+                for(IEPlanBusinessItemSetVO i : groupBySdtyp.get(IEPlanBusinessItemSet.GET)){
                     if("X".equals(i.getHjbgn())){
                         startItem = i;
                     }
@@ -198,15 +226,19 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     }
 
                     //取得最新的日期及其对应的htnum
-                    Optional<IEPlanSelectValueSet> first = sdartValueMap.get(item.getSdart()).stream().max(Comparator.comparing(IEPlanSelectValueSet::getSdval));
-                    if (first.isPresent()) {
-                        maxDate = first.get().getSdval();
-                        maxHtnum = first.get().getHtnum();
+                    List<IEPlanSelectValueSet> valueList = sdartValueMap.get(item.getSdart());
+                    if(!ClassUtils.isEmpty(valueList)) {
+                        Optional<IEPlanSelectValueSet> first = sdartValueMap.get(item.getSdart()).stream().max(Comparator.comparing(IEPlanSelectValueSet::getSdval));
+                        if (first.isPresent()) {
+                            maxDate = first.get().getSdval();
+                            maxHtnum = first.get().getHtnum();
+                        }
                     }
                     item.setSdartValue(maxDate);//最新取数日期（如果取不到则为空）
                     item.setCaartValue(getDmval(item.getCaart()));//历史能力值
                     item.setSdcutValue(BigDecimal.valueOf(sumCurr));//累计金额
                     item.setMaxHtnum(maxHtnum);//最新日期对应的合同管理编号
+
                 });
 
                 //上一个环节
@@ -218,9 +250,9 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
 
                     while(true){
                         //取待处理计划（因为列表一直在增加，只能使用程序判断循环。）
-                        if(i<=rollPlanDataHelperList.size()){
+                        if(i < localHelperList.size()){
+                            helper = localHelperList.get(i);
                             i++;
-                            helper = rollPlanDataHelperList.get(i);
                         }else{
                             break;
                         }
@@ -243,9 +275,10 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                             this.createHelper(newHelper, itemVO, calcList);
                             newHelper.getHeadData().setWears(subCurr);
                             newHelper.getHeadData().setHtsno(htsno);
+                            newHelper.getHeadData().setBukrs(head.getBukrs());
                             newHelper.getHeadData().setHdnum(itemVO.getHdnum());
                             newHelper.getHeadData().setVersion(version);
-                            rollPlanDataHelperList.add(newHelper);
+                            localHelperList.add(newHelper);
                         }
                         //已存在计划节点计算
                         noDiff(helper,itemVO);
@@ -255,14 +288,14 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 }
 
                 //根据合同约定条款，调整计划日期。
-                rollPlanDataHelperList.forEach(helper->{
+                localHelperList.forEach(helper->{
                     try {
                         calcContractStipulate(calcList, helper, sdartValueMap);
                     } catch (Exception e) {
                         log.error(e.getMessage());
                     }
                 });
-
+                rollPlanDataHelperList.addAll(localHelperList);
             });
             rollPlanHeadDataList.addAll(
                     rollPlanDataHelperList
@@ -275,9 +308,84 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     .collect(Collectors.toList()).forEach(rollPlanItemDataList::addAll);
         });
 
+        //计算【经营指标】
+        calcZbart(rollPlanHeadDataList, valueListByHtsno);
+        //先清空当前版本的数据，再进行保存。
+        deleteAllByVersion(version);
         rollPlanHeadDataDAO.save(rollPlanHeadDataList);
         rollPlanItemDataDAO.save(rollPlanItemDataList);
         return rollPlanHeadDataList;
+    }
+
+    @Override
+    public List<RollPlanHeaderVO> getRollPlanVOByVersionAndHtsno(String version, String htsno) {
+        //抬头配置
+        Map<String, List<IEPlanBusinessHeadSet>> headerMap = iePlanBusinessHeadSetService.getAll().stream().collect(Collectors.groupingBy(IEPlanBusinessHeadSet::getHdnum));
+        //行项目配置
+        Map<String, List<IEPlanBusinessItemSet>> itemMap = iePlanBusinessItemSetService.getAll().stream().collect(Collectors.groupingBy(IEPlanBusinessItemSet::getImnum));
+
+        List<RollPlanHeadData> headerList = rollPlanHeadDataDAO.findAllByVersionAndHtsno(version, htsno);
+
+        //装配headerVO
+        List<RollPlanHeaderVO> headerVOList = new ArrayList<>(headerList.size());
+        headerList.forEach(header->{
+            RollPlanHeaderVO headerVO = new RollPlanHeaderVO();
+            BeanUtils.copyProperties(header, headerVO);
+
+            headerVO.setBusta(headerMap.get(header.getHdnum()).get(0).getBusta());
+            headerVO.setZtype(headerMap.get(header.getHdnum()).get(0).getZtype());
+
+            //装配itemVO
+            List<RollPlanItemData> list = rollPlanItemDataDAO.findAllByHeadId(header);
+            List<RollPlanItemVO> itemVOList = new ArrayList<>();
+            list.forEach(item->{
+                RollPlanItemVO itemVO = new RollPlanItemVO();
+                itemVOList.add(itemVO);
+                BeanUtils.copyProperties(item, itemVO);
+                itemVO.setVtype(itemMap.get(item.getImnum()).get(0).getVtype());//设置值类型
+            });
+            headerVO.setItemVOS(itemVOList);
+            headerVOList.add(headerVO);
+        });
+
+        return headerVOList;
+    }
+
+    @Override
+    public List<Map<String, String>> coverToMap(List<RollPlanHeaderVO> list) {
+        List<Map<String, String>> mapList = new ArrayList<>(list.size());
+
+        list.forEach(vo->{
+            Map<String, String> map = new HashMap<>();
+            BigDecimal wears = vo.getWears();
+
+            mapList.add(map);
+            map.put("id",vo.getId().toString());
+            map.put("busta",vo.getBusta());
+            map.put("hdnum",vo.getHdnum());
+            map.put("htsno",vo.getHtsno());
+            map.put("version",vo.getVersion());
+            map.put("ztype",vo.getZtype());
+            map.put("stval",vo.getStval());
+            map.put("wears", wears == null?"":vo.getWears().toString());
+            vo.getItemVOS().forEach(item->{
+                map.put(item.getSdart(),item.getValue());
+                map.put(item.getSdart().replaceFirst("G","H")+"_ctdtp",item.getCtdtp());
+                map.put(item.getSdart().replaceFirst("G","H")+"_imnum",item.getImnum());
+                map.put(item.getSdart().replaceFirst("G","H")+"_vtype",item.getVtype());
+                map.put(item.getSdart().replaceFirst("G","H")+"_odue",item.getOdue());
+            });
+        });
+
+        return mapList;
+    }
+
+    @Override
+    public Map<String, String> getContractDataByVersionAndHtsno(String version, String htsno) {
+        Map<String, String> map = new HashMap<>();
+        List<IEPlanSelectValueSet> contract = iePlanSelectValueSetService.getContractByHtsnoAndVersion(htsno, version);
+        contract.forEach(c-> map.put(c.getSdart(), c.getSdval()));
+        return map;
     }
 
     //处理类型为【G】的指标
@@ -298,23 +406,31 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         plan.setHtsno(htsno);
         plan.setHdnum(head.getHdnum());
         plan.setVersion(version);
+        plan.setBukrs(head.getBukrs());
         helper.setHeadData(plan);
         //获取类型为G的值
         getItem.forEach(c->{
             //当前项目的取值指标
             String sdart = c.getSdart();
-            String sdtyp = c.getSdtyp();
+            String sdtyp = c.getVtype();
             List<IEPlanSelectValueSet> sdartValue = sdartValueMap.get(sdart);
-            if(ClassUtils.isEmpty(sdartValue)){
+            if(!ClassUtils.isEmpty(sdartValue)){
                 OptionalInt maxInt;
                 RollPlanItemData itemData = new RollPlanItemData();
                 itemData.setImnum(c.getImnum());
                 itemData.setCtdtp("G");
+                itemData.setSdart(sdart);
                 switch (sdtyp){
                     //日期
                     case IEPlanSelectDataConstant.RESULT_TYPE_DATS:
                         //取最大值
-                        maxInt = sdartValue.stream().mapToInt(m -> Integer.valueOf(m.getSdval())).max();
+                        maxInt = sdartValue.stream().mapToInt(m -> {
+                            try{
+                                return Integer.valueOf(m.getSdval());
+                            }catch (NumberFormatException e){
+                                return 0;
+                            }
+                        }).max();
                         if(maxInt.isPresent()){
                             itemData.setDtval(String.valueOf(maxInt.getAsInt()));
                         }else {
@@ -327,12 +443,13 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     //字符串
                     case IEPlanSelectDataConstant.RESULT_TYPE_CHAR:
                         StringBuffer sb = new StringBuffer();
-                        sdartValue.forEach(v-> sb.append(v.getSdval()).append("<br>"));
+                        sdartValue.forEach(v-> sb.append(v.getSdval()).append("$"));
                         //合同条款
                         itemData.setStval(sb.toString());
                         //加入明细表
-                        itemData.setHeadId(plan);
-                        itemDataList.add(itemData);
+                        plan.setStval(sb.toString());
+                        //itemData.setHeadId(plan);
+                        //itemDataList.add(itemData);
                         break;
                     //金额
                     case IEPlanSelectDataConstant.RESULT_TYPE_CURR:
@@ -358,9 +475,9 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
             BigDecimal decimal = new BigDecimal(caval);
             decimal = decimal.setScale(0,BigDecimal.ROUND_HALF_UP);
             return decimal.intValue();
+
         } catch (Exception e) {
-            log.error(e.getMessage());
-            e.printStackTrace();
+            log.error(e.getMessage()+"caart:"+caart);
             return 0;
         }
     }
@@ -370,14 +487,21 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         //新建一个节点
         List<RollPlanItemData> itemList = helper.getItemList();
         RollPlanItemData itemData = new RollPlanItemData();
-        itemList.add(itemData);
 
-        //待计算项目：有且只有一个上一节点-【约定条款】
+        itemList.add(itemData);
+        itemData.setHeadId(helper.getHeadData());
+        itemData.setImnum(itemVO.getImnum());
+        itemData.setCtdtp(IEPlanBusinessItemSet.CALC);
+        itemData.setCaval(itemVO.getCaartValue());
+        itemData.setSdart(itemVO.getSdart());
+
+        //待计算项目：如果没有上一节点，则返回。
         if(itemList.size()<=1){
             return;
         }
         //上一节点
         RollPlanItemData lastItem = itemList.get(itemList.size()-2);
+
 
         //已存在的滚动计划，本节点必定是计算节点
         String calcDate;
@@ -389,19 +513,14 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     itemVO.getCaartValue(),
                     true).toString().replace("-","");*/
             //根据上一节点日期，以及当前节点的能力值，计算计划日期
-            calcDate = LocalDate.parse(lastItem.getDtval())
+            calcDate = ClassUtils.StringToLocalDate(lastItem.getDtval())
                     .plusDays(itemVO.getCaartValue())
                     .toString().replace("-","");
         } catch (Exception e) {
             log.error(e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
             calcDate = "";
         }
-
-        itemData.setHeadId(helper.getHeadData());
-        itemData.setImnum(itemVO.getImnum());
-        itemData.setCtdtp(IEPlanBusinessItemSet.CALC);
-        itemData.setCaval(itemVO.getCaartValue());
         itemData.setDtval(calcDate);
     }
 
@@ -575,5 +694,39 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
             int days = (int) natureDays * i.getCaval();
             i.setDtval(startDate.plusDays(days).toString().replace("-",""));
         });
+    }
+
+    //计算经营指标
+    //TODO
+    private void calcZbart(List<RollPlanHeadData> rollPlanHeadDataList,
+                           Map<String, List<IEPlanSelectValueSet>> valueListByHtsno){
+        long l = System.currentTimeMillis();
+        Map<String, List<IEPlanReportItemSet>> reportMap = iePlanReportItemSetService.getAllByIetyp().stream().collect(Collectors.groupingBy(IEPlanReportItemSet::getBukrs));
+        //遍历滚动计划
+        rollPlanHeadDataList.forEach(plan->{
+            //该合同的指标map
+            Map<String, List<IEPlanSelectValueSet>> sdartMap = valueListByHtsno
+                    .get(plan.getHtsno())
+                    .stream()
+                    .collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
+            //取出计划相关公司的报表项目
+            List<IEPlanReportItemSet> reportItemList = reportMap.get(plan.getBukrs());
+            //遍历报表项目计算经营指标
+            reportItemList.forEach(report->{
+                //获取【经营指标-取数指标】的值
+                List<IEPlanSelectValueSet> valueSetList = sdartMap.get(report.getSdart());
+                if(!ClassUtils.isEmpty(valueSetList)){
+                    //默认每个合同流水号仅有一个值
+                    String sdval = valueSetList.get(0).getSdval();
+                    //经营指标，判断条件
+                    List<String> ietypList = Arrays.asList(report.getIetyp().split(","));
+                    //设置经营指标
+                    if(ietypList.contains(sdval)){
+                        plan.setZbart(report.getZbart());
+                    }
+                }
+            });
+        });
+        log.info("滚动计划-经营指标计算完毕，耗时：{}", (System.currentTimeMillis()-l)/1000.00);
     }
 }

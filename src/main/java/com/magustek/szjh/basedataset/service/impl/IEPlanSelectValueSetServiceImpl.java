@@ -82,7 +82,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
     }
 
     @Override
-    public List<IEPlanSelectValueSetVO> getContractByHtsno(String htsno, String version) {
+    public List<IEPlanSelectValueSetVO> getContractByHtsnoAndVersionGroupByHtnum(String htsno, String version) {
         //获取指标列表（用来匹配指标值类型）
         Map<String, IEPlanSelectDataSet> selectDataSetMap = iePlanSelectDataSetService.getMappedList();
         if(Strings.isNullOrEmpty(version)){
@@ -121,6 +121,11 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         return iePlanSelectValueSetDAO.findAllByVersionAndPflag(version, pflag);
     }
 
+    @Override
+    public List<IEPlanSelectValueSet> getContractByHtsnoAndVersion(String htsno, String version) {
+        return iePlanSelectValueSetDAO.findAllByHtsnoAndVersion(htsno, version);
+    }
+
     private List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanSelectDataSet selectDataSet) {
         String url = OdataUtils.IEPlanSelectValueSet
                 +"?$filter=sdart eq '"+selectDataSet.getSdart()+"' " +
@@ -132,6 +137,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         try {
             List<IEPlanSelectValueSet> list = OdataUtils.getListWithEntity(result,
                     IEPlanSelectValueSet.class);
+            log.info("odata调用结果sdart={}，返回{}条记录。", selectDataSet.getSdart(), list.size());
             list.forEach(item->{
                 String value = item.getSdval().trim();
                 //判断如果值的类型是日期，需要进行非空处理
@@ -144,6 +150,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
                 item.setSdart(selectDataSet.getSdart());
                 item.setBegda(begin);
                 item.setEndda(end);
+                item.setBukrs(bukrs);
                 item.setVersion(LocalDate.now().toString());
             });
             return list;

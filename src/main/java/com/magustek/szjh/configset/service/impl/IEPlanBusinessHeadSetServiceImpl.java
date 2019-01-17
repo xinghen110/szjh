@@ -46,7 +46,7 @@ public class IEPlanBusinessHeadSetServiceImpl implements IEPlanBusinessHeadSetSe
 
     @Override
     public List<IEPlanBusinessHeadSet> getAllByBukrsAndRptyp(String bukrs, String rptyp) {
-        return iePlanBusinessHeadSetDAO.findAllByBukrsAndRptyp(bukrs, rptyp);
+        return iePlanBusinessHeadSetDAO.findAllByBukrsAndRptypOrderByHdnum(bukrs, rptyp);
     }
 
     @Override

@@ -126,7 +126,7 @@ public class HttpUtils {
                 method,
                 requestEntity,
                 String.class);
-        log.info("------- "+ ContextUtils.getUserName()+" 【"+(System.currentTimeMillis()-start)/1000.0+"】"+method.name()+"  "+urlString.toString());
+        log.info("------- "+ ContextUtils.getUserName()+" odata调用耗时：【"+(System.currentTimeMillis()-start)/1000.0+"】"+method.name()+"  "+urlString.toString());
         return checkResponse(response);
     }
 

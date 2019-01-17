@@ -6,4 +6,5 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
 public interface IEPlanBusinessItemSetDAO extends CrudRepository<IEPlanBusinessItemSet, Long> {
+    List<IEPlanBusinessItemSet> findAllByOrderByImnum();
 }

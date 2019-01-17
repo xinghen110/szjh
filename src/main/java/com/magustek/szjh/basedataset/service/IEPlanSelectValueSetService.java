@@ -12,7 +12,8 @@ public interface IEPlanSelectValueSetService {
     void deleteAllByVersion(String version);
     //List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs) throws Exception;
     List<IEPlanSelectValueSet> fetchData() throws Exception;
-    List<IEPlanSelectValueSetVO> getContractByHtsno(String htsno, String version) throws Exception;
+    List<IEPlanSelectValueSetVO> getContractByHtsnoAndVersionGroupByHtnum(String htsno, String version) throws Exception;
 
     List<IEPlanSelectValueSet> getAllByVersionAndPflag(String version, String pflag);
+    List<IEPlanSelectValueSet> getContractByHtsnoAndVersion(String htsno, String version);
 }

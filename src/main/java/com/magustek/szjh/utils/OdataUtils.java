@@ -39,6 +39,9 @@ public class OdataUtils {
     public static final String IEPlanBusinessHeadSet = "ZCM_ODATA_PLAN_SRV/IEPlanBusinessHeadSet";
     public static final String IEPlanBusinessItemSet = "ZCM_ODATA_PLAN_SRV/IEPlanBusinessItemSet";
 
+    public static final String IEPlanScreenHeadSet = "ZCM_ODATA_PLAN_SRV/IEPlanScreenHeadSet";
+    public static final String IEPlanScreenItemSet = "ZCM_ODATA_PLAN_SRV/IEPlanScreenItemSet";
+
     //public static final String IEPlanContractHeadSet = "ZCM_ODATA_PLAN_SRV/IEPlanContractHeadSet";
 
     /**

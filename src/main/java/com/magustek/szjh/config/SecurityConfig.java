@@ -5,6 +5,7 @@ import com.magustek.szjh.user.bean.UserInfo;
 import com.magustek.szjh.user.service.UserInfoService;
 import com.magustek.szjh.utils.base.BaseResponse;
 import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.constant.AllowResource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,7 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 
 import javax.servlet.http.HttpServletRequest;
@@ -53,22 +55,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
     public void configure(WebSecurity web){
 
         //注册匿名访问资源，允许用户匿名访问
-        //web.ignoring().antMatchers("/b/**"); //static 文件夹内b文件夹（静态资源）所有资源均允许匿名访问
-        web.ignoring().antMatchers("/static/**");   //static 文件夹内b文件夹（静态资源）所有资源均允许匿名访问
-        web.ignoring().antMatchers("/manage/**");   //tomcat管理资源允许匿名访问
-        web.ignoring().antMatchers("/swagger-ui.html/**");     //restapi允许匿名访问
-        web.ignoring().antMatchers("/swagger-resources/**");     //restapi允许匿名访问
-        web.ignoring().antMatchers("/webjars/**");     //restapi允许匿名访问
-        web.ignoring().antMatchers("/v2/**");     //restapi允许匿名访问
-        web.ignoring().antMatchers("/**/*.html",
-                "/**/*.htm",
-                "/**/*.gif",
-                "/**/*.jpeg",
-                "/**/*.jpg",
-                "/**/*.js",
-                "/**/*.css",
-                "/**/*.*",
-                "/**/*.font");
+        web.ignoring().antMatchers(AllowResource.resource);
     }
 
     @Override
@@ -147,6 +134,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
                     writer.close();
                 }
             }).permitAll();
+        //增加自定义过滤器
+        http.addFilterAfter(new SecurityFilter(),UsernamePasswordAuthenticationFilter.class);
     }
 
     @SuppressWarnings("deprecation")

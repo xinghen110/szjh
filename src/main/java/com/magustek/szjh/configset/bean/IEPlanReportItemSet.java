@@ -16,7 +16,8 @@ public class IEPlanReportItemSet extends BaseEntity {
     @Column(length = 4) private String bukrs;                  //公司代码
     @Column(length = 4) private String rptyp;                  //报表类型
     @Column(length = 4) private String zbart;                  //经营指标分类
-    @Column(length = 11) private String ietyp;                 //经营指标收支类型
+    @Column(length = 11)private String ietyp;                  //经营指标收支类型
+    @Column(length = 4) private String sdart;                  //经营指标分类（计算所需取值指标）
     @Column(length = 1) private String opera;                  //操作方式
     @Column private String calcu;                              //计算公式
     @Column(length = 1) private String msgtype;                //消息类型

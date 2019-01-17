@@ -41,7 +41,7 @@ public class IEPlanBusinessItemSetServiceImpl implements IEPlanBusinessItemSetSe
 
     @Override
     public List<IEPlanBusinessItemSet> getAll() {
-        return Lists.newArrayList(iePlanBusinessItemSetDAO.findAll());
+        return Lists.newArrayList(iePlanBusinessItemSetDAO.findAllByOrderByImnum());
     }
 
     @Override
