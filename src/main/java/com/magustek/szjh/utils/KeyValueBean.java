@@ -13,6 +13,7 @@ public class KeyValueBean {
     private String key;
     private String value;
     private String opera = "M";
+    private String calc = "";
 
     public KeyValueBean put(String key, String value){
         this.key = key;

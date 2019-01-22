@@ -15,6 +15,7 @@ public class GroovyShellExample {
         String a = "";
         try {
             System.out.println(ClassUtils.dfYMD.parse("20180116"));
+            d();
         } catch (ParseException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
@@ -66,6 +67,12 @@ public class GroovyShellExample {
             e.printStackTrace();
         }
 
+    }
+
+    public static void d(){
+        String a = "a";
+        a = a.substring(0, a.length()-1);
+        System.out.println(a);
     }
 
 }

@@ -88,6 +88,7 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         IEPlanReportHeadVO vo = getReportConfigByBukrs(bukrs, rptyp);
         //将传入的时间转化为LocalDate类型
         LocalDate startDate;
+        //计划维度单位-年、月、季、日
         if("Y".equals(vo.getPunit())){
             if("X".equals(vo.getTflag())){
                 //绝对时间
@@ -99,7 +100,14 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         }else if("M".equals(vo.getPunit())) {
             if("X".equals(vo.getTflag())){
                 //绝对时间
-                startDate = LocalDate.parse(rpdat+"-01-01");
+                if(vo.getRptyp().equals("MR")){
+                    //月报
+                    startDate = LocalDate.parse(rpdat+"-01");
+                }else {
+                    //年报
+                    startDate = LocalDate.parse(rpdat+"-01-01");
+                }
+
             }else{
                 //相对时间
                 startDate = LocalDate.now();
@@ -154,7 +162,7 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
                     value.add(getORG(vo.getBukrs(), vo.getOrgdp(), orgdp));
                     break;
                 case PlanConstant.AXIS_TIM:
-                    value.add(getTIM(vo.getPunit(), vo.getPvalu(), startDate, vo.getBukrs(), vo.getRptyp()));
+                    value.add(getTIM(startDate, vo));
                     break;
                 case PlanConstant.AXIS_ZB:
                     value.add(getZB(vo));
@@ -229,8 +237,17 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         return keyValueBeans;
     }
     //返回指定日期列表
-    private ArrayList<KeyValueBean> getTIM(String punit, String pvalue, LocalDate rpdat, String bukrs, String rptyp){
+    private ArrayList<KeyValueBean> getTIM(LocalDate rpdat, IEPlanReportHeadVO vo){
+
+        String punit = vo.getPunit();
+        String pvalue = vo.getPvalu();
+        String bukrs = vo.getBukrs();
+        String rptyp = vo.getRptyp();
+        //获取【小计】指标
+        ArrayList<KeyValueBean> t800 = new ArrayList<>();
+
         int i = Integer.parseInt(pvalue);
+        int firstIndex = 0;
         ArrayList<KeyValueBean> keyValueBeans = new ArrayList<>();
 
         //获取统计指标配置数据，统计指标需要加在时间轴前面
@@ -240,15 +257,53 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
             KeyValueBean bean = new KeyValueBean();
             bean.put(st.getTmart(), st.getTmnam(), "S");//统计指标不可编辑
             keyValueBeans.add(bean);
+
+            if(bean.getKey().equals("T800")){
+                t800.add(bean);
+            }
         });
 
+        StringBuilder strBuilder = new StringBuilder();
         for (;i>=0;i--){
             KeyValueBean item = new KeyValueBean();
             String date = ClassUtils.formatDate(rpdat, punit);
             item.put(date, date);
+
+            strBuilder.append(date).append("+");
+
             keyValueBeans.add(item);
             rpdat = ClassUtils.getDate(rpdat, punit, 1, true);
+
+            if(firstIndex == 0){
+                firstIndex = keyValueBeans.size();
+            }
         }
+
+        //月报时间处理
+        if(vo.getRptyp().equals("MR")){
+            KeyValueBean firstBean = keyValueBeans.get(firstIndex-1);
+            KeyValueBean lastBean = keyValueBeans.get(keyValueBeans.size() - 1);
+            //【小计】指标计算公式
+            String str = strBuilder.toString();
+            str = str.substring(0, str.length()-1);//去掉最后一个【+】
+            str = str.replaceFirst(firstBean.getKey(), firstBean.getKey()+" ");
+            str = str.replaceFirst(lastBean.getKey(), lastBean.getKey()+"后");
+            if(!ClassUtils.isEmpty(t800)){
+                t800.get(0).setCalc(str);
+            }
+
+            //自定义标识，第一个时间段后面加个空格，方便判断
+
+            firstBean.put(firstBean.getKey()+" ", firstBean.getValue()+" ");
+
+            //自定义标识，最后一个节点需要增加【后】--2019年1月后
+
+            lastBean.put(lastBean.getKey()+"后", lastBean.getValue()+"后");
+        }else{
+            //去掉最后一个节点
+            keyValueBeans.remove(keyValueBeans.size()-1);
+        }
+
         return keyValueBeans;
     }
     //获取所有经营指标分类

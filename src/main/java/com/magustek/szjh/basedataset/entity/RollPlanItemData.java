@@ -12,6 +12,8 @@ import javax.persistence.*;
  * */
 @Getter
 @Setter
+//TABLE_PER_CLASS策略:父类和子类对应不同的表,子类中存在所有的属性(包含从父类继承下来的所有属性)
+@Inheritance(strategy=InheritanceType.TABLE_PER_CLASS)
 @Entity
 public class RollPlanItemData extends BaseEntity {
     @ManyToOne(cascade={CascadeType.REFRESH},fetch=FetchType.EAGER,optional=false)

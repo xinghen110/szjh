@@ -26,7 +26,7 @@ public class RollPlanItemVO extends RollPlanItemData {
             LocalDate localDate = null;
             try {
                 localDate = ClassUtils.StringToLocalDate(super.getDtval());
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 log.warn(e.getMessage());
             }
             value = localDate==null?"":localDate.toString();

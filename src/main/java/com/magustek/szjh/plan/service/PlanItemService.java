@@ -1,6 +1,7 @@
 package com.magustek.szjh.plan.service;
 
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
+import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.PlanItem;
 import com.magustek.szjh.plan.bean.vo.PlanHeaderVO;
 import com.magustek.szjh.plan.bean.vo.PlanItemVO;
@@ -23,6 +24,8 @@ public interface PlanItemService {
     Map<String, BigDecimal> getZBValByHeaderId(Long headerId) throws Exception;
     //初始化明细表数据
     List<PlanItem> initItemDataByConfig(IEPlanReportHeadVO config, Long headerId) throws Exception;
+    //初始化统计数据
+    void initCalcData(List<PlanItem> itemList, IEPlanReportHeadVO config, PlanHeader planHeader) throws Exception;
     //根据指标分组统计计划的zbval值
     ArrayList<KeyValueBean> getZbList(Long headerId);
 }

@@ -122,7 +122,7 @@ public class BasedataSetController {
 
     @ApiOperation(value="根据版本号，计算滚动计划数据。")
     @RequestMapping("/calcRollPlanData")
-    public String calcRollPlanData(@RequestBody DmCalcStatistics result){
+    public String calcRollPlanData(@RequestBody DmCalcStatistics result) throws Exception{
         String version = version(result);
 
         List<RollPlanHeadData> list = rollPlanDataService.calculateByVersion(version);
@@ -143,7 +143,7 @@ public class BasedataSetController {
 
     @ApiOperation(value="执行所有计算。")
     @RequestMapping("/executeAllCalc")
-    private void executeAllCalc(DmCalcStatistics result){
+    private void executeAllCalc(DmCalcStatistics result) throws Exception{
         calculate(result);//计算合同指标
         statisticByVersion(result);//将合同指标的计算结果，根据维度进行统计，形成历史能力值
         calcRollPlanData(result);//根据历史能力值，计算滚动计划

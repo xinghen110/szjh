@@ -35,7 +35,7 @@ public class GroovyUtils {
                 try{
                     bean.setResult(script.run());
                 }catch (Exception e){
-                    log.error(e.getMessage());
+                    log.warn(e.getMessage());
                 }
             }
         });
@@ -55,7 +55,7 @@ public class GroovyUtils {
             try {
                 return script.run();
             } catch (Exception e) {
-                log.error(e.getMessage());
+                log.warn(e.getMessage());
                 return null;
             }
         }

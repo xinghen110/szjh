@@ -6,6 +6,6 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
 public interface IEPlanReportItemSetDAO extends CrudRepository<IEPlanReportItemSet, Long> {
-    List<IEPlanReportItemSet> findAllByBukrsAndRptyp(String bukrs, String rptyp);
+    List<IEPlanReportItemSet> findAllByBukrsAndRptypOrderByZsort(String bukrs, String rptyp);
     List<IEPlanReportItemSet> findAllByIetypIsNotNull();
 }

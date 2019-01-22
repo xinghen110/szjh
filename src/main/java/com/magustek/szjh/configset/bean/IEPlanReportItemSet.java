@@ -20,6 +20,8 @@ public class IEPlanReportItemSet extends BaseEntity {
     @Column(length = 4) private String sdart;                  //经营指标分类（计算所需取值指标）
     @Column(length = 1) private String opera;                  //操作方式
     @Column private String calcu;                              //计算公式
+    private Integer zblev;                                     //层级
+    private Integer zsort;                                     //排序
     @Column(length = 1) private String msgtype;                //消息类型
     @Column(length = 220) private String msgtext;              //消息文本
 

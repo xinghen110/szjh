@@ -11,6 +11,6 @@ public interface RollPlanHeadDataDAO extends CrudRepository<RollPlanHeadData, Lo
     @Transactional
     @Modifying
     void deleteAllByVersion(String version);
-    List<RollPlanHeadData> findAllByVersion(String version);
+    List<RollPlanHeadData> findAllByVersionAndBukrs(String version, String bukrs);
     List<RollPlanHeadData> findAllByVersionAndHtsno(String version, String htsno);
 }

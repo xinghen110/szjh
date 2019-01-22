@@ -3,13 +3,17 @@ package com.magustek.szjh.plan.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
+import com.magustek.szjh.configset.bean.vo.IEPlanReportItemVO;
 import com.magustek.szjh.configset.service.IEPlanOperationSetService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
+import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.PlanItem;
+import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.vo.PlanItemVO;
 import com.magustek.szjh.plan.dao.PlanItemDAO;
 import com.magustek.szjh.plan.dao.PlanLayoutDAO;
 import com.magustek.szjh.plan.service.PlanItemService;
+import com.magustek.szjh.plan.service.RollPlanArchiveService;
 import com.magustek.szjh.plan.utils.PlanConstant;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.KeyValueBean;
@@ -17,6 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,12 +34,15 @@ public class PlanItemServiceImpl implements PlanItemService {
     private PlanLayoutDAO planLayoutDAO;
     private OrganizationSetService organizationSetService;
     private IEPlanOperationSetService iePlanOperationSetService;
+    private RollPlanArchiveService rollPlanArchiveService;
 
-    public PlanItemServiceImpl(PlanItemDAO planItemDAO, PlanLayoutDAO planLayoutDAO, OrganizationSetService organizationSetService, IEPlanOperationSetService iePlanOperationSetService) {
+
+    public PlanItemServiceImpl(PlanItemDAO planItemDAO, PlanLayoutDAO planLayoutDAO, OrganizationSetService organizationSetService, IEPlanOperationSetService iePlanOperationSetService, RollPlanArchiveService rollPlanArchiveService) {
         this.planItemDAO = planItemDAO;
         this.planLayoutDAO = planLayoutDAO;
         this.organizationSetService = organizationSetService;
         this.iePlanOperationSetService = iePlanOperationSetService;
+        this.rollPlanArchiveService = rollPlanArchiveService;
     }
 
     //根据ID更新指标值
@@ -217,53 +227,6 @@ public class PlanItemServiceImpl implements PlanItemService {
         return resultList;
     }
 
-    private List<Map<String, String>> handleMap(IEPlanReportHeadVO layout, Map<String, List<PlanItem>> group) throws Exception {
-        List<Map<String, String>> resultList = new ArrayList<>(group.size());
-        List<PlanItem> pList;
-
-        Map<String, String> orgKeyValue = organizationSetService.orgKeyValue();
-        Map<String, String> zbnamMap = iePlanOperationSetService.getZbnamMap();
-        //按行处理数据
-        for(Map.Entry<String, List<PlanItem>> i : group.entrySet()) {
-            Map<String, String> map = new HashMap<>();
-            pList = i.getValue();
-            //处理每个单元格数据
-            for (PlanItem p : pList) {
-                switch (layout.getXaxis()) {
-                    case PlanConstant.AXIS_TIM:
-                        map.put(p.getZtval(), p.getZbval());
-                        map.put(p.getZtval() + "_id", p.getId().toString());
-                        break;
-                    case PlanConstant.AXIS_ORG:
-                        //如果是组织，需要转换成中文描述
-                        map.put(orgKeyValue.get(p.getDmval()), p.getZbval());
-                        map.put(orgKeyValue.get(p.getDmval()) + "_id", p.getId().toString());
-                        break;
-                    case PlanConstant.AXIS_ZB:
-                        //如果是指标，需要转换成中文描述
-                        map.put(zbnamMap.get(p.getZbart()), p.getZbval());
-                        map.put(zbnamMap.get(p.getZbart()) + "_id", p.getId().toString());
-                        break;
-                }
-            }
-            //设置y轴key以及描述
-            map.put("y_key",i.getKey());
-            switch (layout.getYaxis()) {
-                case PlanConstant.AXIS_TIM:
-                    map.put("y_name",i.getKey());
-                    break;
-                case PlanConstant.AXIS_ORG:
-                    map.put("y_name",orgKeyValue.get(i.getKey()));
-                    break;
-                case PlanConstant.AXIS_ZB:
-                    map.put("y_name",zbnamMap.get(i.getKey()));
-                    break;
-            }
-            resultList.add(map);
-        }
-        return resultList;
-    }
-
     @Override
     public Map<String, BigDecimal> getZBValByHeaderId(Long headerId){
         //获取这个单子的所有数据
@@ -306,6 +269,58 @@ public class PlanItemServiceImpl implements PlanItemService {
             }
         }
         return itemList;
+    }
+
+    @Override
+    public void initCalcData(List<PlanItem> itemList,
+                                       IEPlanReportHeadVO config,
+                                       PlanHeader planHeader) throws Exception {
+        //复制数据到【roll_plan_head_data_archive】、【roll_plan_item_data_archive】表
+        rollPlanArchiveService.copyData(planHeader);
+        //获取滚动计划列表，并根据经营指标值分组
+        Map<String, List<RollPlanHeadDataArchive>> headMapByZbart = rollPlanArchiveService
+                .getHeadDataArchiveList(planHeader)
+                .stream()
+                .collect(Collectors.groupingBy(RollPlanHeadDataArchive::getZbart));
+        //将统计数据存入报表项目
+        //取出待统计的指标list(操作方式为【S】)
+        List<String> zbartList = config
+                .getItemVOS()
+                .stream()
+                .filter(item -> item.getOpera().equals("S"))
+                .map(IEPlanReportItemVO::getZbart)
+                .collect(Collectors.toList());
+
+        if(ClassUtils.isEmpty(zbartList)){
+            return;
+        }
+
+        //将计划明细根据经营指标分组
+        Map<String, List<PlanItem>> itemMapByZbart = itemList
+                .stream()
+                .collect(Collectors.groupingBy(PlanItem::getZbart));
+
+        itemMapByZbart.forEach((k, v)->{
+            //如果当前数据的经营指标需要统计
+            if(zbartList.contains(k)){
+                //当前经营指标的计划列表
+                List<RollPlanHeadDataArchive> headList = headMapByZbart.get(k);
+                v.forEach(item->{
+                    //报表维度，格式：D110:50003521
+                    String dmval = item.getDmart()+":"+item.getDmval();
+                    headList.forEach(head->{
+                        //如果维度相同，滚动计划时间如果在item日期范围内，则加总金额
+                        if(dmval.equals(head.getDmval())){
+                            try {
+                                calcItem(item, head);
+                            } catch (ParseException e) {
+                                log.warn("{}:item{},head:{}" ,e.getMessage(), item.getZtval(), head.getDtval());
+                            }
+                        }
+                    });
+                });
+            }
+        });
     }
 
     //根据指标分组统计计划的zbval值
@@ -373,6 +388,100 @@ public class PlanItemServiceImpl implements PlanItemService {
                 //报表值存入zbval字段
                 item.setZbval(zbval);
                 break;
+        }
+    }
+
+    private List<Map<String, String>> handleMap(IEPlanReportHeadVO layout, Map<String, List<PlanItem>> group) throws Exception {
+        List<Map<String, String>> resultList = new ArrayList<>(group.size());
+        List<PlanItem> pList;
+
+        Map<String, String> orgKeyValue = organizationSetService.orgKeyValue();
+        Map<String, String> zbnamMap = iePlanOperationSetService.getZbnamMap();
+        //按行处理数据
+        for(Map.Entry<String, List<PlanItem>> i : group.entrySet()) {
+            Map<String, String> map = new HashMap<>();
+            pList = i.getValue();
+            //处理每个单元格数据
+            for (PlanItem p : pList) {
+                switch (layout.getXaxis()) {
+                    case PlanConstant.AXIS_TIM:
+                        map.put(p.getZtval(), p.getZbval());
+                        map.put(p.getZtval() + "_id", p.getId().toString());
+                        break;
+                    case PlanConstant.AXIS_ORG:
+                        //如果是组织，需要转换成中文描述
+                        map.put(orgKeyValue.get(p.getDmval()), p.getZbval());
+                        map.put(orgKeyValue.get(p.getDmval()) + "_id", p.getId().toString());
+                        break;
+                    case PlanConstant.AXIS_ZB:
+                        //如果是指标，需要转换成中文描述
+                        map.put(zbnamMap.get(p.getZbart()), p.getZbval());
+                        map.put(zbnamMap.get(p.getZbart()) + "_id", p.getId().toString());
+                        break;
+                }
+            }
+            //设置y轴key以及描述
+            map.put("y_key",i.getKey());
+            switch (layout.getYaxis()) {
+                case PlanConstant.AXIS_TIM:
+                    map.put("y_name",i.getKey());
+                    break;
+                case PlanConstant.AXIS_ORG:
+                    map.put("y_name",orgKeyValue.get(i.getKey()));
+                    break;
+                case PlanConstant.AXIS_ZB:
+                    map.put("y_name",zbnamMap.get(i.getKey()));
+                    break;
+            }
+            resultList.add(map);
+        }
+        return resultList;
+    }
+
+    private void calcItem(PlanItem item, RollPlanHeadDataArchive head) throws ParseException {
+        String ztval = item.getZtval();
+        String ztime = item.getZtime();
+        long headTime = ClassUtils.StringToLocalDate(head.getDtval()).toEpochDay();
+
+        long start = 0;
+        long end = Long.MAX_VALUE;
+        String startTime = "2000-01-01";
+        String endTime = "2199-12-31";
+
+        switch (ztval){
+            case PlanItem.ZTIME_Y:
+                //计划起始日期，需包含以前的计划
+                if(!ztime.contains(" ")){
+                    startTime = ztime + "-01-01";
+                }
+                //计划结束日期，需包含以后的计划
+                if(!ztime.contains("后")){
+                    endTime = ztime + "-12-31";
+                }
+
+                start = LocalDate.parse(startTime).toEpochDay();
+                end = LocalDate.parse(endTime).toEpochDay();
+                break;
+            case PlanItem.ZTIME_M:
+                startTime = ztime + "-01";
+                start = LocalDate.parse(startTime).toEpochDay();
+                end = LocalDate.parse(startTime).with(TemporalAdjusters.lastDayOfMonth()).toEpochDay();
+                //计划起始日期，需包含以前的计划
+                if(ztime.contains(" ")){
+                    startTime = "2000-01-01";
+                    start = LocalDate.parse(startTime).toEpochDay();
+                }
+                //计划结束日期，需包含以后的计划
+                if(ztime.contains("后")){
+                    endTime = "2199-12-31";
+                    end = LocalDate.parse(endTime).toEpochDay();
+                }
+                break;
+        }
+        //如果计划日期在报表日期范围内，则汇总金额
+        if(start <= headTime && headTime <= end){
+            BigDecimal zbval = new BigDecimal(item.getZbval());
+            item.setZbval(zbval.add(head.getWears()).toString());
         }
     }
 }

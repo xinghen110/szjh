@@ -75,6 +75,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             IEPlanReportHeadVO config = iePlanReportHeadSetService.getReportConfigByBukrs(header.getBukrs(), header.getRptyp(), header.getRporg(), header.getJhval());
             //初始化明细数据
             List<PlanItem> itemList = planItemService.initItemDataByConfig(config, header.getId());
+            //如果是月报，需要复制数据到【roll_plan_head_data_archive】、【roll_plan_item_data_archive】表，并且将统计数据存入其中
+            if("MR".equals(header.getRptyp())){
+                planItemService.initCalcData(itemList, config, header);
+            }
             //保存明细数据
             planItemService.save(itemList);
             //保存布局数据

@@ -58,7 +58,7 @@ public class IEPlanReportItemSetServiceImpl implements IEPlanReportItemSetServic
 
     @Override
     public List<IEPlanReportItemSet> getByBukrsAndRptyp(String bukrs, String rptyp) throws Exception {
-        return iePlanReportItemSetDAO.findAllByBukrsAndRptyp(bukrs, rptyp);
+        return iePlanReportItemSetDAO.findAllByBukrsAndRptypOrderByZsort(bukrs, rptyp);
     }
 
     @Override
