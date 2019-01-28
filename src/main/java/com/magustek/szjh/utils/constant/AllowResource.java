@@ -20,8 +20,6 @@ public class AllowResource {
             "/**/*.js",
             "/**/*.css",
             "/**/*.*",
-            "/**/*.font",
-            "#/login",
-            "/"
+            "/**/*.font"
     };
 }
