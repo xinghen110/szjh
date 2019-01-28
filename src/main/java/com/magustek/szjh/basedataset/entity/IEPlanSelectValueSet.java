@@ -30,4 +30,5 @@ public class IEPlanSelectValueSet extends BaseEntity {
     @Column(length = 1) private String pflag;//计划编制标识
     @Column(length = 4) private String bukrs;//公司代码
     @Column(length = 30) private String version;//明细版本（储存编制日期或计划编号）
+    @Column(length = 1) private String referenced;//是否已被引用（被计划引用的数据不允许删除）
 }

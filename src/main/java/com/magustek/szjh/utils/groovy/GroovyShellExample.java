@@ -5,6 +5,7 @@ import com.magustek.szjh.utils.ClassUtils;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -15,7 +16,7 @@ public class GroovyShellExample {
         String a = "";
         try {
             System.out.println(ClassUtils.dfYMD.parse("20180116"));
-            d();
+            c();
         } catch (ParseException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
@@ -73,6 +74,13 @@ public class GroovyShellExample {
         String a = "a";
         a = a.substring(0, a.length()-1);
         System.out.println(a);
+    }
+
+    public static void e(){
+        BigDecimal aa = new BigDecimal(2);
+        BigDecimal bb = new BigDecimal(3);
+        aa.add(bb);
+        System.out.println(aa.toString());
     }
 
 }

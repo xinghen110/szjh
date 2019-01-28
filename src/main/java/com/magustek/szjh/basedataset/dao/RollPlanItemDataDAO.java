@@ -13,5 +13,5 @@ public interface RollPlanItemDataDAO extends CrudRepository<RollPlanItemData, Lo
     @Modifying
     void deleteAllByHeadIdIn(List<RollPlanHeadData> rollPlanHeadDataList);
 
-    List<RollPlanItemData> findAllByHeadId(RollPlanHeadData headData);
+    List<RollPlanItemData> findAllByHeadIdIn(List<RollPlanHeadData> headDataList);
 }

@@ -38,9 +38,11 @@ public class PlanHeaderController {
     @ApiOperation(value="保存计划抬头（保存抬头后，会自动生成报表布局并初始化数据）", notes = "参数：参考PlanHeader结构")
     @RequestMapping("/save")
     public String savePlanHeader(@RequestBody PlanHeader header) throws Exception {
+        long l = System.currentTimeMillis();
         header = planHeaderService.save(header);
         String userName = ContextUtils.getUserName();
         log.warn("{}保存计划抬头：{}", userName, JSON.toJSONString(header));
+        log.warn("保存计划耗时：{}秒", (System.currentTimeMillis()-l)/1000.00);
         return resp.setStateCode(BaseResponse.SUCCESS).setData(header).setMsg("成功！").toJson();
     }
 

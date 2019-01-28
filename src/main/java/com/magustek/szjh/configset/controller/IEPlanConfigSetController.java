@@ -118,11 +118,11 @@ public class IEPlanConfigSetController {
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="根据公司代码获取报表配置信息，参数：1、rptyp-报表类型；2、orgdp-公司报表/部门报表；3、rpdat-报表日期（年报yyyy-MM，月报yyyy-MM）。")
+    @ApiOperation(value="根据公司代码获取报表配置信息，参数：1、rptyp-报表类型；2、dmart-公司报表/部门报表；3、rpdat-报表日期（年报yyyy-MM，月报yyyy-MM）。")
     @RequestMapping("/getIEPlanReportHeadVO")
     public String getIEPlanReportHeadVO(HttpSession session, @RequestBody IEPlanReportHeadVO vo) throws Exception {
         UserInfo userInfo = (UserInfo) session.getAttribute("userInfo");
-        vo = iePlanReportHeadSetService.getReportConfigByBukrs(userInfo.getCompanyModel().getOrgcode(), vo.getRptyp(), vo.getOrgdp(), vo.getRpdat());
+        vo = iePlanReportHeadSetService.getReportConfigByBukrs(userInfo.getCompanyModel().getOrgcode(), vo.getRptyp(), vo.getDmart(), vo.getRpdat());
         log.warn("从Odata获取取报表配置数据：{}", JSON.toJSONString(vo));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(vo).setMsg("成功！").toJson();
     }

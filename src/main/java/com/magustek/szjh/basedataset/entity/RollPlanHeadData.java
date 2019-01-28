@@ -14,8 +14,6 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Entity
-//TABLE_PER_CLASS策略:父类和子类对应不同的表,子类中存在所有的属性(包含从父类继承下来的所有属性)
-@Inheritance(strategy=InheritanceType.TABLE_PER_CLASS)
 @Table(indexes = {@Index(columnList = "version")})
 public class RollPlanHeadData extends BaseEntity{
     @Column(length = 4) private String bukrs;                   //公司代码

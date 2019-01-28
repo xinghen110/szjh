@@ -20,9 +20,12 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -32,6 +35,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
     private final IEPlanSelectValueSetDAO iePlanSelectValueSetDAO;
     private final IEPlanSelectDataSetService iePlanSelectDataSetService;
     private final OrganizationSetService organizationSetService;
+    private static Lock lock = new ReentrantLock();
 
     public IEPlanSelectValueSetServiceImpl(HttpUtils httpUtils, IEPlanSelectValueSetDAO iePlanSelectValueSetDAO, IEPlanSelectDataSetService iePlanSelectDataSetService, OrganizationSetService organizationSetService) {
         this.httpUtils = httpUtils;
@@ -51,10 +55,11 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         return iePlanSelectValueSetDAO.findAllByVersion(version);
     }
 
+    //referenced字段不是null的，不允许删除
     @Transactional
     @Override
     public void deleteAllByVersion(String version) {
-        iePlanSelectValueSetDAO.deleteAllByVersion(version);
+        iePlanSelectValueSetDAO.deleteAllByVersionAndReferencedIsNull(version);
     }
 
     public List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs) {
@@ -62,7 +67,28 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         //获取所有取数指标
         List<IEPlanSelectDataSet> selectDataSetList = iePlanSelectDataSetService.getAll();
         //根据取数指标循环取数
-        selectDataSetList.forEach(selectDataSet -> list.addAll(getAllFromDatasource(begin,end,bukrs,selectDataSet)));
+        long l = System.currentTimeMillis();
+        HashSet<String> threadNameSet = new HashSet<>();
+        try {
+            ForkJoinPool pool = new ForkJoinPool(15);
+            pool.submit(() ->
+                selectDataSetList.parallelStream().forEach(selectDataSet -> {
+                    log.warn("Thread name:{}",Thread.currentThread().getName());
+                    List<IEPlanSelectValueSet> valueSetList = getAllFromDatasource(begin, end, bukrs, selectDataSet);
+                    lock.lock();
+                    try{
+                        threadNameSet.add(Thread.currentThread().getName());
+                        list.addAll(valueSetList);
+                    }finally {
+                        lock.unlock();
+                    }
+                })
+            ).get();
+            log.warn("并发线程数：{}", threadNameSet.size());
+        } catch (Exception e) {
+            log.error("取数错误：{}",e.getMessage());
+        }
+        log.warn("根据取数指标循环取数耗时：{}", (System.currentTimeMillis()-l)/1000.00);
         return list;
     }
 
@@ -124,6 +150,11 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
     @Override
     public List<IEPlanSelectValueSet> getContractByHtsnoAndVersion(String htsno, String version) {
         return iePlanSelectValueSetDAO.findAllByHtsnoAndVersion(htsno, version);
+    }
+
+    @Override
+    public int updateReferencedByVersion(String referenced, String version) {
+        return iePlanSelectValueSetDAO.updateReferenced(referenced, version);
     }
 
     private List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanSelectDataSet selectDataSet) {

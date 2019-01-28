@@ -59,6 +59,10 @@ public class IEPlanBusinessHeadSetVO extends IEPlanBusinessHeadSet {
                 binding.put(v.getSdart(), v.getSdval());
             }
         });
+        //优化运行速度，如果取数指标的值数量小于待计算指标数量（部分待计算指标没有值），则返回。
+        if(binding.size() < vars.size()){
+            return false;
+        }
         GroovyBean bean = new GroovyBean();
         bean.setBinding(binding);
         bean.setCommand(super.getCondi());

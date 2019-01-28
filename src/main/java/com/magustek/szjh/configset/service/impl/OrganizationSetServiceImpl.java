@@ -122,9 +122,9 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
     @SuppressWarnings("unchecked")
     @Override
     public Map<String, String> orgKeyValue() {
-        Object object = redisTemplate.opsForValue().get(RedisConfig.ORG_MAP);
+        Map<String, String> object = (Map<String, String>)redisTemplate.opsForValue().get(RedisConfig.ORG_MAP);
         Map<String, String> map;
-        if(object==null){
+        if(ClassUtils.isEmpty(object)){
             List<OrganizationSet> bukrs = organizationSetDAO.findDistinctBukrsByOrderByCsort();
             List<OrganizationSet> dpnum = organizationSetDAO.findDistinctDpnumByOrderByDsort();
             List<OrganizationSet> ponum = organizationSetDAO.findDistinctPonumByOrderByDsort();
@@ -136,7 +136,7 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
             uname.forEach(o-> map.put(o.getUname(), o.getUsnam()));
             redisTemplate.opsForValue().set(RedisConfig.ORG_MAP, map);
         }else{
-            map = (Map<String, String>) object;
+            map = object;
         }
 
         return map;

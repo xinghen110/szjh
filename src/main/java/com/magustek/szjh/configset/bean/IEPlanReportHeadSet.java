@@ -20,7 +20,7 @@ public class IEPlanReportHeadSet extends BaseEntity {
     @Column(length = 4) private String yaxis;                   //Y轴
     @Column(length = 4) private String zaxis;                   //z轴
     @Column(length = 1) private String zbdep;                   //指标深度
-    @Column(length = 1) private String orgdp;                   //组织深度
+    @Column(length = 4) private String dmart;                   //组织深度
     //@Column(length = 1) private String hunit;                   //历史维度单位
     //@Column(length = 5) private String hvalu;                   //历史维度值
     @Column(length = 1) private String punit;                   //计划维度单位

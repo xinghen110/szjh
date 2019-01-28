@@ -23,6 +23,7 @@ public class DmCalcStatistics extends BaseEntity{
     @Column(nullable = false, length = 4) private String caart;//业务计算指标
     @Column                               private String caval;//业务计算指标值
 
-    @Column                               private int jswdqz;//业务计算指标-维度权重值
+    @Column                               private Integer jswdqz;//业务计算指标-维度权重值
+    @Column                               private Integer hisval;//业务计算指标-历史能力值
     @Column(length = 30)                  private String version;//明细版本（储存编制日期或计划编号）
 }

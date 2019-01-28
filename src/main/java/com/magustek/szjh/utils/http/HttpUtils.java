@@ -113,9 +113,9 @@ public class HttpUtils {
             }
         }
 
-        log.info("-------" + method.name() + "  " + urlString.toString());
+        log.info("---" + method.name() + "  " + urlString.toString());
         if(params!=null){
-            log.info("------- params :"+JSON.toJSONString(params));
+            log.info("--- params :"+JSON.toJSONString(params));
         }
         long start = System.currentTimeMillis();
         //执行http请求
@@ -126,7 +126,7 @@ public class HttpUtils {
                 method,
                 requestEntity,
                 String.class);
-        log.info("------- "+ ContextUtils.getUserName()+" odata调用耗时：【"+(System.currentTimeMillis()-start)/1000.0+"】"+method.name()+"  "+urlString.toString());
+        log.info("--- "+ ContextUtils.getUserName()+" odata调用耗时：【"+(System.currentTimeMillis()-start)/1000.0+"】"+method.name()+"  "+urlString.toString());
         return checkResponse(response);
     }
 
@@ -158,7 +158,7 @@ public class HttpUtils {
         //从http header中获取token
         List<String> headerList = responseEntity.getHeaders().get(odataTokenHeader);
         String token = headerList.get(headerList.size() - 1);
-        log.info(odataTokenHeader + ":" + token);
+        //log.info(odataTokenHeader + ":" + token);
         return token;
     }
 

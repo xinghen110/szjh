@@ -1,6 +1,7 @@
 package com.magustek.szjh.plan.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportItemVO;
@@ -281,7 +282,9 @@ public class PlanItemServiceImpl implements PlanItemService {
         Map<String, List<RollPlanHeadDataArchive>> headMapByZbart = rollPlanArchiveService
                 .getHeadDataArchiveList(planHeader)
                 .stream()
+                .filter(i-> i.getZbart() != null) //容错
                 .collect(Collectors.groupingBy(RollPlanHeadDataArchive::getZbart));
+        log.warn("滚动计划列表获取完成");
         //将统计数据存入报表项目
         //取出待统计的指标list(操作方式为【S】)
         List<String> zbartList = config
@@ -291,6 +294,7 @@ public class PlanItemServiceImpl implements PlanItemService {
                 .map(IEPlanReportItemVO::getZbart)
                 .collect(Collectors.toList());
 
+        log.warn("指标列表，数量{}",zbartList.size());
         if(ClassUtils.isEmpty(zbartList)){
             return;
         }
@@ -299,7 +303,7 @@ public class PlanItemServiceImpl implements PlanItemService {
         Map<String, List<PlanItem>> itemMapByZbart = itemList
                 .stream()
                 .collect(Collectors.groupingBy(PlanItem::getZbart));
-
+        log.warn("将计划明细根据经营指标分组");
         itemMapByZbart.forEach((k, v)->{
             //如果当前数据的经营指标需要统计
             if(zbartList.contains(k)){
@@ -310,12 +314,10 @@ public class PlanItemServiceImpl implements PlanItemService {
                     String dmval = item.getDmart()+":"+item.getDmval();
                     headList.forEach(head->{
                         //如果维度相同，滚动计划时间如果在item日期范围内，则加总金额
-                        if(dmval.equals(head.getDmval())){
-                            try {
-                                calcItem(item, head);
-                            } catch (ParseException e) {
-                                log.warn("{}:item{},head:{}" ,e.getMessage(), item.getZtval(), head.getDtval());
-                            }
+                        if(!Strings.isNullOrEmpty(head.getDmval())
+                                && head.getDmval().contains(dmval)
+                                && !item.getZtval().startsWith("T")){
+                            calcItem(item, head);
                         }
                     });
                 });
@@ -330,7 +332,7 @@ public class PlanItemServiceImpl implements PlanItemService {
         ArrayList<KeyValueBean> list = new ArrayList<>(zbList.size());
         for (Object[] s : zbList){
             KeyValueBean bean = new KeyValueBean();
-            bean.put(s[1].toString(), s[0].toString());
+            bean.put(s[1].toString(), new BigDecimal(s[0].toString()).setScale(2, BigDecimal.ROUND_HALF_EVEN).toString());
             list.add(bean);
         }
         return list;
@@ -348,7 +350,7 @@ public class PlanItemServiceImpl implements PlanItemService {
                     break;
                 case PlanConstant.AXIS_ORG:
                     item.setDmval(value[i].getKey());
-                    item.setDmart(config.getOrgdp());
+                    item.setDmart(config.getDmart());
                     break;
                 case PlanConstant.AXIS_ZB:
                     item.setZbart(value[i].getKey());
@@ -438,46 +440,63 @@ public class PlanItemServiceImpl implements PlanItemService {
         return resultList;
     }
 
-    private void calcItem(PlanItem item, RollPlanHeadDataArchive head) throws ParseException {
+    private void calcItem(PlanItem item, RollPlanHeadDataArchive head) {
         String ztval = item.getZtval();
         String ztime = item.getZtime();
-        long headTime = ClassUtils.StringToLocalDate(head.getDtval()).toEpochDay();
+        long headTime;
+        try {
+            headTime = ClassUtils.StringToLocalDate(head.getDtval()).toEpochDay();
+        } catch (ParseException e) {
+            return;
+        }
 
-        long start = 0;
-        long end = Long.MAX_VALUE;
+        log.warn("计划明细计算：历史维度单位——{}，明细时间——{}，滚动计划日期——{}，滚动计划金额——{}",
+                ztime,
+                ztval,
+                head.getDtval(),
+                head.getWears().toString());
+        long start;
+        long end;
         String startTime = "2000-01-01";
         String endTime = "2199-12-31";
 
-        switch (ztval){
+        switch (ztime){
             case PlanItem.ZTIME_Y:
                 //计划起始日期，需包含以前的计划
-                if(!ztime.contains(" ")){
-                    startTime = ztime + "-01-01";
+                if(!ztval.contains(" ")){
+                    startTime = ztval + "-01-01";
                 }
                 //计划结束日期，需包含以后的计划
-                if(!ztime.contains("后")){
-                    endTime = ztime + "-12-31";
+                if(!ztval.contains("后")){
+                    endTime = ztval + "-12-31";
                 }
 
                 start = LocalDate.parse(startTime).toEpochDay();
                 end = LocalDate.parse(endTime).toEpochDay();
                 break;
             case PlanItem.ZTIME_M:
-                startTime = ztime + "-01";
-                start = LocalDate.parse(startTime).toEpochDay();
-                end = LocalDate.parse(startTime).with(TemporalAdjusters.lastDayOfMonth()).toEpochDay();
                 //计划起始日期，需包含以前的计划
-                if(ztime.contains(" ")){
+                if(ztval.contains(" ")){
                     startTime = "2000-01-01";
                     start = LocalDate.parse(startTime).toEpochDay();
-                }
-                //计划结束日期，需包含以后的计划
-                if(ztime.contains("后")){
+                    end = LocalDate.parse(ztval.replace(" ","")+"-01").with(TemporalAdjusters.lastDayOfMonth()).toEpochDay();
+                }else if(ztval.contains("后")){
+                    //计划结束日期，需包含以后的计划
+                    start = LocalDate.parse(ztval.replace("后", "")+"-01").toEpochDay();
                     endTime = "2199-12-31";
                     end = LocalDate.parse(endTime).toEpochDay();
+                }else{
+                    start = LocalDate.parse(ztval+"-01").toEpochDay();
+                    end = LocalDate.parse(ztval+"-01").with(TemporalAdjusters.lastDayOfMonth()).toEpochDay();
                 }
                 break;
+            default:
+                return;
         }
+        log.warn("起始时间{}，截止时间{}，计划时间{}",
+                start,
+                end,
+                headTime);
         //如果计划日期在报表日期范围内，则汇总金额
         if(start <= headTime && headTime <= end){
             BigDecimal zbval = new BigDecimal(item.getZbval());

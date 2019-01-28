@@ -20,7 +20,7 @@ public class PlanHeader extends BaseEntity{
     @ApiModelProperty(value = "公司代码-后台获取")
     @Column(nullable = false, length = 4) private String bukrs;
     @ApiModelProperty(value = "报表级别（C-公司报表|D-部门报表|P-岗位报表|U-用户报表）")
-    @Column(length = 1)   private String rporg;
+    @Column(length = 4)   private String rporg;
     @ApiModelProperty(value = "报表级别值-后台获取（公司代码|部门代码|岗位代码|用户代码）")
     @Column(length = 20)  private String orgval;
     @ApiModelProperty(value = "工作状态")

@@ -1,10 +1,7 @@
 package com.magustek.szjh.configset.service.impl;
 
 import com.google.common.collect.Lists;
-import com.magustek.szjh.configset.bean.IEPlanReportHeadSet;
-import com.magustek.szjh.configset.bean.IEPlanReportItemSet;
-import com.magustek.szjh.configset.bean.IEPlanStatisticSet;
-import com.magustek.szjh.configset.bean.OrganizationSet;
+import com.magustek.szjh.configset.bean.*;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportItemVO;
 import com.magustek.szjh.configset.dao.IEPlanReportHeadSetDAO;
@@ -63,11 +60,6 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
     }
 
     @Override
-    public List<IEPlanReportHeadSet> getAllByRptyp(String rptyp) {
-        return Lists.newArrayList(iePlanReportHeadSetDAO.findAllByRptyp(rptyp));
-    }
-
-    @Override
     public void deleteAll() {
         iePlanReportHeadSetDAO.deleteAll();
     }
@@ -84,7 +76,7 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
     }
 
     @Override
-    public IEPlanReportHeadVO getReportConfigByBukrs(String bukrs, String rptyp, String orgdp, String rpdat) throws Exception {
+    public IEPlanReportHeadVO getReportConfigByBukrs(String bukrs, String rptyp, String dmart, String rpdat) throws Exception {
         IEPlanReportHeadVO vo = getReportConfigByBukrs(bukrs, rptyp);
         //将传入的时间转化为LocalDate类型
         LocalDate startDate;
@@ -116,8 +108,8 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
             startDate = LocalDate.parse(rpdat);
         }
         //初始化x、y、z轴数据
-        //用户如果编制部门报表，需要根据orgdp标记对组织进行筛选。
-        axisType(vo,orgdp,startDate);
+        //用户如果编制部门报表，需要根据dmart标记对组织进行筛选。
+        axisType(vo, dmart,startDate);
         return vo;
     }
 
@@ -142,13 +134,8 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         vo.setItemVOS(itemVOList);
         return vo;
     }
-
-    @Override
-    public List<CompanyModel> getBukrsList() {
-        return null;
-    }
     //初始化x、y、z轴数据
-    private void axisType(IEPlanReportHeadVO vo, String orgdp, LocalDate startDate) throws Exception{
+    private void axisType(IEPlanReportHeadVO vo, String dmart, LocalDate startDate) throws Exception{
         ArrayList<String> axis = new ArrayList<>(3);
         ArrayList<ArrayList<KeyValueBean>> value = new ArrayList<>(3);
         axis.add(vo.getXaxis());
@@ -159,7 +146,7 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         for(String s : axis){
             switch (s){
                 case PlanConstant.AXIS_ORG:
-                    value.add(getORG(vo.getBukrs(), vo.getOrgdp(), orgdp));
+                    value.add(getORG(vo.getBukrs(), vo.getDmart(), dmart));
                     break;
                 case PlanConstant.AXIS_TIM:
                     value.add(getTIM(startDate, vo));
@@ -177,21 +164,21 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         vo.setZvalue(value.get(2));
     }
     //返回指定组织机构树
-    private ArrayList<KeyValueBean> getORG(String voBukrs, String voOrgdp, String orgdp) throws Exception{
+    private ArrayList<KeyValueBean> getORG(String voBukrs, String voDmart, String dmart) throws Exception{
         ArrayList<KeyValueBean> keyValueBeans = new ArrayList<>();
         List<Object[]> list;
         KeyValueBean bean;
         CompanyModel company = ContextUtils.getCompany();
-        switch (voOrgdp){
-            case "C":
+        switch (voDmart){
+            case IEPlanDimensionSet.DM_Company:
                 OrganizationSet org = organizationSetService.getByBukrs(voBukrs);
                 bean = new KeyValueBean();
                 bean.put(org.getBukrs(), org.getButxt());
                 keyValueBeans.add(bean);
                 break;
-            case "D":
+            case IEPlanDimensionSet.DM_Department:
                 //如果是编制部门计划，就取当前用户所在部门
-                if("D".equals(orgdp)){
+                if(IEPlanDimensionSet.DM_Department.equals(dmart)){
                     bean = new KeyValueBean();
                     bean.put(company.getDeptcode(), company.getGtext());
                     keyValueBeans.add(bean);
@@ -204,22 +191,9 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
                     }
                 }
                 break;
-            case "P":
-                //如果是编制部门计划，取当前用户所在部门的岗位
-                if("D".equals(orgdp)){
-                    list = organizationSetService.getPonumByDpnum(company.getDeptcode());
-                }else {
-                    list = organizationSetService.getPonumByBukrs(voBukrs);
-                }
-                for(Object[] o : list) {
-                    bean = new KeyValueBean();
-                    bean.put((String)o[0], (String)o[1]);
-                    keyValueBeans.add(bean);
-                }
-                break;
-            case "U":
+            case IEPlanDimensionSet.DM_User:
                 //如果是编制部门计划，就取当前用户所在部门的用户
-                if("D".equals(orgdp)){
+                if(IEPlanDimensionSet.DM_Department.equals(dmart)){
                     list = organizationSetService.getUnameByDpnum(company.getDeptcode());
                 }else {
                     list = organizationSetService.getUnameByBukrs(voBukrs);
@@ -231,8 +205,8 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
                 }
                 break;
             default :
-                log.error("axis error:" + voOrgdp);
-                throw new Exception("axis error:" + voOrgdp);
+                log.error("axis error:" + voDmart);
+                throw new Exception("axis error:" + voDmart);
         }
         return keyValueBeans;
     }
@@ -267,7 +241,7 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         for (;i>=0;i--){
             KeyValueBean item = new KeyValueBean();
             String date = ClassUtils.formatDate(rpdat, punit);
-            item.put(date, date);
+            item.put(date, date, "MH");
 
             strBuilder.append(date).append("+");
 
@@ -289,15 +263,13 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
             str = str.replaceFirst(firstBean.getKey(), firstBean.getKey()+" ");
             str = str.replaceFirst(lastBean.getKey(), lastBean.getKey()+"后");
             if(!ClassUtils.isEmpty(t800)){
-                t800.get(0).setCalc(str);
+                t800.get(0).setCalc(t800.get(0).getKey()+"="+str);
             }
 
             //自定义标识，第一个时间段后面加个空格，方便判断
-
             firstBean.put(firstBean.getKey()+" ", firstBean.getValue()+" ");
 
             //自定义标识，最后一个节点需要增加【后】--2019年1月后
-
             lastBean.put(lastBean.getKey()+"后", lastBean.getValue()+"后");
         }else{
             //去掉最后一个节点
@@ -316,7 +288,5 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
             keyValueBeans.add(bean);
         });
         return keyValueBeans;
-
-
     }
 }

@@ -139,6 +139,16 @@ public class CalculateResultServiceImpl implements CalculateResultService {
         }
         //根据htnum遍历取数明细列表
         for(Map.Entry<String, List<IEPlanSelectValueSet>> entry : grouped.entrySet()){
+
+            //TODO debug only
+            if("52000000000441".equals(entry.getKey())){
+                System.out.println("debug point");
+            }
+
+
+
+
+
             List<IEPlanSelectValueSet> value = entry.getValue();
             //非空判断
             if(ClassUtils.isEmpty(value)){

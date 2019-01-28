@@ -14,6 +14,12 @@ import javax.persistence.Entity;
 @Setter
 @Entity
 public class IEPlanDimensionSet extends BaseEntity{
+
+
+    public static transient final String DM_Company    = "D100";
+    public static transient final String DM_Department = "D110";
+    public static transient final String DM_User       = "D120";
+
     @Column(length = 4)  private String dmart;//维度指标
     @Column(length = 50) private String dmnam;//维度指标描述
     @Column(length = 1)  private String dmtyp;//维度类型

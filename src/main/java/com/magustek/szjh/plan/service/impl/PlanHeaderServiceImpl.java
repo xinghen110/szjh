@@ -2,6 +2,7 @@ package com.magustek.szjh.plan.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
+import com.magustek.szjh.configset.bean.IEPlanDimensionSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.configset.service.ConfigDataSourceSetService;
 import com.magustek.szjh.configset.service.IEPlanReportHeadSetService;
@@ -14,6 +15,7 @@ import com.magustek.szjh.plan.dao.PlanHeaderDAO;
 import com.magustek.szjh.plan.dao.PlanLayoutDAO;
 import com.magustek.szjh.plan.service.PlanHeaderService;
 import com.magustek.szjh.plan.service.PlanItemService;
+import com.magustek.szjh.plan.service.RollPlanArchiveService;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.KeyValueBean;
@@ -42,14 +44,16 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     private ConfigDataSourceSetService configDataSourceSetService;
     private IEPlanReportHeadSetService iePlanReportHeadSetService;
     private PlanLayoutDAO planLayoutDAO;
+    private RollPlanArchiveService rollPlanArchiveService;
 
-    public PlanHeaderServiceImpl(PlanHeaderDAO planHeaderDAO, PlanItemService planItemService, OrganizationSetService organizationSetService, ConfigDataSourceSetService configDataSourceSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, PlanLayoutDAO planLayoutDAO) {
+    public PlanHeaderServiceImpl(PlanHeaderDAO planHeaderDAO, PlanItemService planItemService, OrganizationSetService organizationSetService, ConfigDataSourceSetService configDataSourceSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, PlanLayoutDAO planLayoutDAO, RollPlanArchiveService rollPlanArchiveService) {
         this.planHeaderDAO = planHeaderDAO;
         this.planItemService = planItemService;
         this.organizationSetService = organizationSetService;
         this.configDataSourceSetService = configDataSourceSetService;
         this.iePlanReportHeadSetService = iePlanReportHeadSetService;
         this.planLayoutDAO = planLayoutDAO;
+        this.rollPlanArchiveService = rollPlanArchiveService;
     }
 
     @Override
@@ -57,11 +61,11 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         if(Strings.isNullOrEmpty(header.getBukrs())){
             header.setBukrs(ContextUtils.getCompany().getOrgcode());
             //公司报表
-            if("C".equals(header.getRporg())){
+            if(IEPlanDimensionSet.DM_Company.equals(header.getRporg())){
                 header.setOrgval(ContextUtils.getCompany().getOrgcode());
             }
             //部门报表
-            if("D".equals(header.getRporg())){
+            if(IEPlanDimensionSet.DM_Department.equals(header.getRporg())){
                 header.setOrgval(ContextUtils.getCompany().getDeptcode());
             }
         }
@@ -101,10 +105,17 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     @Override
     public PlanHeader delete(PlanHeader header) {
         Assert.isTrue(!ClassUtils.isEmpty(header.getId()), "计划ID不得为空");
+        PlanHeader one = planHeaderDAO.findOne(header.getId());
         //级联删除
         planItemService.deleteByHeaderId(header.getId());
         planHeaderDAO.delete(header.getId());
         planLayoutDAO.deleteAllByHeaderId(header.getId());
+
+        if("MR".equals(one.getRptyp())){
+            //月报要删除滚动计划归档数据
+            rollPlanArchiveService.deleteData(one);
+        }
+
         return header;
     }
 
@@ -120,10 +131,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     public Page<Map<String, String>> getListByBukrs(PlanHeaderVO vo, Pageable pageable) throws Exception{
         Page<PlanHeader> page;
         switch (vo.getRporg()) {
-            case "C":
+            case IEPlanDimensionSet.DM_Company:
                 page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(), ContextUtils.getCompany().getOrgcode(), vo.getRptyp(), pageable);
                 break;
-            case "D":
+            case IEPlanDimensionSet.DM_Department:
                 page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(), ContextUtils.getCompany().getDeptcode(), vo.getRptyp(), pageable);
                 break;
             default:

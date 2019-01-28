@@ -1,5 +1,6 @@
 package com.magustek.szjh.basedataset.service.impl;
 
+import com.google.common.base.Strings;
 import com.magustek.szjh.basedataset.dao.DmCalcStatisticsDAO;
 import com.magustek.szjh.basedataset.entity.CalculateResult;
 import com.magustek.szjh.basedataset.entity.DmCalcStatistics;
@@ -98,21 +99,25 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
                         if(ClassUtils.isEmpty(caartValue)){//非空判断
                             return;
                         }
-                        Optional<CalculateResult> sum = caartValue.stream().reduce((a, b)->{
+/*                        Optional<CalculateResult> sum = caartValue.stream().reduce((a, b)->{
                             BigDecimal sum1 = new BigDecimal(a.getCaval());
                             BigDecimal sum2 = new BigDecimal(b.getCaval());
                             a.setCaval(sum1.add(sum2).toString());
                             return a;
-                        });
-                        if(!sum.isPresent()){//非空判断
-                            return;
-                        }
+                        });*/
+
+                        List<BigDecimal> sum = new ArrayList<>(1);
+                        sum.add(new BigDecimal(0));
+
+                        caartValue.forEach(c-> sum.set(0,sum.get(0).add(new BigDecimal(c.getCaval()))));
+
+
                         int count = caartValue.size();
                         DmCalcStatistics statistics = new DmCalcStatistics();
                         statistics.setDmart(dmartKey);
                         statistics.setDmval(dmvalKey);
                         statistics.setCaart(caartKey);
-                        statistics.setCaval(sum.get().getCaval());
+                        statistics.setCaval(sum.get(0).toString());
                         statistics.setJswdqz(count);
                         statistics.setVersion(caartValue.get(0).getVersion());
                         htsnoList.add(statistics);
@@ -126,19 +131,22 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
                     return;
                 }
                 caartMapForHtsno.forEach((caartMapForHtsnoKey, caartMapForHtsnoValue)->{
-                    Optional<DmCalcStatistics> sum = caartMapForHtsnoValue.stream().reduce((a,b)->{
-                        //值加和
-                        BigDecimal sum1 = new BigDecimal(a.getCaval());
-                        BigDecimal sum2 = new BigDecimal(b.getCaval());
-                        a.setCaval(sum1.add(sum2).toString());
-                        //笔数加和
-                        a.setJswdqz(a.getJswdqz()+b.getJswdqz());
-                        return a;
-                    });
-                    if(!sum.isPresent()){//非空判断
-                        return;
+                    if(!ClassUtils.isEmpty(caartMapForHtsnoValue)){
+                        DmCalcStatistics s = caartMapForHtsnoValue.get(0);
+                        for(DmCalcStatistics dm : caartMapForHtsnoValue){
+                            BigDecimal sum1 = new BigDecimal(s.getCaval());
+                            BigDecimal sum2 = new BigDecimal(dm.getCaval());
+                            //值加和
+                            s.setCaval(sum1.add(sum2).toString());
+                            //笔数加和
+                            s.setJswdqz(s.getJswdqz()+dm.getJswdqz());
+                        }
+                        BigDecimal sum1 = new BigDecimal(s.getCaval());
+                        BigDecimal sum2 = new BigDecimal(s.getJswdqz());
+                        //计算历史能力值
+                        s.setHisval(sum1.divide(sum2,0,BigDecimal.ROUND_DOWN).intValue());
+                        statisticsList.add(s);
                     }
-                    statisticsList.add(sum.get());
                 });
             });
         });
@@ -150,7 +158,16 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
     }
 
     @Override
-    public String getCaval(String version, String dmart, String dmval, String caart) {
+    public String getCaval(String version, String dmart, String dmval, String caart, Map<String, String> cache) {
+        //容错
+        if(Strings.isNullOrEmpty(caart)){
+            return "";
+        }
+        //缓存命中
+        String key = version+"-"+dmart+"-"+dmval+"-"+caart;
+        if(cache.containsKey(key)){
+            return cache.get(key);
+        }
 
         DmCalcStatistics dm = dmCalcStatisticsDAO.findFirstByVersionAndDmartAndDmvalAndCaart(
                 version,
@@ -159,8 +176,12 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
                 caart);
 
         if(dm != null){
-            return dm.getCaval();
+            //加入缓存
+            cache.put(key, dm.getHisval()+"");
+            return cache.get(key);
         }else{
+            //加入缓存
+            cache.put(key, "");
             return "";
         }
     }

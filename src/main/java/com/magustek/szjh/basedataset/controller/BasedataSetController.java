@@ -133,12 +133,15 @@ public class BasedataSetController {
     @ApiOperation(value="从Odata获取所有配置及业务数据，并存入数据库。")
     @RequestMapping("/fetchAllBaseData")
     public void fetchBaseData(@RequestBody DmCalcStatistics result) throws Exception {
+        long l = System.currentTimeMillis();
         iePlanConfigSetController.initAll();//获取所有配置数据
+        log.warn("获取所有配置数据耗时{}", (System.currentTimeMillis()-l)/1000.00);
         getIEPlanSelectValueSet();
         getIEPlanDimenValueSet();
-        getIEPlanPaymentSet();
-        getIEPlanTermsSet();
+        //getIEPlanPaymentSet();
+        //getIEPlanTermsSet();
         executeAllCalc(result);
+        log.warn("从Odata获取所有配置及业务数据耗时{}", (System.currentTimeMillis()-l)/1000.00);
     }
 
     @ApiOperation(value="执行所有计算。")

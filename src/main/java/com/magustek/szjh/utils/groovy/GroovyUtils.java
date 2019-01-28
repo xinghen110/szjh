@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.magustek.szjh.utils.ClassUtils;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import groovy.lang.MissingPropertyException;
 import groovy.lang.Script;
 import lombok.extern.slf4j.Slf4j;
 

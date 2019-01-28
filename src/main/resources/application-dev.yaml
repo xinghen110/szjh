@@ -22,7 +22,7 @@ spring:
       #url: jdbc:log4jdbc:mysql://118.31.14.156:20003/szjh?useUnicode=true&amp;characterEncoding=utf8
       #url: jdbc:mysql://118.31.14.156:20003/szjh?useUnicode=true&amp;characterEncoding=utf8
       #url: jdbc:mysql://localhost:3306/szjh?useUnicode=true&amp;characterEncoding=utf8
-      #url: jdbc:mysql://localhost:3306/szjh?userSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=CST
+      ##url: jdbc:mysql://localhost:3306/szjh?userSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=CST
       url: jdbc:mysql://10.154.96.70:3306/szjh?userSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=CST
 #      username: cm
       username: root
@@ -60,7 +60,7 @@ spring:
       port: 27017
   jpa:
     database: MYSQL
-    show-sql: false
+    show-sql: true
     hibernate.ddl-auto: update
     hibernate.use-new-id-generator-mappings: true
     properties.hibernate.dialect: org.hibernate.dialect.MySQL5Dialect

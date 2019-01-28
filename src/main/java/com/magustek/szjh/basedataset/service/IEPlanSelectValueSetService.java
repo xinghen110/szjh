@@ -16,4 +16,6 @@ public interface IEPlanSelectValueSetService {
 
     List<IEPlanSelectValueSet> getAllByVersionAndPflag(String version, String pflag);
     List<IEPlanSelectValueSet> getContractByHtsnoAndVersion(String htsno, String version);
+
+    int updateReferencedByVersion(String referenced, String version);
 }

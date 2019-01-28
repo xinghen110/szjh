@@ -31,7 +31,7 @@ public class IEPlanReportHeadVO {
     @ApiModelProperty(value = "指标深度")
     private String zbdep;
     @ApiModelProperty(value = "组织深度")
-    private String orgdp;
+    private String dmart;
     @ApiModelProperty(value = "历史维度单位")
     private String hunit;
     @ApiModelProperty(value = "历史维度值")
