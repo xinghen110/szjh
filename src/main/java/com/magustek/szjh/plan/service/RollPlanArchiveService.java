@@ -11,4 +11,6 @@ public interface RollPlanArchiveService {
     void deleteData(PlanHeader header);
     List<RollPlanHeadDataArchive> getHeadDataArchiveList(PlanHeader header);
     List<RollPlanItemDataArchive> getItemDataArchiveList(PlanHeader header);
+
+    List<RollPlanHeadDataArchive> getHeadData(String zbart, String dmval, String dtval, Long planHeadId);
 }

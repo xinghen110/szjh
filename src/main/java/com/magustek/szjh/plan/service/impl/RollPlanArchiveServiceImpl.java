@@ -18,7 +18,10 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -131,5 +134,10 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     @Override
     public List<RollPlanItemDataArchive> getItemDataArchiveList(PlanHeader header) {
         return rollPlanItemDataArchiveDAO.findAllByPlanHeadId(header.getId());
+    }
+
+    @Override
+    public List<RollPlanHeadDataArchive> getHeadData(String zbart, String dmval, String dtval, Long planHeadId) {
+        return rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndDtvalContainsAndDmvalContainsAndZbart(planHeadId, dtval, "D110:"+dmval, zbart);
     }
 }

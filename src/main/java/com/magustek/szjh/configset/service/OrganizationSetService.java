@@ -20,7 +20,7 @@ public interface OrganizationSetService {
     List<Object[]> getUnameByDpnum(String dpnum) throws Exception;
     List<KeyValueBean> getRangeList() throws Exception;
 
-    OrganizationSet getByBukrs(String bukrs) throws Exception;
+    OrganizationSet getByBukrs(String bukrs);
 
     Map<String, String> orgKeyValue();
 }

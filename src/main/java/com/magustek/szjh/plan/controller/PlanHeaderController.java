@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -57,10 +58,10 @@ public class PlanHeaderController {
 
     @ApiOperation(value="根据id获取计划", notes = "参数：id")
     @RequestMapping("/getPlanHeaderById")
-    public String getPlanHeaderById(@RequestBody PlanHeader header) throws Exception {
+    public String getPlanHeaderById(@RequestBody PlanHeader header) {
         header = planHeaderService.getById(header);
         String userName = ContextUtils.getUserName();
-        log.warn("{}获取计划：{}", userName, JSON.toJSONString(header));
+        log.warn("{}根据id获取计划：{}", userName, JSON.toJSONString(header));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(header).setMsg("成功！").toJson();
     }
 
@@ -69,7 +70,7 @@ public class PlanHeaderController {
     public String getPlanHeaderByBukrs(@RequestBody PlanHeaderVO vo) throws Exception {
         Page<Map<String, String>> listByBukrs = planHeaderService.getListByBukrs(vo, vo.getPageRequest());
         String userName = ContextUtils.getUserName();
-        log.warn("{}获取计划：{}", userName, JSON.toJSONString(listByBukrs));
+        log.warn("{}根据公司获取计划列表：{}", userName, JSON.toJSONString(listByBukrs));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(listByBukrs).setMsg("成功！").toJson();
     }
 
@@ -79,5 +80,13 @@ public class PlanHeaderController {
         IEPlanReportHeadVO config = planHeaderService.getLayoutByHeaderId(vo.getId());
         log.warn("根据计划抬头ID代码获取报表布局信息：{}", JSON.toJSONString(config));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(config).setMsg("成功！").toJson();
+    }
+
+    @ApiOperation(value="根据参数获取合同信息列表，参数：zbart-指标值、dmval-维度值、dtval-时间（yyyy-MM）、planHeadId-月度计划id。")
+    @RequestMapping("/getHtsnoList")
+    public String getHtsnoList(@RequestBody PlanHeaderVO vo) throws Exception {
+        List<Map<String, String>> htsnoList = planHeaderService.getHtsnoList(vo.getZbart(), vo.getDmval(), vo.getDtval(), vo.getId(), vo.getPageRequest());
+        log.warn("根据参数获取合同信息列表：{}", JSON.toJSONString(htsnoList));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(htsnoList).setMsg("成功！").toJson();
     }
 }

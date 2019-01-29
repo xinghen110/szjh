@@ -2,20 +2,26 @@ package com.magustek.szjh.plan.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
+import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
+import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
+import com.magustek.szjh.configset.bean.IEPlanBusinessHeadSet;
 import com.magustek.szjh.configset.bean.IEPlanDimensionSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.configset.service.ConfigDataSourceSetService;
+import com.magustek.szjh.configset.service.IEPlanBusinessHeadSetService;
 import com.magustek.szjh.configset.service.IEPlanReportHeadSetService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.PlanItem;
 import com.magustek.szjh.plan.bean.PlanLayout;
+import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.vo.PlanHeaderVO;
 import com.magustek.szjh.plan.dao.PlanHeaderDAO;
 import com.magustek.szjh.plan.dao.PlanLayoutDAO;
 import com.magustek.szjh.plan.service.PlanHeaderService;
 import com.magustek.szjh.plan.service.PlanItemService;
 import com.magustek.szjh.plan.service.RollPlanArchiveService;
+import com.magustek.szjh.plan.utils.WearsType;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.KeyValueBean;
@@ -29,9 +35,14 @@ import org.springframework.util.Assert;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -45,8 +56,17 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     private IEPlanReportHeadSetService iePlanReportHeadSetService;
     private PlanLayoutDAO planLayoutDAO;
     private RollPlanArchiveService rollPlanArchiveService;
+    private IEPlanSelectValueSetService iePlanSelectValueSetService;
+    private IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
 
-    public PlanHeaderServiceImpl(PlanHeaderDAO planHeaderDAO, PlanItemService planItemService, OrganizationSetService organizationSetService, ConfigDataSourceSetService configDataSourceSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, PlanLayoutDAO planLayoutDAO, RollPlanArchiveService rollPlanArchiveService) {
+    public PlanHeaderServiceImpl(PlanHeaderDAO planHeaderDAO,
+                                 PlanItemService planItemService,
+                                 OrganizationSetService organizationSetService,
+                                 ConfigDataSourceSetService configDataSourceSetService,
+                                 IEPlanReportHeadSetService iePlanReportHeadSetService,
+                                 PlanLayoutDAO planLayoutDAO,
+                                 RollPlanArchiveService rollPlanArchiveService,
+                                 IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService) {
         this.planHeaderDAO = planHeaderDAO;
         this.planItemService = planItemService;
         this.organizationSetService = organizationSetService;
@@ -54,6 +74,8 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         this.iePlanReportHeadSetService = iePlanReportHeadSetService;
         this.planLayoutDAO = planLayoutDAO;
         this.rollPlanArchiveService = rollPlanArchiveService;
+        this.iePlanSelectValueSetService = iePlanSelectValueSetService;
+        this.iePlanBusinessHeadSetService = iePlanBusinessHeadSetService;
     }
 
     @Override
@@ -120,7 +142,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     }
 
     @Override
-    public PlanHeader getById(PlanHeader header) throws Exception{
+    public PlanHeader getById(PlanHeader header){
         Assert.isTrue(!ClassUtils.isEmpty(header.getId()), "计划ID不得为空");
         header = planHeaderDAO.findOne(header.getId());
         return coverToVO(header);
@@ -158,7 +180,103 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         return JSON.parseObject(planLayoutDAO.findTopByHeaderId(headerId).getLayout(), IEPlanReportHeadVO.class);
     }
 
-    private PlanHeaderVO coverToVO(PlanHeader header) throws Exception{
+    @Override
+    public List<Map<String, String>> getHtsnoList(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable) throws Exception {
+        boolean firstMonth = dtval.contains(" ");
+        boolean lastMonth = dtval.contains("后");
+        dtval = dtval.replace("-", "").replace(" ","").replace("后","");
+        PlanHeader planHeader = new PlanHeader();
+        planHeader.setId(planHeadId);
+        Map<String, List<IEPlanBusinessHeadSet>> headMapByHdnum;
+        try {
+            planHeader = this.getById(planHeader);
+            headMapByHdnum = iePlanBusinessHeadSetService
+                    .getAllByBukrsAndRptyp(ContextUtils.getCompany().getOrgcode(), "MR")
+                    .stream()
+                    .collect(Collectors.groupingBy(IEPlanBusinessHeadSet::getHdnum));
+        } catch (Exception e) {
+            log.error("无此计划，ID：{}，message：{}",e.getMessage());
+            throw new Exception(e.getMessage());
+        }
+
+        //待处理的计划列表
+        Map<String, List<RollPlanHeadDataArchive>> rollPlanMapByHtsno = rollPlanArchiveService
+                .getHeadData(zbart, dmval, dtval, planHeadId)
+                .stream()
+                .collect(Collectors.groupingBy(RollPlanHeadDataArchive::getHtsno));
+        List<Map<String, String>> htsnoList = new ArrayList<>(rollPlanMapByHtsno.size());
+        Map<String, List<LocalDate>> weekMap = week(dtval);
+        Assert.notNull(weekMap,"星期计算错误！"+dtval);
+        //计算周期内合同的金额
+        rollPlanMapByHtsno.forEach((htsno, rollPlanList)->{
+            Map<String, WearsType> htsnoMap = new HashMap<>();
+            rollPlanList.forEach(rollPlan ->
+                weekMap.forEach((week, dateList)->{
+                    WearsType wears = new WearsType();
+                    //如果滚动计划日期在本周内，则累计滚动计划金额
+                    if(isInDuration(rollPlan.getDtval(), dateList, week, weekMap.size(), firstMonth, lastMonth)){
+                        IEPlanBusinessHeadSet headSet = headMapByHdnum.get(rollPlan.getHdnum()).get(0);
+                        switch (headSet.getZtype()){
+                            case "01":
+                                wears.setBudget(wears.getBudget().add(rollPlan.getWears()));
+                                break;
+                            case "02":
+                                wears.setProgress(wears.getProgress().add(rollPlan.getWears()));
+                                break;
+                            case "03":
+                                wears.setSettlement(wears.getSettlement().add(rollPlan.getWears()));
+                                break;
+                            case "04":
+                                wears.setWarranty(wears.getWarranty().add(rollPlan.getWears()));
+                                break;
+                        }
+                        htsnoMap.put(week,wears);
+                    }
+                })
+            );
+            //组装款项明细
+            Map<String, String> map = new HashMap<>();
+            htsnoList.add(map);
+            map.put("htsno",htsno);
+            htsnoMap.forEach((k,v)->{
+                StringBuilder sb = new StringBuilder();
+                if(v.getBudget().compareTo(BigDecimal.ZERO)>0){
+                    sb.append("预：").append(v.getBudget().toString());
+                }
+                if(v.getBudget().add(v.getProgress()).compareTo(BigDecimal.ZERO)>0){
+                    if(!Strings.isNullOrEmpty(sb.toString())){
+                        sb.append("$");
+                    }
+                    sb.append("结：").append(v.getBudget().add(v.getProgress()).toString());
+                }
+                if(v.getBudget().compareTo(BigDecimal.ZERO)>0){
+                    if(!Strings.isNullOrEmpty(sb.toString())){
+                        sb.append("$");
+                    }
+                    sb.append("质：").append(v.getBudget().toString());
+                }
+                if(!Strings.isNullOrEmpty(sb.toString())){
+                    map.put(k, sb.toString());
+                }
+            });
+        });
+
+        //补充htsno的取数指标数据iePlanSelectDataSetService
+        String ckdate = planHeader.getCkdate();
+        htsnoList.forEach(htsno->{
+            //根据版本号，及htsno获取所有取数指标
+            List<IEPlanSelectValueSet> selectValueSetList = iePlanSelectValueSetService.getContractByHtsnoAndVersion(htsno.get("htsno"), ckdate);
+            //取数指标根据sdart分组
+            Map<String, List<IEPlanSelectValueSet>> selectValueMapBySdart = selectValueSetList
+                    .stream()
+                    .collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
+            //维度数据如果查出多条，用第一条即可
+            selectValueMapBySdart.forEach((k,v)-> htsno.put(k, v.get(0).getSdval()));
+        });
+        return htsnoList;
+    }
+
+    private PlanHeaderVO coverToVO(PlanHeader header){
         Map<String, BigDecimal> zbval = planItemService.getZBValByHeaderId(header.getId());
         PlanHeaderVO vo = new PlanHeaderVO();
         BeanUtils.copyProperties(header, vo);
@@ -179,4 +297,63 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         return vo;
     }
 
+    //获取yyyyMM月的每个星期及其起止日期
+    private Map<String, List<LocalDate>> week(String yyyyMM){
+        LocalDate firstDayOfMonth;
+        try {
+            firstDayOfMonth = ClassUtils.StringToLocalDate(yyyyMM + "01");
+        } catch (ParseException e) {
+            log.error(e.getMessage());
+            return null;
+        }
+        Map<String, List<LocalDate>> weekMap = new HashMap<>();
+        int days = firstDayOfMonth.lengthOfMonth();
+        int week = 1;
+        List<LocalDate> list = new ArrayList<>(2);
+        while(true){
+            //这个月的第一天
+            if(firstDayOfMonth.getDayOfMonth() == 1){
+                list.add(firstDayOfMonth);
+                weekMap.put("week"+week,list);
+            }
+            //周一
+            if(firstDayOfMonth.getDayOfWeek().equals(DayOfWeek.MONDAY)){
+                list = new ArrayList<>(2);
+                list.add(firstDayOfMonth);
+                weekMap.put("week"+week,list);
+            }
+            //周日
+            if(firstDayOfMonth.getDayOfWeek().equals(DayOfWeek.SUNDAY)){
+                list.add(firstDayOfMonth);
+                week++;
+            }
+            //这个月的最后一天
+            if(firstDayOfMonth.getDayOfMonth() == days){
+                list.add(firstDayOfMonth);
+                break;
+            }
+            firstDayOfMonth = firstDayOfMonth.plusDays(1);
+        }
+        return weekMap;
+    }
+
+    //判断日期是否在这个期间
+    private boolean isInDuration(String yyyyMMdd, List<LocalDate> dateList, String week, int weekSize, boolean firstMonth, boolean lastMonth){
+        try {
+            long today = ClassUtils.StringToLocalDate(yyyyMMdd).toEpochDay();
+            long from = dateList.get(0).toEpochDay();
+            long to = dateList.get(1).toEpochDay();
+            //第一个月的第一周，需要包含以前所有的计划
+            if("week1".equals(week) && firstMonth){
+                return today <= to;
+            }
+            //最后一个月的最后一周，需要包含以后的所有计划
+            if(("week"+weekSize).equals(week) && lastMonth){
+                return from <= today;
+            }
+            return from <= today && today <= to;
+        } catch (ParseException e) {
+            return false;
+        }
+    }
 }

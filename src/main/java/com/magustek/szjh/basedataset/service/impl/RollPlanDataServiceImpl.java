@@ -53,6 +53,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
 
     private String version;//全局变量
     private Map<String, String> dmvalCache;//历史能力值缓存
+    private Set<String> hjendCache;//计算结束环节列表
 
 
     public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanItemDataDAO rollPlanItemDataDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, DmCalcStatisticsService dmCalcStatisticsService, OrganizationSetService organizationSetService, HolidayService holidayService) {
@@ -80,6 +81,13 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         businessItemMap = iePlanBusinessItemSetService.getAllVO().stream().collect(Collectors.groupingBy(IEPlanBusinessItemSet::getHdnum));
 
         dmvalCache = new HashMap<>();
+        //hjendCache = new HashSet<>();
+        //获取计算结束环节列表
+        hjendCache = iePlanBusinessItemSetService.getAllVO()
+                .stream()
+                .filter(i->"X".equals(i.getHjend()))
+                .map(IEPlanBusinessItemSet::getImnum)
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -310,11 +318,11 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     }
                 });
 
-                //将计划第一个为【C】的节点日期（差值的计划执行日期），存入head，备用。
+                //将结束计算环节的节点日期（类型为C的付款完成日期），存入head，备用。
                 localHelperList.forEach(helper->{
                     if(!ClassUtils.isEmpty(helper.getItemList())){
                         helper.getItemList().forEach(i->{
-                            if(IEPlanBusinessItemSet.CALC.equals(i.getCtdtp())){
+                            if(IEPlanBusinessItemSet.CALC.equals(i.getCtdtp()) && hjendCache.contains(i.getImnum())){
                                 helper.getHeadData().setDtval(i.getDtval());
                             }
                         });

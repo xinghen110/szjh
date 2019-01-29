@@ -28,4 +28,9 @@ public class PlanHeaderVO extends PlanHeader{
     private String ktext;
     @ApiModelProperty(value = "货币单位描述")
     private String unitx;
+
+    private String zbart;
+    private String dtval;
+    private String dmval;
+
 }

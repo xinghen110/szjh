@@ -8,15 +8,15 @@ import groovy.lang.GroovyShell;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.LinkedList;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.*;
 
 public class GroovyShellExample {
     public static void main(String args[]) {
         String a = "";
         try {
             System.out.println(ClassUtils.dfYMD.parse("20180116"));
-            c();
         } catch (ParseException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();

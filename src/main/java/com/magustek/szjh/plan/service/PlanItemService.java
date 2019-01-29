@@ -3,7 +3,6 @@ package com.magustek.szjh.plan.service;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.PlanItem;
-import com.magustek.szjh.plan.bean.vo.PlanHeaderVO;
 import com.magustek.szjh.plan.bean.vo.PlanItemVO;
 import com.magustek.szjh.utils.KeyValueBean;
 
@@ -21,7 +20,7 @@ public interface PlanItemService {
     List<PlanItem> coverVOToList(PlanItemVO vo) throws Exception;
     PlanItemVO coverListToVO(List<PlanItem> list, String zValue) throws Exception;
     List<Map<String, String>> coverListToMap(List<PlanItem> list) throws Exception;
-    Map<String, BigDecimal> getZBValByHeaderId(Long headerId) throws Exception;
+    Map<String, BigDecimal> getZBValByHeaderId(Long headerId);
     //初始化明细表数据
     List<PlanItem> initItemDataByConfig(IEPlanReportHeadVO config, Long headerId) throws Exception;
     //初始化统计数据
