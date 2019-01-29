@@ -207,6 +207,20 @@ public class ClassUtils {
     }
 
     /**
+     * yyyyMMdd转LocalDate
+     * @param yyyyMMdd    yyyyMMdd
+     * @return          计算后的日期
+     */
+    public static LocalDate StringToLocalDateWithoutException(String yyyyMMdd) {
+        try {
+            return StringToLocalDate(yyyyMMdd);
+        } catch (ParseException e) {
+            log.error(e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * 将对象转换为map json格式，处理其中keyValueBean。
      */
     @SuppressWarnings("unchecked")

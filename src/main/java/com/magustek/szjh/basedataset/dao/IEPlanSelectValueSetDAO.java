@@ -9,12 +9,14 @@ import org.springframework.data.repository.query.Param;
 import javax.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface IEPlanSelectValueSetDAO extends CrudRepository<IEPlanSelectValueSet, Long>{
     @Transactional
     void deleteAllByVersionAndReferencedIsNull(String version);
     List<IEPlanSelectValueSet> findAllByVersion(String version);
     List<IEPlanSelectValueSet> findAllByHtsnoAndVersion(String htsno, String version);
+    List<IEPlanSelectValueSet> findAllByHtsnoInAndVersion(Set<String> htsnoSet, String version);
 
     List<IEPlanSelectValueSet> findAllByVersionAndPflag(String version, String pflag);
 

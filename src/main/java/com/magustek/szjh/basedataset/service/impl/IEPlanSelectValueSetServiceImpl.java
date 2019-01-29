@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -150,6 +147,11 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
     @Override
     public List<IEPlanSelectValueSet> getContractByHtsnoAndVersion(String htsno, String version) {
         return iePlanSelectValueSetDAO.findAllByHtsnoAndVersion(htsno, version);
+    }
+
+    @Override
+    public List<IEPlanSelectValueSet> getContractByHtsnoSetAndVersion(Set<String> htsnoSet, String version) {
+        return iePlanSelectValueSetDAO.findAllByHtsnoInAndVersion(htsnoSet, version);
     }
 
     @Override

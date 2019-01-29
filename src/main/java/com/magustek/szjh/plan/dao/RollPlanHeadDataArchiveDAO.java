@@ -11,4 +11,6 @@ public interface RollPlanHeadDataArchiveDAO extends CrudRepository<RollPlanHeadD
     void deleteAllByPlanHeadId(Long planHeadId);
 
     List<RollPlanHeadDataArchive> findAllByPlanHeadIdAndDtvalContainsAndDmvalContainsAndZbart(Long planHeadId, String dtval, String dmval, String zbart);
+    List<RollPlanHeadDataArchive> findAllByPlanHeadIdAndDtvalGreaterThanAndDmvalContainsAndZbart(Long planHeadId, String dtval, String dmval, String zbart);
+    List<RollPlanHeadDataArchive> findAllByPlanHeadIdAndDtvalLessThanEqualAndDmvalContainsAndZbart(Long planHeadId, String dtval, String dmval, String zbart);
 }

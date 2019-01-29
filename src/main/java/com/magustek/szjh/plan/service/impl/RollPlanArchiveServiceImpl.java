@@ -16,10 +16,13 @@ import com.magustek.szjh.utils.ClassUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import javax.transaction.Transactional;
+import java.text.ParseException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -137,7 +140,26 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     }
 
     @Override
-    public List<RollPlanHeadDataArchive> getHeadData(String zbart, String dmval, String dtval, Long planHeadId) {
+    public List<RollPlanHeadDataArchive> getHeadData(String zbart, String dmval, String dtval, Long planHeadId, boolean firstMonth, boolean lastMonth) {
+        LocalDate localDate = ClassUtils.StringToLocalDateWithoutException(dtval+"01");
+        Assert.notNull(localDate, "dtval 格式错误："+dtval);
+        //月计划第一个月需要包含之前所有数据
+        if(firstMonth){
+            LocalDate lastday = localDate.with(TemporalAdjusters.lastDayOfMonth());
+            return rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndDtvalLessThanEqualAndDmvalContainsAndZbart(planHeadId,
+                    lastday.toString().replace("-",""),
+                    "D110:"+dmval,
+                    zbart);
+        }
+        //月计划最后一个月，需要包含之后所有数据
+        if(lastMonth){
+            LocalDate firstday = localDate.with(TemporalAdjusters.lastDayOfMonth());
+            return rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndDtvalGreaterThanAndDmvalContainsAndZbart(planHeadId,
+                    firstday.toString().replace("-", ""),
+                    "D110:"+dmval,
+                    zbart);
+        }
+        //返回当月所有数据
         return rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndDtvalContainsAndDmvalContainsAndZbart(planHeadId, dtval, "D110:"+dmval, zbart);
     }
 }

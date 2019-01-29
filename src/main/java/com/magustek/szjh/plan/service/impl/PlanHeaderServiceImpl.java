@@ -38,10 +38,7 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -201,7 +198,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
         //待处理的计划列表
         Map<String, List<RollPlanHeadDataArchive>> rollPlanMapByHtsno = rollPlanArchiveService
-                .getHeadData(zbart, dmval, dtval, planHeadId)
+                .getHeadData(zbart, dmval, dtval, planHeadId, firstMonth, lastMonth)
                 .stream()
                 .collect(Collectors.groupingBy(RollPlanHeadDataArchive::getHtsno));
         List<Map<String, String>> htsnoList = new ArrayList<>(rollPlanMapByHtsno.size());
@@ -209,12 +206,17 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         Assert.notNull(weekMap,"星期计算错误！"+dtval);
         //计算周期内合同的金额
         rollPlanMapByHtsno.forEach((htsno, rollPlanList)->{
+            //TODO debug point
+            if ("60101800005945".equals(htsno)){
+                log.debug("debug point!");
+            }
             Map<String, WearsType> htsnoMap = new HashMap<>();
             rollPlanList.forEach(rollPlan ->
                 weekMap.forEach((week, dateList)->{
-                    WearsType wears = new WearsType();
                     //如果滚动计划日期在本周内，则累计滚动计划金额
                     if(isInDuration(rollPlan.getDtval(), dateList, week, weekMap.size(), firstMonth, lastMonth)){
+                        WearsType wears = new WearsType();
+                        htsnoMap.put(week,wears);
                         IEPlanBusinessHeadSet headSet = headMapByHdnum.get(rollPlan.getHdnum()).get(0);
                         switch (headSet.getZtype()){
                             case "01":
@@ -230,46 +232,50 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                                 wears.setWarranty(wears.getWarranty().add(rollPlan.getWears()));
                                 break;
                         }
-                        htsnoMap.put(week,wears);
                     }
                 })
             );
             //组装款项明细
-            Map<String, String> map = new HashMap<>();
-            htsnoList.add(map);
-            map.put("htsno",htsno);
-            htsnoMap.forEach((k,v)->{
-                StringBuilder sb = new StringBuilder();
-                if(v.getBudget().compareTo(BigDecimal.ZERO)>0){
-                    sb.append("预：").append(v.getBudget().toString());
-                }
-                if(v.getBudget().add(v.getProgress()).compareTo(BigDecimal.ZERO)>0){
-                    if(!Strings.isNullOrEmpty(sb.toString())){
-                        sb.append("$");
+            if(!ClassUtils.isEmpty(htsnoMap)){
+                Map<String, String> map = new HashMap<>();
+                htsnoList.add(map);
+                map.put("htsno",htsno);
+                htsnoMap.forEach((k,v)->{
+                    StringBuilder sb = new StringBuilder();
+                    if(v.getBudget().compareTo(BigDecimal.ZERO)>0){
+                        sb.append("预：").append(v.getBudget().toString());
                     }
-                    sb.append("结：").append(v.getBudget().add(v.getProgress()).toString());
-                }
-                if(v.getBudget().compareTo(BigDecimal.ZERO)>0){
-                    if(!Strings.isNullOrEmpty(sb.toString())){
-                        sb.append("$");
+                    if(v.getBudget().add(v.getProgress()).compareTo(BigDecimal.ZERO)>0){
+                        if(!Strings.isNullOrEmpty(sb.toString())){
+                            sb.append("$");
+                        }
+                        sb.append("结：").append(v.getBudget().add(v.getProgress()).toString());
                     }
-                    sb.append("质：").append(v.getBudget().toString());
-                }
-                if(!Strings.isNullOrEmpty(sb.toString())){
-                    map.put(k, sb.toString());
-                }
-            });
+                    if(v.getBudget().compareTo(BigDecimal.ZERO)>0){
+                        if(!Strings.isNullOrEmpty(sb.toString())){
+                            sb.append("$");
+                        }
+                        sb.append("质：").append(v.getBudget().toString());
+                    }
+                    if(!Strings.isNullOrEmpty(sb.toString())){
+                        map.put(k, sb.toString());
+                    }
+                });
+            }
         });
 
         //补充htsno的取数指标数据iePlanSelectDataSetService
         String ckdate = planHeader.getCkdate();
+
+        Set<String> htsnoSet = htsnoList.stream().map(i -> i.get("htsno")).collect(Collectors.toSet());
+        //根据版本号，及htsno获取所有取数指标
+        List<IEPlanSelectValueSet> selectValueSetList = iePlanSelectValueSetService.getContractByHtsnoSetAndVersion(htsnoSet, ckdate);
+        //取数指标根据sdart分组
+        Map<String, List<IEPlanSelectValueSet>> selectValueMapBySdart = selectValueSetList
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
+
         htsnoList.forEach(htsno->{
-            //根据版本号，及htsno获取所有取数指标
-            List<IEPlanSelectValueSet> selectValueSetList = iePlanSelectValueSetService.getContractByHtsnoAndVersion(htsno.get("htsno"), ckdate);
-            //取数指标根据sdart分组
-            Map<String, List<IEPlanSelectValueSet>> selectValueMapBySdart = selectValueSetList
-                    .stream()
-                    .collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
             //维度数据如果查出多条，用第一条即可
             selectValueMapBySdart.forEach((k,v)-> htsno.put(k, v.get(0).getSdval()));
         });

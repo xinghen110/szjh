@@ -5,6 +5,7 @@ import com.magustek.szjh.basedataset.entity.vo.IEPlanSelectValueSetVO;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface IEPlanSelectValueSetService {
     List<IEPlanSelectValueSet> save(List<IEPlanSelectValueSet> list);
@@ -16,6 +17,7 @@ public interface IEPlanSelectValueSetService {
 
     List<IEPlanSelectValueSet> getAllByVersionAndPflag(String version, String pflag);
     List<IEPlanSelectValueSet> getContractByHtsnoAndVersion(String htsno, String version);
+    List<IEPlanSelectValueSet> getContractByHtsnoSetAndVersion(Set<String> htsnoSet, String version);
 
     int updateReferencedByVersion(String referenced, String version);
 }

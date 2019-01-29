@@ -4,6 +4,7 @@ import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
 
+import javax.swing.text.StyledEditorKit;
 import java.util.List;
 
 public interface RollPlanArchiveService {
@@ -12,5 +13,5 @@ public interface RollPlanArchiveService {
     List<RollPlanHeadDataArchive> getHeadDataArchiveList(PlanHeader header);
     List<RollPlanItemDataArchive> getItemDataArchiveList(PlanHeader header);
 
-    List<RollPlanHeadDataArchive> getHeadData(String zbart, String dmval, String dtval, Long planHeadId);
+    List<RollPlanHeadDataArchive> getHeadData(String zbart, String dmval, String dtval, Long planHeadId, boolean firstMonth, boolean lastMonth);
 }
