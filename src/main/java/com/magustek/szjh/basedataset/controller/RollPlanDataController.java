@@ -46,7 +46,7 @@ public class RollPlanDataController {
             return resp.setStateCode(BaseResponse.ERROR).setMsg("合同流水号为空").toJson();
         }
 
-        List<RollPlanHeaderVO> list = rollPlanDataService.getRollPlanVOByVersionAndHtsno(vo.getVersion(), vo.getHtsno());
+        List<RollPlanHeaderVO> list = rollPlanDataService.getRollPlanVOByIdAndHtsno(vo.getId(), vo.getHtsno());
 
         List<Map<String, String>> maps = rollPlanDataService.coverToMap(list);
         log.warn("version和htsno，合同滚动计划数据：{}", JSON.toJSONString(maps));

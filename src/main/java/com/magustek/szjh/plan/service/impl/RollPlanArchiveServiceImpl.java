@@ -19,8 +19,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import javax.transaction.Transactional;
-import java.text.ParseException;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -137,6 +135,18 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     @Override
     public List<RollPlanItemDataArchive> getItemDataArchiveList(PlanHeader header) {
         return rollPlanItemDataArchiveDAO.findAllByPlanHeadId(header.getId());
+    }
+
+    @Override
+    public Map<RollPlanHeadDataArchive, List<RollPlanItemDataArchive>> getRollPlanListByPlanIdAndHtsno(Long id, String htsno) {
+        List<RollPlanHeadDataArchive> headList = rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndHtsno(id, htsno);
+        Map<RollPlanHeadDataArchive, List<RollPlanItemDataArchive>> map = new HashMap<>(headList.size());
+
+        headList.forEach(head->{
+            List<RollPlanItemDataArchive> itemList = rollPlanItemDataArchiveDAO.findAllByHeadId(head.getRollId());
+            map.put(head, itemList);
+        });
+        return map;
     }
 
     @Override

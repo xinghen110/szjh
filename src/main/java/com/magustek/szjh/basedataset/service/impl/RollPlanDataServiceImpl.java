@@ -20,6 +20,10 @@ import com.magustek.szjh.configset.bean.IEPlanReportItemSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanBusinessHeadSetVO;
 import com.magustek.szjh.configset.bean.vo.IEPlanBusinessItemSetVO;
 import com.magustek.szjh.configset.service.*;
+import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
+import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
+import com.magustek.szjh.plan.dao.RollPlanHeadDataArchiveDAO;
+import com.magustek.szjh.plan.dao.RollPlanItemDataArchiveDAO;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.constant.IEPlanSelectDataConstant;
@@ -36,7 +40,9 @@ import java.util.stream.Collectors;
 @Service("RollPlanDataService")
 public class RollPlanDataServiceImpl implements RollPlanDataService {
     private RollPlanHeadDataDAO rollPlanHeadDataDAO;
+    private RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO;
     private RollPlanItemDataDAO rollPlanItemDataDAO;
+    private RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO;
 
 
     private IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
@@ -47,6 +53,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private DmCalcStatisticsService dmCalcStatisticsService;
     private OrganizationSetService organizationSetService;
     private HolidayService holidayService;
+    private ConfigDataSourceSetService configDataSourceSetService;
 
     private List<IEPlanBusinessHeadSetVO> headSetList;//滚动计划抬头列表
     private Map<String, List<IEPlanBusinessItemSetVO>> businessItemMap;//滚动计划明细列表（以抬头编号分组）
@@ -56,9 +63,11 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private Set<String> hjendCache;//计算结束环节列表
 
 
-    public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanItemDataDAO rollPlanItemDataDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, DmCalcStatisticsService dmCalcStatisticsService, OrganizationSetService organizationSetService, HolidayService holidayService) {
+    public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataDAO rollPlanItemDataDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, DmCalcStatisticsService dmCalcStatisticsService, OrganizationSetService organizationSetService, HolidayService holidayService, ConfigDataSourceSetService configDataSourceSetService) {
         this.rollPlanHeadDataDAO = rollPlanHeadDataDAO;
+        this.rollPlanHeadDataArchiveDAO = rollPlanHeadDataArchiveDAO;
         this.rollPlanItemDataDAO = rollPlanItemDataDAO;
+        this.rollPlanItemDataArchiveDAO = rollPlanItemDataArchiveDAO;
         this.iePlanBusinessHeadSetService = iePlanBusinessHeadSetService;
         this.iePlanBusinessItemSetService = iePlanBusinessItemSetService;
         this.iePlanReportHeadSetService = iePlanReportHeadSetService;
@@ -67,6 +76,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         this.dmCalcStatisticsService = dmCalcStatisticsService;
         this.organizationSetService = organizationSetService;
         this.holidayService = holidayService;
+        this.configDataSourceSetService = configDataSourceSetService;
     }
     //初始化数据
     private void init(){
@@ -355,13 +365,13 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     }
 
     @Override
-    public List<RollPlanHeaderVO> getRollPlanVOByVersionAndHtsno(String version, String htsno) {
+    public List<RollPlanHeaderVO> getRollPlanVOByIdAndHtsno(Long id, String htsno) {
         //抬头配置
         Map<String, List<IEPlanBusinessHeadSet>> headerMap = iePlanBusinessHeadSetService.getAll().stream().collect(Collectors.groupingBy(IEPlanBusinessHeadSet::getHdnum));
         //行项目配置
         Map<String, List<IEPlanBusinessItemSet>> itemMap = iePlanBusinessItemSetService.getAll().stream().collect(Collectors.groupingBy(IEPlanBusinessItemSet::getImnum));
 
-        List<RollPlanHeadData> headerList = rollPlanHeadDataDAO.findAllByVersionAndHtsno(version, htsno);
+        List<RollPlanHeadDataArchive> headerList = rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndHtsno(id, htsno);
 
         //装配headerVO
         List<RollPlanHeaderVO> headerVOList = new ArrayList<>(headerList.size());
@@ -371,11 +381,10 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
 
             headerVO.setBusta(headerMap.get(header.getHdnum()).get(0).getBusta());
             headerVO.setZtype(headerMap.get(header.getHdnum()).get(0).getZtype());
+            headerVO.setConfig(configDataSourceSetService);
 
             //装配itemVO
-            ArrayList<RollPlanHeadData> l = new ArrayList<>(1);
-            l.add(header);
-            List<RollPlanItemData> list = rollPlanItemDataDAO.findAllByHeadIdIn(l);
+            List<RollPlanItemDataArchive> list = rollPlanItemDataArchiveDAO.findAllByHeadId(header.getRollId());
             List<RollPlanItemVO> itemVOList = new ArrayList<>();
             list.forEach(item->{
                 RollPlanItemVO itemVO = new RollPlanItemVO();

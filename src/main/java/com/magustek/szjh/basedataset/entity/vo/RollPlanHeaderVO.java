@@ -1,6 +1,7 @@
 package com.magustek.szjh.basedataset.entity.vo;
 
-import com.magustek.szjh.basedataset.entity.RollPlanHeadData;
+import com.magustek.szjh.configset.service.ConfigDataSourceSetService;
+import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,10 +9,11 @@ import java.util.List;
 
 @Getter
 @Setter
-public class RollPlanHeaderVO extends RollPlanHeadData {
+public class RollPlanHeaderVO extends RollPlanHeadDataArchive {
     private String busta;//业务状态（01-未支付、02-已支付）
     private String ztype;//款项（01-预付款、02-进度款）
     private List<RollPlanItemVO> itemVOS;
+    private ConfigDataSourceSetService config;
 
     public String getBusta(){
         if("01".equals(busta)){
@@ -24,11 +26,8 @@ public class RollPlanHeaderVO extends RollPlanHeadData {
     }
 
     public String getZtype(){
-        if("01".equals(ztype)){
-            return "预付款";
-        }
-        if("02".equals(ztype)){
-            return "进度款";
+        if(config!=null){
+            return config.getDescByQcgrpAndQcode("'SFKU'", ztype);
         }
         return "";
     }

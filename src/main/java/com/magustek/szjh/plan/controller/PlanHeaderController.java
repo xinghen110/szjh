@@ -3,6 +3,7 @@ package com.magustek.szjh.plan.controller;
 import com.alibaba.fastjson.JSON;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.plan.bean.PlanHeader;
+import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.vo.PlanHeaderVO;
 import com.magustek.szjh.plan.service.PlanHeaderService;
 import com.magustek.szjh.utils.ClassUtils;
@@ -82,7 +83,7 @@ public class PlanHeaderController {
         return resp.setStateCode(BaseResponse.SUCCESS).setData(config).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="根据参数获取合同信息列表，参数：zbart-指标值、dmval-维度值、dtval-时间（yyyy-MM）、planHeadId-月度计划id。")
+    @ApiOperation(value="根据参数获取合同信息列表，参数：zbart-指标值、dmval-维度值、dtval-时间（yyyy-MM）、id-月度计划id。")
     @RequestMapping("/getHtsnoList")
     public String getHtsnoList(@RequestBody PlanHeaderVO vo) throws Exception {
         List<Map<String, String>> htsnoList = planHeaderService.getHtsnoList(vo.getZbart(), vo.getDmval(), vo.getDtval(), vo.getId(), vo.getPageRequest());

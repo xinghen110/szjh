@@ -1,19 +1,18 @@
 package com.magustek.szjh.basedataset.entity.vo;
 
-import com.magustek.szjh.basedataset.entity.RollPlanItemData;
+import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.constant.IEPlanSelectDataConstant;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.text.ParseException;
 import java.time.LocalDate;
 
 @Setter
 @Getter
 @Slf4j
-public class RollPlanItemVO extends RollPlanItemData {
+public class RollPlanItemVO extends RollPlanItemDataArchive {
     private String value;
     private String vtype;//值类型
 

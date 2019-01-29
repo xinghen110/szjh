@@ -14,7 +14,7 @@ public interface RollPlanDataService {
     List<RollPlanItemData> getAllByHead(List<RollPlanHeadData> list);
     void deleteAllByVersion(String version) throws Exception;
     List<RollPlanHeadData> calculateByVersion(String version) throws Exception;
-    List<RollPlanHeaderVO> getRollPlanVOByVersionAndHtsno(String version, String htsno);
+    List<RollPlanHeaderVO> getRollPlanVOByIdAndHtsno(Long id, String htsno);
     List<Map<String, String>> coverToMap(List<RollPlanHeaderVO> list);
     Map<String, String> getContractDataByVersionAndHtsno(String version, String htsno) throws Exception;
 }
