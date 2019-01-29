@@ -51,6 +51,6 @@ public class BaseEntity extends BasePage{
     }
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hashCode(id);
     }
 }

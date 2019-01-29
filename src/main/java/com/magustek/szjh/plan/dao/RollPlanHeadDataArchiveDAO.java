@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface RollPlanHeadDataArchiveDAO extends CrudRepository<RollPlanHeadDataArchive, Long> {
     List<RollPlanHeadDataArchive> findAllByPlanHeadId(Long planHeadId);
+    List<RollPlanHeadDataArchive> findAllByPlanHeadIdAndHtsno(Long planHeadId, String htsno);
 
     void deleteAllByPlanHeadId(Long planHeadId);
 

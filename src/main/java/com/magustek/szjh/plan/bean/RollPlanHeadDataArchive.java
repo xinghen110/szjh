@@ -1,6 +1,5 @@
 package com.magustek.szjh.plan.bean;
 
-import com.magustek.szjh.basedataset.entity.RollPlanHeadData;
 import com.magustek.szjh.utils.base.BaseEntity;
 import io.swagger.annotations.ApiModel;
 import lombok.Getter;
@@ -33,4 +32,5 @@ public class RollPlanHeadDataArchive  extends BaseEntity {
     @Column(length = 10)   private String dtval;                //第一个计划日期(yyyyMMdd)
     @Column(length = 1000) private String stval;                //合同条款
     @Column(length = 30) private String version;                //明细版本（储存编制日期或计划编号）
+
 }

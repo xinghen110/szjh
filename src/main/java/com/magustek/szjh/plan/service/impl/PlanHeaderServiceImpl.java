@@ -11,10 +11,7 @@ import com.magustek.szjh.configset.service.ConfigDataSourceSetService;
 import com.magustek.szjh.configset.service.IEPlanBusinessHeadSetService;
 import com.magustek.szjh.configset.service.IEPlanReportHeadSetService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
-import com.magustek.szjh.plan.bean.PlanHeader;
-import com.magustek.szjh.plan.bean.PlanItem;
-import com.magustek.szjh.plan.bean.PlanLayout;
-import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
+import com.magustek.szjh.plan.bean.*;
 import com.magustek.szjh.plan.bean.vo.PlanHeaderVO;
 import com.magustek.szjh.plan.dao.PlanHeaderDAO;
 import com.magustek.szjh.plan.dao.PlanLayoutDAO;
@@ -242,23 +239,28 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 map.put("htsno",htsno);
                 htsnoMap.forEach((k,v)->{
                     StringBuilder sb = new StringBuilder();
+                    BigDecimal amount = new BigDecimal("0.00");
                     if(v.getBudget().compareTo(BigDecimal.ZERO)>0){
                         sb.append("预：").append(v.getBudget().toString());
+                        amount = amount.add(v.getBudget());
                     }
-                    if(v.getBudget().add(v.getProgress()).compareTo(BigDecimal.ZERO)>0){
+                    if(v.getSettlement().add(v.getProgress()).compareTo(BigDecimal.ZERO)>0){
                         if(!Strings.isNullOrEmpty(sb.toString())){
                             sb.append("$");
                         }
                         sb.append("结：").append(v.getBudget().add(v.getProgress()).toString());
+                        amount = amount.add(v.getSettlement()).add(v.getProgress());
                     }
-                    if(v.getBudget().compareTo(BigDecimal.ZERO)>0){
+                    if(v.getWarranty().compareTo(BigDecimal.ZERO)>0){
                         if(!Strings.isNullOrEmpty(sb.toString())){
                             sb.append("$");
                         }
                         sb.append("质：").append(v.getBudget().toString());
+                        amount = amount.add(v.getWarranty());
                     }
                     if(!Strings.isNullOrEmpty(sb.toString())){
                         map.put(k, sb.toString());
+                        map.put(k+"_amount", amount.toString());
                     }
                 });
             }
@@ -271,13 +273,14 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         //根据版本号，及htsno获取所有取数指标
         List<IEPlanSelectValueSet> selectValueSetList = iePlanSelectValueSetService.getContractByHtsnoSetAndVersion(htsnoSet, ckdate);
         //取数指标根据sdart分组
-        Map<String, List<IEPlanSelectValueSet>> selectValueMapBySdart = selectValueSetList
+        Map<String, List<IEPlanSelectValueSet>> selectValueMapByHtsno = selectValueSetList
                 .stream()
-                .collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
+                .collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtsno));
 
         htsnoList.forEach(htsno->{
-            //维度数据如果查出多条，用第一条即可
-            selectValueMapBySdart.forEach((k,v)-> htsno.put(k, v.get(0).getSdval()));
+            //根据合同流水号，获取取数指标及其值
+            List<IEPlanSelectValueSet> sdartList = selectValueMapByHtsno.get(htsno.get("htsno"));
+            sdartList.forEach(sdart-> htsno.put(sdart.getSdart(), sdart.getSdval()));
         });
         return htsnoList;
     }
