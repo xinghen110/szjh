@@ -446,7 +446,7 @@ public class PlanItemServiceImpl implements PlanItemService {
         long headTime;
         try {
             headTime = ClassUtils.StringToLocalDate(head.getDtval()).toEpochDay();
-        } catch (ParseException e) {
+        } catch (Exception e) {
             return;
         }
 

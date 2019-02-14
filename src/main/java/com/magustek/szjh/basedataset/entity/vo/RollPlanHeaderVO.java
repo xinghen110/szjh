@@ -27,7 +27,7 @@ public class RollPlanHeaderVO extends RollPlanHeadDataArchive {
 
     public String getZtype(){
         if(config!=null){
-            return config.getDescByQcgrpAndQcode("'SFKU'", ztype);
+            return config.getDescByQcgrpAndQcode("SFKU", ztype);
         }
         return "";
     }

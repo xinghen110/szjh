@@ -22,7 +22,7 @@ public class GroovyShellExample {
             e.printStackTrace();
         }
 
-        c();
+        f();
     }
 
     public static void a(){
@@ -58,10 +58,9 @@ public class GroovyShellExample {
     public static void c(){
         Binding binding = new Binding();
         try {
-            binding.setVariable("G111", "ICM03");
-
+            binding.setVariable("G121", "0.00");
             GroovyShell shell = new GroovyShell(binding);
-            Object value = shell.evaluate("G111 != 'ICM09'");
+            Object value = shell.evaluate("G121 > '0'");
 
             System.err.println(value);
         } catch (Exception e) {
@@ -81,6 +80,15 @@ public class GroovyShellExample {
         BigDecimal bb = new BigDecimal(3);
         aa.add(bb);
         System.out.println(aa.toString());
+    }
+
+    private static void f(){
+        StringBuffer sb = new StringBuffer();
+        //sb.append("sdfsdfsdf").append("$");
+        if(sb.charAt(sb.length()-1) == '$'){
+            sb.deleteCharAt(sb.length()-1);
+        }
+        System.out.println(sb.toString());
     }
 
 }

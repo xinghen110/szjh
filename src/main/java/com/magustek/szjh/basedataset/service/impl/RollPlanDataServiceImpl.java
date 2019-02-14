@@ -1,5 +1,6 @@
 package com.magustek.szjh.basedataset.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
 import com.magustek.szjh.Holiday.service.HolidayService;
 import com.magustek.szjh.basedataset.dao.RollPlanHeadDataDAO;
@@ -51,7 +52,6 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private IEPlanReportItemSetService iePlanReportItemSetService;
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
     private DmCalcStatisticsService dmCalcStatisticsService;
-    private OrganizationSetService organizationSetService;
     private HolidayService holidayService;
     private ConfigDataSourceSetService configDataSourceSetService;
 
@@ -63,7 +63,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private Set<String> hjendCache;//计算结束环节列表
 
 
-    public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataDAO rollPlanItemDataDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, DmCalcStatisticsService dmCalcStatisticsService, OrganizationSetService organizationSetService, HolidayService holidayService, ConfigDataSourceSetService configDataSourceSetService) {
+    public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataDAO rollPlanItemDataDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, DmCalcStatisticsService dmCalcStatisticsService, HolidayService holidayService, ConfigDataSourceSetService configDataSourceSetService) {
         this.rollPlanHeadDataDAO = rollPlanHeadDataDAO;
         this.rollPlanHeadDataArchiveDAO = rollPlanHeadDataArchiveDAO;
         this.rollPlanItemDataDAO = rollPlanItemDataDAO;
@@ -74,7 +74,6 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         this.iePlanReportItemSetService = iePlanReportItemSetService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
         this.dmCalcStatisticsService = dmCalcStatisticsService;
-        this.organizationSetService = organizationSetService;
         this.holidayService = holidayService;
         this.configDataSourceSetService = configDataSourceSetService;
     }
@@ -127,17 +126,19 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     }
 
     @Override
-    public void deleteAllByVersion(String version) throws Exception {
-        List<RollPlanHeadData> headDataList = new ArrayList<>();
+    public void deleteAllByVersion(String version) {
+        //List<RollPlanHeadData> headDataList = new ArrayList<>();
         //获取所有公司的数据
-        organizationSetService.getRangeList().forEach(i-> headDataList.addAll(getAllByVersion(version, i.getKey())));
+        //organizationSetService.getRangeList().forEach(i-> headDataList.addAll(getAllByVersion(version, i.getKey())));
 
-        rollPlanItemDataDAO.deleteAllByHeadIdIn(headDataList);
-        rollPlanHeadDataDAO.delete(headDataList);
+        //rollPlanItemDataDAO.deleteAllByHeadIdIn(headDataList);
+        rollPlanItemDataDAO.deleteByVersion(version);
+        //rollPlanHeadDataDAO.delete(headDataList);
+        rollPlanHeadDataDAO.deleteAllByVersion(version);
     }
 
     @Override
-    public List<RollPlanHeadData> calculateByVersion(String version) throws Exception {
+    public List<RollPlanHeadData> calculateByVersion(String version) {
         this.version = version;
         this.init();
 
@@ -160,7 +161,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         valueListByHtsno.forEach((htsno, valueList)->{
             List<IEPlanBusinessHeadSetVO> headList = new ArrayList<>();
             //TODO debug only
-            if("60101800028182".equals(htsno)){
+            if("60101800029082".equals(htsno)){
                 System.out.println("debug point");
             }
             headSetList.forEach(h->{
@@ -177,7 +178,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         /* 计算滚动计划明细单 */
         htsnoHeadList.forEach((htsno, headSetList)->{
             //TODO debug only
-            if("60101800028182".equals(htsno)){
+            if("60101800029082".equals(htsno)){
                 System.out.println("debug point");
             }
             List<RollPlanDataHelper> rollPlanDataHelperList = new ArrayList<>();//同一个合同的计划列表
@@ -196,7 +197,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                         .stream()
                         .collect(Collectors.groupingBy(IEPlanBusinessItemSetVO::getSdtyp));
                 //TODO debug only
-                if("60101800028182".equals(htsno)){
+                if("60101800029082".equals(htsno)){
                     System.out.println("debug point");
                 }
                 //处理类型为【G】的指标
@@ -210,6 +211,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 //获取计算值的项目
                 List<IEPlanBusinessItemSetVO> getItem = groupBySdtyp.get(IEPlanBusinessItemSet.CALC);
                 if(ClassUtils.isEmpty(getItem)){
+                    rollPlanDataHelperList.addAll(localHelperList);
                     return;
                 }
                 //计算起始节点
@@ -298,13 +300,25 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                             lastSdcutValue = lastItemVO.getSdcutValue();
                         }
                         //计算节点差值
-                        BigDecimal subCurr = lastSdcutValue.subtract(itemVO.getSdcutValue());
+                        BigDecimal sdcut = itemVO.getSdcutValue();
+                        //如果上一个节点有金额，当前节点金额为空，后续节点还有值（业务流程不规范，导致部分节点跳过。），则当前节点的金额取后续有值节点的金额。
+                        if(ClassUtils.isEmpty(sdcut)){
+                            ArrayList<IEPlanBusinessItemSetVO> nextItemList = getNextItemList(calcList, itemVO);
+                            for (IEPlanBusinessItemSetVO vo : nextItemList) {
+                                if(!ClassUtils.isEmpty(vo.getSdcutValue())){
+                                    sdcut = vo.getSdcutValue();
+                                    break;
+                                }
+                            }
+                        }
+                        BigDecimal subCurr = lastSdcutValue.subtract(sdcut);
 
                         if (subCurr.compareTo(BigDecimal.ZERO) > 0){
                             //金额有差值
                             //增加一条新的滚动计划
                             RollPlanDataHelper newHelper = new RollPlanDataHelper();
                             this.createHelper(newHelper, itemVO, calcList);
+                            newHelper.getHeadData().setStval(helper.getHeadData().getStval());
                             newHelper.getHeadData().setWears(subCurr);
                             newHelper.getHeadData().setHtsno(htsno);
                             newHelper.getHeadData().setBukrs(head.getBukrs());
@@ -340,6 +354,11 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 });
                 //删除第一个计划（由【G】创建的）
                 if(!ClassUtils.isEmpty(localHelperList) && localHelperList.size()>1){
+                    //TODO debug only
+                    if("60101800029082".equals(htsno)){
+                        log.error("debug point: 0-{}", JSON.toJSONString(localHelperList.get(0)));
+                        log.error("debug point: 1-{}", JSON.toJSONString(localHelperList.get(1)));
+                    }
                     localHelperList.remove(0);
                 }
                 rollPlanDataHelperList.addAll(localHelperList);
@@ -418,10 +437,10 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
             map.put("wears", wears == null?"":vo.getWears().toString());
             vo.getItemVOS().forEach(item->{
                 map.put(item.getSdart(),item.getValue());
-                map.put(item.getSdart().replaceFirst("G","H")+"_ctdtp",item.getCtdtp());
-                map.put(item.getSdart().replaceFirst("G","H")+"_imnum",item.getImnum());
-                map.put(item.getSdart().replaceFirst("G","H")+"_vtype",item.getVtype());
-                map.put(item.getSdart().replaceFirst("G","H")+"_odue",item.getOdue());
+                map.put(item.getSdart().replaceFirst("G","H"),item.getCtdtp());
+                //map.put(item.getSdart().replaceFirst("G","H")+"_imnum",item.getImnum());
+                //map.put(item.getSdart().replaceFirst("G","H"),item.getVtype());
+                //map.put(item.getSdart().replaceFirst("G","H")+"_odue",item.getOdue());
             });
         });
 
@@ -494,6 +513,10 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                         sdartValue.forEach(v-> sb.append(v.getSdval()).append("$"));
                         //合同条款
                         itemData.setStval(sb.toString());
+                        //删除最后一个【$】符号
+                        if(sb.length()>0 && sb.charAt(sb.length()-1) == '$'){
+                            sb.deleteCharAt(sb.length()-1);
+                        }
                         //加入明细表
                         plan.setStval(sb.toString());
                         //itemData.setHeadId(plan);
@@ -744,7 +767,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         }
 
         LocalDate startDate = ClassUtils.StringToLocalDate(lastGItem.getDtval());//计算起始日期
-        float natureDays = ( limitDate.toEpochDay() - startDate.toEpochDay()) / sumCaval; //日期乘数
+        float natureDays = ( limitDate.toEpochDay() - startDate.toEpochDay()) / (float)sumCaval; //日期乘数
         //根据合同约定，调整计划日期
         pendingItemList.forEach(i->{
             int days = (int) natureDays * i.getCaval();
@@ -783,5 +806,23 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
             });
         });
         log.info("滚动计划-经营指标计算完毕，耗时：{}", (System.currentTimeMillis()-l)/1000.00);
+    }
+
+    //根据计算环节列表，以及当前环节，返回后续环节列表
+    private ArrayList<IEPlanBusinessItemSetVO> getNextItemList(ArrayList<IEPlanBusinessItemSetVO> calcList, IEPlanBusinessItemSetVO currItem){
+        ArrayList<IEPlanBusinessItemSetVO> nextItemList = new ArrayList<>();
+        boolean add = false;
+        for (IEPlanBusinessItemSetVO vo : calcList) {
+            if(!add){
+                //之前的环节
+                if(vo.getImnum().equals(currItem.getImnum())){
+                    add = true;
+                }
+            }else{
+                //之后的环节
+                nextItemList.add(vo);
+            }
+        }
+        return nextItemList;
     }
 }

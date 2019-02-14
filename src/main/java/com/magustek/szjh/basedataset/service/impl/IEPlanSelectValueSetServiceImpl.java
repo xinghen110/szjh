@@ -53,10 +53,11 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
     }
 
     //referenced字段不是null的，不允许删除
-    @Transactional
     @Override
     public void deleteAllByVersion(String version) {
-        iePlanSelectValueSetDAO.deleteAllByVersionAndReferencedIsNull(version);
+        //TODO
+        iePlanSelectValueSetDAO.deleteAllByVersion(version);
+        //iePlanSelectValueSetDAO.deleteAllByVersionAndReferencedIsNull(version);
     }
 
     public List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs) {

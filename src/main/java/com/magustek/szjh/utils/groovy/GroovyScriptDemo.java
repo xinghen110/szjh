@@ -44,7 +44,7 @@ public class GroovyScriptDemo {
         while(i-->0) {
             GroovyScriptDemo demo = new GroovyScriptDemo();
             demo.setVariable("x", i);
-            Object o = demo.evaluateExpression("return x+x");
+            Object o = demo.evaluateExpression("return x>0");
             System.out.println(o.toString());
         }
         //b();

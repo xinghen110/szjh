@@ -76,7 +76,7 @@ zconnection:
   type: odata
   odataIp: http://10.154.2.41
   odataPort: 8000
-  odataUser: zn_odata
-  odataPasswd: zn_odata
+  odataUser: zn_odata_p
+  odataPasswd: zn_odata_p
   odataClient: 300
   esbIp: http://10.154.97.1:8010/

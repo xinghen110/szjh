@@ -14,6 +14,7 @@ import java.util.Set;
 public interface IEPlanSelectValueSetDAO extends CrudRepository<IEPlanSelectValueSet, Long>{
     @Transactional
     void deleteAllByVersionAndReferencedIsNull(String version);
+    void deleteAllByVersion(String version);
     List<IEPlanSelectValueSet> findAllByVersion(String version);
     List<IEPlanSelectValueSet> findAllByHtsnoAndVersion(String htsno, String version);
     List<IEPlanSelectValueSet> findAllByHtsnoInAndVersion(Set<String> htsnoSet, String version);

@@ -204,7 +204,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         //计算周期内合同的金额
         rollPlanMapByHtsno.forEach((htsno, rollPlanList)->{
             //TODO debug point
-            if ("60101800005945".equals(htsno)){
+            if ("60101800019313".equals(htsno)){
                 log.debug("debug point!");
             }
             Map<String, WearsType> htsnoMap = new HashMap<>();
