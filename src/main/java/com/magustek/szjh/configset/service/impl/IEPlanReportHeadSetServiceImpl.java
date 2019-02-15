@@ -241,7 +241,11 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         for (;i>=0;i--){
             KeyValueBean item = new KeyValueBean();
             String date = ClassUtils.formatDate(rpdat, punit);
-            item.put(date, date, "MH");
+            if("MR".equals(rptyp)){
+                item.put(date, date, "H");
+            }else{
+                item.put(date, date, "M");
+            }
 
             strBuilder.append(date).append("+");
 
