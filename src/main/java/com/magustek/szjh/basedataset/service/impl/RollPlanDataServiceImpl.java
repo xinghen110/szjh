@@ -12,6 +12,7 @@ import com.magustek.szjh.basedataset.entity.helper.RollPlanDataHelper;
 import com.magustek.szjh.basedataset.entity.vo.RollPlanHeaderVO;
 import com.magustek.szjh.basedataset.entity.vo.RollPlanItemVO;
 import com.magustek.szjh.basedataset.service.DmCalcStatisticsService;
+import com.magustek.szjh.basedataset.service.IEPlanDimenValueSetService;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.basedataset.service.RollPlanDataService;
 import com.magustek.szjh.configset.bean.IEPlanBusinessHeadSet;
@@ -26,7 +27,6 @@ import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
 import com.magustek.szjh.plan.dao.RollPlanHeadDataArchiveDAO;
 import com.magustek.szjh.plan.dao.RollPlanItemDataArchiveDAO;
 import com.magustek.szjh.utils.ClassUtils;
-import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.constant.IEPlanSelectDataConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -51,6 +51,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private IEPlanReportHeadSetService iePlanReportHeadSetService;
     private IEPlanReportItemSetService iePlanReportItemSetService;
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
+    private IEPlanDimenValueSetService iePlanDimenValueSetService;
     private DmCalcStatisticsService dmCalcStatisticsService;
     private HolidayService holidayService;
     private ConfigDataSourceSetService configDataSourceSetService;
@@ -63,7 +64,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private Set<String> hjendCache;//计算结束环节列表
 
 
-    public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataDAO rollPlanItemDataDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, DmCalcStatisticsService dmCalcStatisticsService, HolidayService holidayService, ConfigDataSourceSetService configDataSourceSetService) {
+    public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataDAO rollPlanItemDataDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanDimenValueSetService iePlanDimenValueSetService, DmCalcStatisticsService dmCalcStatisticsService, HolidayService holidayService, ConfigDataSourceSetService configDataSourceSetService) {
         this.rollPlanHeadDataDAO = rollPlanHeadDataDAO;
         this.rollPlanHeadDataArchiveDAO = rollPlanHeadDataArchiveDAO;
         this.rollPlanItemDataDAO = rollPlanItemDataDAO;
@@ -73,6 +74,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         this.iePlanReportHeadSetService = iePlanReportHeadSetService;
         this.iePlanReportItemSetService = iePlanReportItemSetService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
+        this.iePlanDimenValueSetService = iePlanDimenValueSetService;
         this.dmCalcStatisticsService = dmCalcStatisticsService;
         this.holidayService = holidayService;
         this.configDataSourceSetService = configDataSourceSetService;
@@ -89,6 +91,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         //滚动计划明细列表（以抬头编号分组）
         businessItemMap = iePlanBusinessItemSetService.getAllVO().stream().collect(Collectors.groupingBy(IEPlanBusinessItemSet::getHdnum));
 
+        //初始化缓存
         dmvalCache = new HashMap<>();
         //hjendCache = new HashSet<>();
         //获取计算结束环节列表
@@ -269,7 +272,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                         }
                     }
                     item.setSdartValue(maxDate);//最新取数日期（如果取不到则为空）
-                    item.setCaartValue(getDmval(item.getCaart()));//历史能力值
+                    item.setCaartValue(getDmval(item.getCaart(), htsno));//历史能力值
                     item.setSdcutValue(BigDecimal.valueOf(sumCurr));//累计金额
                     item.setMaxHtnum(maxHtnum);//最新日期对应的合同管理编号
 
@@ -538,10 +541,10 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     }
 
     //根据版本，维度代码获取【计划能力值】
-    private int getDmval(String caart){
+    private int getDmval(String caart,String htsno){
         try {
-            String dmval = ContextUtils.getCompany().getOrgcode();
-            String caval = dmCalcStatisticsService.getCaval(this.version, "D100", dmval, caart, dmvalCache);
+            String dmval = iePlanDimenValueSetService.getDmvalByHtsno(htsno, this.version, "D110").getDmval();
+            String caval = dmCalcStatisticsService.getCaval(this.version, "D110", dmval, caart, dmvalCache);
             //四舍五入取整
             if(Strings.isNullOrEmpty(caval)){
                 return 0;
@@ -637,7 +640,8 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     }
 
     //获取合同约定相关节点数据（待调整日期的节点列表）
-    private List<IEPlanBusinessItemSetVO> getStipulateItemList(List<IEPlanBusinessItemSetVO> calcList,                                  Map<String, List<IEPlanSelectValueSet>> sdartValueMap){
+    private List<IEPlanBusinessItemSetVO> getStipulateItemList(List<IEPlanBusinessItemSetVO> calcList,
+                                                               Map<String, List<IEPlanSelectValueSet>> sdartValueMap){
         List<IEPlanBusinessItemSetVO> itemList = new ArrayList<>();
         //取出【合同约定起始环节】不为空的环节
         Optional<IEPlanBusinessItemSetVO> lastItemOP = calcList.stream().filter(i -> !Strings.isNullOrEmpty(i.getCtbgn())).findFirst();
@@ -779,7 +783,10 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private void calcZbart(List<RollPlanHeadData> rollPlanHeadDataList,
                            Map<String, List<IEPlanSelectValueSet>> valueListByHtsno){
         long l = System.currentTimeMillis();
-        Map<String, List<IEPlanReportItemSet>> reportMap = iePlanReportItemSetService.getAllByIetyp().stream().collect(Collectors.groupingBy(IEPlanReportItemSet::getBukrs));
+        Map<String, List<IEPlanReportItemSet>> reportMap = iePlanReportItemSetService
+                .getAllByIetyp()
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanReportItemSet::getBukrs));
         //遍历滚动计划
         rollPlanHeadDataList.forEach(plan->{
             //该合同的指标map

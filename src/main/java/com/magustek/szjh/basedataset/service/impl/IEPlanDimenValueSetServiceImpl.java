@@ -89,15 +89,18 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
 
     @Override
     public List<IEPlanDimenValueSetVO> getContractByHtsno(String htsno, String version) {
-        //获取指标列表（用来匹配指标值类型）
-        Map<String, IEPlanDimensionSet> dimensionSetMap = iePlanDimensionSetService.getMappedList();
         if(Strings.isNullOrEmpty(version)){
             version = LocalDate.now().toString();
         }
+        //获取指标列表（用来匹配指标值类型）
+        Map<String, IEPlanDimensionSet> dimensionSetMap = iePlanDimensionSetService.getMappedList();
+
         //根据合同流水号及版本号返回所有单据
         List<IEPlanDimenValueSet> valueSetList = iePlanDimenValueSetDAO.findAllByHtsnoAndVersion(htsno, version);
-        Map<String, List<IEPlanDimenValueSet>> collect = valueSetList.stream().collect(Collectors.groupingBy(IEPlanDimenValueSet::getHtnum));
-        List<IEPlanDimenValueSetVO> voList = new ArrayList<>(collect.size());
+        Map<String, List<IEPlanDimenValueSet>> collect = valueSetList
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanDimenValueSet::getHtnum));
+        List<IEPlanDimenValueSetVO> voList = new ArrayList<>();
         //根据htnum分组遍历
         collect.forEach((k, v)->{
             if(!ClassUtils.isEmpty(v)){
@@ -105,7 +108,7 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
                 vo.setHtnum(k);
                 vo.setHtsno(v.get(0).getHtsno());
                 vo.setVersion(v.get(0).getVersion());
-                List<KeyValueBean> kvList = new ArrayList<>(v.size());
+                List<KeyValueBean> kvList = new ArrayList<>();
                 //组装指标信息
                 v.forEach(i->{
                     KeyValueBean kv = new KeyValueBean();
@@ -120,6 +123,11 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
             }
         });
         return voList;
+    }
+
+    @Override
+    public IEPlanDimenValueSet getDmvalByHtsno(String htsno, String dmart, String version) {
+        return iePlanDimenValueSetDAO.findTopByHtsnoAndVersionAndDmart(htsno,version,dmart);
     }
 
     private List<IEPlanDimenValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanDimensionSet dimensionSet){

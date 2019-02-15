@@ -1,7 +1,9 @@
 package com.magustek.szjh.utils.http;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.base.Strings;
 import com.magustek.szjh.config.HttpConnectConfig;
+import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.OdataUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +78,17 @@ public class HttpUtils {
                     .append(config.getOdataClient());
 
             //设置sap token
-            headers.add(odataTokenHeader, this.getOdataToken());
+            String token = "";
+            int i = 0;
+            while (Strings.isNullOrEmpty(token)){
+                token = this.getOdataToken();
+                i++;
+                if(i>5){
+                    log.error("获取sap token失败！url：{}",urlString);
+                    break;
+                }
+            }
+            headers.add(odataTokenHeader, token);
         }
         if("esb".equals(config.getType())) {
             //拼接url

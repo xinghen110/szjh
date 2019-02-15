@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 计划业务表：历史业务取数主表
@@ -128,6 +129,16 @@ public class BasedataSetController {
         List<RollPlanHeadData> list = rollPlanDataService.calculateByVersion(version);
         log.warn("根据版本号，计算滚动计划数据：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list.size()).setMsg("成功！").toJson();
+    }
+
+    @ApiOperation(value="根据版本号、维度值获取历史账期。")
+    @RequestMapping("/getStatisticsByDmartAndVersion")
+    public String getStatisticsByDmartAndVersion(@RequestBody DmCalcStatistics result){
+        String version = version(result);
+
+        List<Map<String, String>> list = dmCalcStatisticsService.getStatisticsByDmartAndVersion(result.getDmart(), version);
+        log.warn("根据版本号、维度值获取历史账期：{}", JSON.toJSONString(list));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
     @ApiOperation(value="从Odata获取所有配置及业务数据，并存入数据库。")

@@ -45,7 +45,7 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
     }
 
     @Override
-    public List<OrganizationSet> getAll(List<OrganizationSet> list) {
+    public List<OrganizationSet> getAll() {
         return Lists.newArrayList(organizationSetDAO.findAll());
     }
 

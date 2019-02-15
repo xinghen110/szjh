@@ -9,4 +9,5 @@ public interface IEPlanDimenValueSetDAO extends CrudRepository<IEPlanDimenValueS
     void deleteAllByVersion(String version);
     List<IEPlanDimenValueSet> findAllByVersion(String version);
     List<IEPlanDimenValueSet> findAllByHtsnoAndVersion(String htsno, String version);
+    IEPlanDimenValueSet findTopByHtsnoAndVersionAndDmart(String htsno, String version, String dmart);
 }

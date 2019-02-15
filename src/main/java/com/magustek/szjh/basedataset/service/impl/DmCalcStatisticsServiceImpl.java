@@ -8,15 +8,15 @@ import com.magustek.szjh.basedataset.entity.IEPlanDimenValueSet;
 import com.magustek.szjh.basedataset.service.CalculateResultService;
 import com.magustek.szjh.basedataset.service.DmCalcStatisticsService;
 import com.magustek.szjh.basedataset.service.IEPlanDimenValueSetService;
+import com.magustek.szjh.configset.bean.OrganizationSet;
+import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.utils.ClassUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -25,11 +25,13 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
     private IEPlanDimenValueSetService iePlanDimenValueSetService;
     private CalculateResultService calculateResultService;
     private DmCalcStatisticsDAO dmCalcStatisticsDAO;
+    private OrganizationSetService organizationSetService;
 
-    public DmCalcStatisticsServiceImpl(IEPlanDimenValueSetService iePlanDimenValueSetService, CalculateResultService calculateResultService, DmCalcStatisticsDAO dmCalcStatisticsDAO) {
+    public DmCalcStatisticsServiceImpl(IEPlanDimenValueSetService iePlanDimenValueSetService, CalculateResultService calculateResultService, DmCalcStatisticsDAO dmCalcStatisticsDAO, OrganizationSetService organizationSetService) {
         this.iePlanDimenValueSetService = iePlanDimenValueSetService;
         this.calculateResultService = calculateResultService;
         this.dmCalcStatisticsDAO = dmCalcStatisticsDAO;
+        this.organizationSetService = organizationSetService;
     }
 
     @Override
@@ -154,6 +156,53 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
         //保存新版本
         dmCalcStatisticsDAO.save(statisticsList);
         return statisticsList.size();
+    }
+
+    @Override
+    public List<Map<String, String>> getStatisticsByDmartAndVersion(String dmart, String version) {
+        Map<String, List<DmCalcStatistics>> statisticsMap = dmCalcStatisticsDAO
+                .findAllByDmartAndVersion(dmart, version)
+                .stream()
+                .collect(Collectors.groupingBy(DmCalcStatistics::getDmval));
+        List<Map<String, String>> list = new ArrayList<>();
+        Map<String, List<OrganizationSet>> orgMap;
+        switch (dmart){
+            case "D100":
+                orgMap = organizationSetService.getAll().stream().collect(Collectors.groupingBy(OrganizationSet::getBukrs));
+                break;
+            case "D110":
+                orgMap = organizationSetService.getAll().stream().collect(Collectors.groupingBy(OrganizationSet::getDpnum));
+                break;
+            case "D120":
+                orgMap = organizationSetService.getAll().stream().collect(Collectors.groupingBy(OrganizationSet::getUname));
+                break;
+            default:
+                return list;
+        }
+
+        statisticsMap.forEach((dmval, statisticsList)->{
+            Map<String, String> map = new HashMap<>();
+            list.add(map);
+            map.put("dmval",dmval);
+            map.put("dmart",dmart);
+            //历史能力值k-v
+            statisticsList.forEach(statistics-> map.put(statistics.getCaart(), statistics.getHisval().toString()));
+            switch (dmart){
+                case "D100":
+                    map.put("dmtxt",orgMap.get(dmval).get(0).getButxt());
+                    map.put("sort",orgMap.get(dmval).get(0).getCsort());
+                    break;
+                case "D110":
+                    map.put("dmtxt",orgMap.get(dmval).get(0).getDpnam());
+                    map.put("sort",orgMap.get(dmval).get(0).getDsort());
+                    break;
+                case "D120":
+                    map.put("dmtxt",orgMap.get(dmval).get(0).getUsnam());
+                    map.put("sort",orgMap.get(dmval).get(0).getDsort());
+                    break;
+            }
+        });
+        return list.stream().sorted(Comparator.comparingInt(m -> Integer.parseInt(m.get("sort")))).collect(Collectors.toList());
     }
 
     @Override

@@ -18,7 +18,8 @@ import javax.persistence.Table;
 @Getter
 @Setter
 @Entity
-@Table(indexes = {@Index(columnList = "version")})
+@Table(indexes = {@Index(columnList = "version"),
+                  @Index(columnList = "htsno,version")})
 public class IEPlanSelectValueSet extends BaseEntity {
     @Column(nullable = false, length = 14) private String htsno;//合同流水号
     @Column(nullable = false, length = 20) private String htnum;//合同管理编号

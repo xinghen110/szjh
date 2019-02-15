@@ -8,7 +8,7 @@ import java.util.Map;
 
 public interface OrganizationSetService {
     List<OrganizationSet> save(List<OrganizationSet> list);
-    List<OrganizationSet> getAll(List<OrganizationSet> list);
+    List<OrganizationSet> getAll();
     void deleteAll();
     List<OrganizationSet> getAllFromDatasource() throws Exception;
 
