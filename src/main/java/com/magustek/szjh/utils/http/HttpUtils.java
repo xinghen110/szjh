@@ -71,13 +71,13 @@ public class HttpUtils {
 
         if("odata".equals(config.getType())) {
             //拼接url
-            urlString = urlString.append(config.getOdataIp()).append(":").append(config.getOdataPort())
+            urlString.append(config.getOdataIp()).append(":").append(config.getOdataPort())
                     .append(odataString)
                     .append(url)
                     .append(odataClient)
                     .append(config.getOdataClient());
 
-            //设置sap token
+            //设置sap token，如果获取失败，则最多重试5次。
             String token = "";
             int i = 0;
             while (Strings.isNullOrEmpty(token)){
@@ -105,7 +105,7 @@ public class HttpUtils {
             if(HttpMethod.DELETE.equals(method)) {
                 esbString = "/ESBWeb/servlets/15302.CM.OdataDelete@1.0@zn.cm.xt?";
             }
-            urlString = urlString.append(config.getEsbIp())
+            urlString.append(config.getEsbIp())
                     .append(esbString)
                     .append(url)
                     .append(odataClient)
@@ -148,7 +148,7 @@ public class HttpUtils {
     private String getOdataToken(){
         //拼接获取token的url
         StringBuilder tokenString = new StringBuilder();
-        tokenString = tokenString.append(config.getOdataIp()).append(":").append(config.getOdataPort())
+        tokenString.append(config.getOdataIp()).append(":").append(config.getOdataPort())
                 .append(odataString)
                 .append(OdataUtils.Token)
                 .append("?")
@@ -165,13 +165,15 @@ public class HttpUtils {
             //执行odata调用
             responseEntity = restTemplate.exchange(tokenString.toString(), HttpMethod.GET, new HttpEntity(headers), String.class);
         }catch (HttpServerErrorException e){
+            log.error("获取token失败：{}", e.getMessage());
             return "";
         }
         //从http header中获取token
         List<String> headerList = responseEntity.getHeaders().get(odataTokenHeader);
-        String token = headerList.get(headerList.size() - 1);
-        //log.info(odataTokenHeader + ":" + token);
-        return token;
+        if(ClassUtils.isEmpty(headerList)){
+            log.error("获取token失败：{}-{}",responseEntity.getStatusCodeValue(),responseEntity.getBody());
+        }
+        return headerList.get(headerList.size() - 1);
     }
 
     /**
