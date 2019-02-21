@@ -1,10 +1,12 @@
 package com.magustek.szjh.configset.service.impl;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.magustek.szjh.configset.bean.IEPlanBusinessItemSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanBusinessItemSetVO;
 import com.magustek.szjh.configset.dao.IEPlanBusinessItemSetDAO;
 import com.magustek.szjh.configset.service.IEPlanBusinessItemSetService;
+import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -75,5 +77,27 @@ public class IEPlanBusinessItemSetServiceImpl implements IEPlanBusinessItemSetSe
         //保存新数据
         save(list);
         return list;
+    }
+
+    @Override
+    public List<IEPlanBusinessItemSet> getAllByCaart(String caart) {
+        return iePlanBusinessItemSetDAO.findAllByCaart(caart);
+    }
+
+    //获取imnum节点以及所有后续节点
+    @Override
+    public List<IEPlanBusinessItemSet> getNextItemList(String imnum){
+        Map<String, List<IEPlanBusinessItemSet>> cache = getMap();
+        List<IEPlanBusinessItemSet> list = new ArrayList<>();
+        nextItem(cache, imnum, list);
+        return list;
+    }
+
+    private void nextItem(Map<String, List<IEPlanBusinessItemSet>> cache, String imnum, List<IEPlanBusinessItemSet> list){
+        IEPlanBusinessItemSet item = cache.get(imnum).get(0);
+        list.add(item);
+        if(!Strings.isNullOrEmpty(item.getNimnu())){
+            nextItem(cache, item.getNimnu(), list);
+        }
     }
 }

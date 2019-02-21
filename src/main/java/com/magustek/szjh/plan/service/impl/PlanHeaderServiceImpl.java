@@ -5,12 +5,11 @@ import com.google.common.base.Strings;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.configset.bean.IEPlanBusinessHeadSet;
+import com.magustek.szjh.configset.bean.IEPlanBusinessItemSet;
 import com.magustek.szjh.configset.bean.IEPlanDimensionSet;
+import com.magustek.szjh.configset.bean.OrganizationSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
-import com.magustek.szjh.configset.service.ConfigDataSourceSetService;
-import com.magustek.szjh.configset.service.IEPlanBusinessHeadSetService;
-import com.magustek.szjh.configset.service.IEPlanReportHeadSetService;
-import com.magustek.szjh.configset.service.OrganizationSetService;
+import com.magustek.szjh.configset.service.*;
 import com.magustek.szjh.plan.bean.*;
 import com.magustek.szjh.plan.bean.vo.PlanHeaderVO;
 import com.magustek.szjh.plan.dao.PlanHeaderDAO;
@@ -52,6 +51,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     private RollPlanArchiveService rollPlanArchiveService;
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
     private IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
+    private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
 
     public PlanHeaderServiceImpl(PlanHeaderDAO planHeaderDAO,
                                  PlanItemService planItemService,
@@ -60,7 +60,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                                  IEPlanReportHeadSetService iePlanReportHeadSetService,
                                  PlanLayoutDAO planLayoutDAO,
                                  RollPlanArchiveService rollPlanArchiveService,
-                                 IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService) {
+                                 IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService) {
         this.planHeaderDAO = planHeaderDAO;
         this.planItemService = planItemService;
         this.organizationSetService = organizationSetService;
@@ -70,6 +70,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         this.rollPlanArchiveService = rollPlanArchiveService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
         this.iePlanBusinessHeadSetService = iePlanBusinessHeadSetService;
+        this.iePlanBusinessItemSetService = iePlanBusinessItemSetService;
     }
 
     @Override
@@ -283,6 +284,128 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             sdartList.forEach(sdart-> htsno.put(sdart.getSdart(), sdart.getSdval()));
         });
         return htsnoList;
+    }
+
+    @Override
+    public List<Map<String, Object>> getCavalByPlanHeadIdAndCaartAndDmart(Long planHeadId, String caart, String dmart, String zbart) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        //维度列表
+        Map<String, List<OrganizationSet>> orgMap = organizationSetService.getOrgMapByDmart(dmart);
+        if(orgMap==null){
+            return list;
+        }
+        //计划能力值相关项目编号列表
+        Map<String, List<IEPlanBusinessItemSet>> imnumMap = iePlanBusinessItemSetService
+                .getAllByCaart(caart)
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanBusinessItemSet::getImnum));
+        orgMap.forEach((k, v)->{
+            Map<String, Object> map = new HashMap<>();
+            //填充组织信息
+            organizationSetService.fillMap(orgMap, map, dmart, k);
+            //待统计抬头列表
+            List<RollPlanHeadDataArchive> headList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndDmvalAndZbart(zbart, dmart + ":" + k, planHeadId);
+            if(ClassUtils.isEmpty(headList)){
+               return;
+            }
+            //根据抬头ID列表，以及项目编号列表获取相关环节列表
+            List<RollPlanItemDataArchive> itemList = rollPlanArchiveService.getItemDataByHeadIdAndImnum(
+                    headList.stream().map(RollPlanHeadDataArchive::getRollId).collect(Collectors.toList()),
+                    new ArrayList<>(imnumMap.keySet())
+            );
+            //取账期平均值
+            OptionalDouble opt = itemList.stream().filter(i->i.getCaval()!=null).mapToInt(RollPlanItemDataArchive::getCaval).average();
+            if(opt.isPresent()){
+                map.put("caval",new BigDecimal(opt.getAsDouble()).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue());
+            }else{
+                map.put("caval",0);
+            }
+            map.put("cavalHis", map.get("caval"));
+            //合同数量
+            long count = headList.stream().map(RollPlanHeadDataArchive::getHtsno).distinct().count();
+            map.put("count", count);
+            //合同总金额
+            BigDecimal wears = headList.stream().map(RollPlanHeadDataArchive::getWears).reduce(BigDecimal.ZERO, BigDecimal::add);
+            map.put("wears", wears.doubleValue());
+            list.add(map);
+        });
+        return list;
+    }
+
+    @Override
+    public int updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(Long planHeadId, String caart, String dmart, String dmval, String zbart, Integer caval) {
+
+        //待统计抬头列表
+        List<RollPlanHeadDataArchive> headList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndDmvalAndZbart(zbart, dmart + ":" + dmval, planHeadId);
+        if(ClassUtils.isEmpty(headList)){
+            return 0;
+        }
+        //计划能力值相关项目编号列表
+        Map<String, List<IEPlanBusinessItemSet>> imnumMap = iePlanBusinessItemSetService
+                .getAllByCaart(caart)
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanBusinessItemSet::getImnum));
+
+        //获取节点及后续节点列表
+        Map<String, List<IEPlanBusinessItemSet>> itemMap = new HashMap<>(imnumMap.size());
+        Set<String> itemSet = new HashSet<>();
+        imnumMap.forEach((key,value)-> {
+            List<IEPlanBusinessItemSet> nextItemList = iePlanBusinessItemSetService.getNextItemList(key);
+            itemMap.put(key, nextItemList);
+            itemSet.addAll(nextItemList.stream().map(IEPlanBusinessItemSet::getImnum).collect(Collectors.toList()));
+        });
+
+        //根据抬头ID列表，以及项目编号列表获取相关环节列表
+        Map<Long, List<RollPlanItemDataArchive>> itemArchiveMap = rollPlanArchiveService.getItemDataByHeadIdAndImnum(
+                headList.stream().map(RollPlanHeadDataArchive::getRollId).collect(Collectors.toList()),
+                new ArrayList<>(itemSet)
+        ).stream().collect(Collectors.groupingBy(RollPlanItemDataArchive::getHeadId));
+        if(ClassUtils.isEmpty(itemArchiveMap)){
+            return 0;
+        }
+
+        //更新当前节点能力值以及后续节点日期
+        itemMap.forEach((imnum, item)->{
+            if (Strings.isNullOrEmpty(imnum)) {
+                return;
+            }
+            itemArchiveMap.forEach((headId, itemList)->{
+                //根据项目编号分组
+                Map<String, List<RollPlanItemDataArchive>> itemGroup = itemList.stream().collect(Collectors.groupingBy(RollPlanItemDataArchive::getImnum));
+                //处理当前节点
+                List<RollPlanItemDataArchive> imnumItemList = itemGroup.get(imnum);
+                imnumItemList.forEach(i->{
+                    if(IEPlanBusinessItemSet.GET.equals(i.getCtdtp())){
+                        return;
+                    }
+                    //如果调减的天数大于能力值，则调减能力值天数
+                    int days = caval + i.getCaval() > 0 ? caval:0-i.getCaval();
+                    //更新历史能力值
+                    i.setCaval(i.getCaval()+days);
+                    //调整计划日期
+                    adjustDtval(i, days);
+                    //更新后续节点日期
+                    item.forEach(nextItem->{
+                        List<RollPlanItemDataArchive> nextItemList = itemGroup.get(nextItem.getImnum());
+                        if(!ClassUtils.isEmpty(nextItemList)){
+                            nextItemList.forEach(l-> adjustDtval(l, days));
+                        }
+                    });
+                });
+            });
+        });
+        return itemArchiveMap.size();
+    }
+
+    private void adjustDtval(RollPlanItemDataArchive i, int days){
+        String dtval = i.getDtval();
+        if(!Strings.isNullOrEmpty(dtval)){
+            try {
+                i.setDtval(ClassUtils.StringToLocalDate(dtval).plusDays(days).toString().replaceAll("-",""));
+            } catch (Exception e) {
+                log.warn(e.getMessage());
+            }
+        }
     }
 
     private PlanHeaderVO coverToVO(PlanHeader header){

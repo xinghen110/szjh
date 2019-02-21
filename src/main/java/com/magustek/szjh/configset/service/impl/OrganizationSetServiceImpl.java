@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service("OrganizationSetService")
@@ -140,5 +141,46 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
         }
 
         return map;
+    }
+
+    @Override
+    public Map<String, List<OrganizationSet>> getOrgMapByDmart(String dmart) {
+        Map<String, List<OrganizationSet>> orgMap;
+        switch (dmart){
+            case "D100":
+                orgMap = getAll().stream().collect(Collectors.groupingBy(OrganizationSet::getBukrs));
+                break;
+            case "D110":
+                orgMap = getAll().stream().collect(Collectors.groupingBy(OrganizationSet::getDpnum));
+                break;
+            case "D120":
+                orgMap = getAll().stream().collect(Collectors.groupingBy(OrganizationSet::getUname));
+                break;
+            default:
+                return null;
+        }
+        return orgMap;
+    }
+
+    @Override
+    public void fillMap(Map<String, List<OrganizationSet>> orgMap, Map<String, Object> map, String dmart, String dmval) {
+        //map.put("dmart", dmart);
+        switch (dmart){
+            case "D100":
+                map.put("dmval",orgMap.get(dmval).get(0).getBukrs());
+                map.put("dmtxt",orgMap.get(dmval).get(0).getButxt());
+                map.put("sort",orgMap.get(dmval).get(0).getCsort());
+                break;
+            case "D110":
+                map.put("dmval",orgMap.get(dmval).get(0).getDpnum());
+                map.put("dmtxt",orgMap.get(dmval).get(0).getDpnam());
+                map.put("sort",orgMap.get(dmval).get(0).getDsort());
+                break;
+            case "D120":
+                map.put("dmval",orgMap.get(dmval).get(0).getUname());
+                map.put("dmtxt",orgMap.get(dmval).get(0).getUsnam());
+                map.put("sort",orgMap.get(dmval).get(0).getDsort());
+                break;
+        }
     }
 }

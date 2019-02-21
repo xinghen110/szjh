@@ -172,4 +172,14 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
         //返回当月所有数据
         return rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndDtvalContainsAndDmvalContainsAndZbart(planHeadId, dtval, "D110:"+dmval, zbart);
     }
+
+    @Override
+    public List<RollPlanHeadDataArchive> getHeadDataByPlanHeadIdAndDmvalAndZbart(String zbart, String dmval, Long planHeadId) {
+        return rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndDmvalContainsAndZbart(planHeadId, dmval, zbart);
+    }
+
+    @Override
+    public List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String> imnumList) {
+        return rollPlanItemDataArchiveDAO.findAllByHeadIdInAndImnumIn(headIdList, imnumList);
+    }
 }

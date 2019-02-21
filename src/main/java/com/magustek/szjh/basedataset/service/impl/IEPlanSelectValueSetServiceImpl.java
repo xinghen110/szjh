@@ -68,7 +68,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         long l = System.currentTimeMillis();
         HashSet<String> threadNameSet = new HashSet<>();
         try {
-            ForkJoinPool pool = new ForkJoinPool(15);
+            ForkJoinPool pool = new ForkJoinPool(5);
             pool.submit(() ->
                 selectDataSetList.parallelStream().forEach(selectDataSet -> {
                     log.warn("Thread name:{}",Thread.currentThread().getName());
@@ -158,6 +158,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
     @Override
     public int updateReferencedByVersion(String referenced, String version) {
         return iePlanSelectValueSetDAO.updateReferenced(referenced, version);
+        //return 0;
     }
 
     private List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanSelectDataSet selectDataSet) {

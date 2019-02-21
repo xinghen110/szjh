@@ -10,4 +10,6 @@ public interface RollPlanItemDataArchiveDAO extends CrudRepository<RollPlanItemD
     List<RollPlanItemDataArchive> findAllByHeadId(Long rollPlanHeadId);
 
     void deleteAllByPlanHeadId(Long planHeadId);
+
+    List<RollPlanItemDataArchive> findAllByHeadIdInAndImnumIn(List<Long> headIdList, List<String> imnumList);
 }

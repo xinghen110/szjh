@@ -16,4 +16,7 @@ public interface RollPlanArchiveService {
     Map<RollPlanHeadDataArchive,List<RollPlanItemDataArchive>> getRollPlanListByPlanIdAndHtsno(Long id, String htsno);
 
     List<RollPlanHeadDataArchive> getHeadData(String zbart, String dmval, String dtval, Long planHeadId, boolean firstMonth, boolean lastMonth);
+
+    List<RollPlanHeadDataArchive> getHeadDataByPlanHeadIdAndDmvalAndZbart(String zbart, String dmval, Long planHeadId);
+    List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String>imnumList);
 }

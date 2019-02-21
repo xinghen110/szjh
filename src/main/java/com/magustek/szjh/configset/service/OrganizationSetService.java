@@ -23,4 +23,7 @@ public interface OrganizationSetService {
     OrganizationSet getByBukrs(String bukrs);
 
     Map<String, String> orgKeyValue();
+
+    Map<String, List<OrganizationSet>> getOrgMapByDmart(String dmart);
+    void fillMap(Map<String, List<OrganizationSet>> orgMap, Map<String, Object> map, String dmart, String dmval);
 }

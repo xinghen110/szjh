@@ -18,4 +18,7 @@ public interface PlanHeaderService {
     IEPlanReportHeadVO getLayoutByHeaderId(Long headerId);
     //查看部门合同计划
     List<Map<String, String>> getHtsnoList(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable) throws Exception;
+
+    List<Map<String, Object>> getCavalByPlanHeadIdAndCaartAndDmart(Long planHeadId, String caart, String dmart, String zbart);
+    int updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(Long planHeadId, String caart, String dmart, String dmval, String zbart, Integer caval);
 }

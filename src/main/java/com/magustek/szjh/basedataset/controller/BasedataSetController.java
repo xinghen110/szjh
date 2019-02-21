@@ -58,7 +58,7 @@ public class BasedataSetController {
     @RequestMapping("/getIEPlanSelectValueSet")
     public String getIEPlanSelectValueSet() throws Exception {
         List<IEPlanSelectValueSet> list = iePlanSelectValueSetService.fetchData();
-        log.warn("从Odata获取历史业务取数明细：{}", JSON.toJSONString(list));
+        log.warn("从Odata获取历史业务取数明细：{}", list.size());
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list.size()).setMsg("成功！").toJson();
     }
 
@@ -92,7 +92,7 @@ public class BasedataSetController {
     public String calculate(@RequestBody DmCalcStatistics result) {
         String version = version(result);
         List<CalculateResult> list = calculateResultService.calculateByVersion(version);
-        log.warn("计算版本为【{}】的取数明细结果为：{}", version, JSON.toJSONString(list));
+        log.warn("计算版本为【{}】的取数明细结果为：{}", version, list.size());
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list.size()).setMsg("成功！").toJson();
     }
 
@@ -136,7 +136,7 @@ public class BasedataSetController {
     public String getStatisticsByDmartAndVersion(@RequestBody DmCalcStatistics result){
         String version = version(result);
 
-        List<Map<String, String>> list = dmCalcStatisticsService.getStatisticsByDmartAndVersion(result.getDmart(), version);
+        List<Map<String, Object>> list = dmCalcStatisticsService.getStatisticsByDmartAndVersion(result.getDmart(), version);
         log.warn("根据版本号、维度值获取历史账期：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }

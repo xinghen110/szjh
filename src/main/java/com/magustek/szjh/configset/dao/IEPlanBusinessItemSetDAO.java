@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface IEPlanBusinessItemSetDAO extends CrudRepository<IEPlanBusinessItemSet, Long> {
     List<IEPlanBusinessItemSet> findAllByOrderByImnum();
+    List<IEPlanBusinessItemSet> findAllByCaart(String caart);
 }

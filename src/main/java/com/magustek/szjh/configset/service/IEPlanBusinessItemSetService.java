@@ -13,4 +13,8 @@ public interface IEPlanBusinessItemSetService {
     Map<String, List<IEPlanBusinessItemSet>> getMap();
     void deleteAll();
     List<IEPlanBusinessItemSet> getAllFromDatasource() throws Exception;
+
+    List<IEPlanBusinessItemSet> getAllByCaart(String caart);
+
+    List<IEPlanBusinessItemSet> getNextItemList(String imnum);
 }
