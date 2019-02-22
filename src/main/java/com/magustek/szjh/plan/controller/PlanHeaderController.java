@@ -101,8 +101,20 @@ public class PlanHeaderController {
 
     @ApiOperation(value="根据计划ID-planHeadId、业务计算指标-caart、维度-dmart、经营指标分类-zbart、组织机构代码-dmval、历史能力值-caval，更新账期列表。")
     @RequestMapping("/updateCavalByPlanHeadIdAndCaartAndDmartAndDmval")
-    public String updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(@RequestBody RollPlanHeadDataArchiveVO vo) {
-        int count = planHeaderService.updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(vo.getPlanHeadId(), vo.getCaart(), vo.getDmart(), vo.getZbart(), vo.getDmval(), vo.getCaval());
+    public String updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(@RequestBody List<RollPlanHeadDataArchiveVO> voList) {
+        //Assert.isTrue(!ClassUtils.isEmpty(voList),"参数不正确！");
+        int count = 0;
+        for(RollPlanHeadDataArchiveVO vo : voList){
+            if(vo.getCaval()>0){
+                count += planHeaderService.updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(
+                    vo.getPlanHeadId(),
+                    vo.getCaart(),
+                    vo.getDmart(),
+                    vo.getDmval(),
+                    vo.getZbart(),
+                    vo.getCaval());
+            }
+        }
         log.warn("根据计划ID-planHeadId、业务计算指标-caart、维度-dmart、经营指标分类-zbart，更新账期列表：{}", count);
         return resp.setStateCode(BaseResponse.SUCCESS).setData(count).setMsg("成功！").toJson();
     }

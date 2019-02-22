@@ -15,6 +15,7 @@ import com.magustek.szjh.plan.service.RollPlanArchiveService;
 import com.magustek.szjh.utils.ClassUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -181,5 +182,13 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     @Override
     public List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String> imnumList) {
         return rollPlanItemDataArchiveDAO.findAllByHeadIdInAndImnumIn(headIdList, imnumList);
+    }
+
+    @Transactional
+    @Override
+    @Modifying
+    public void saveItemList(List<RollPlanItemDataArchive> changedList) {
+        Iterable<RollPlanItemDataArchive> save = rollPlanItemDataArchiveDAO.save(changedList);
+        save.forEach(s-> log.warn("id:{}, dtval:{}",s.getId(),s.getDtval()));
     }
 }

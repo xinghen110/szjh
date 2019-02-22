@@ -340,6 +340,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         if(ClassUtils.isEmpty(headList)){
             return 0;
         }
+        List<RollPlanItemDataArchive> changedList = new ArrayList<>();
         //计划能力值相关项目编号列表
         Map<String, List<IEPlanBusinessItemSet>> imnumMap = iePlanBusinessItemSetService
                 .getAllByCaart(caart)
@@ -384,17 +385,23 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     i.setCaval(i.getCaval()+days);
                     //调整计划日期
                     adjustDtval(i, days);
+                    changedList.add(i);
                     //更新后续节点日期
+                    item.remove(0);//去掉当前已处理的节点
                     item.forEach(nextItem->{
                         List<RollPlanItemDataArchive> nextItemList = itemGroup.get(nextItem.getImnum());
                         if(!ClassUtils.isEmpty(nextItemList)){
                             nextItemList.forEach(l-> adjustDtval(l, days));
+                            changedList.addAll(nextItemList);
                         }
                     });
                 });
             });
         });
-        return itemArchiveMap.size();
+        if(!ClassUtils.isEmpty(changedList)){
+            rollPlanArchiveService.saveItemList(changedList);
+        }
+        return changedList.size();
     }
 
     private void adjustDtval(RollPlanItemDataArchive i, int days){
