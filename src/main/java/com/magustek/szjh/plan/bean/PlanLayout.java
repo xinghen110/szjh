@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -22,5 +23,6 @@ public class PlanLayout extends BaseEntity{
     @Column(nullable = false, unique = true) private Long headerId;
     @ApiModelProperty(value = "布局json")
     @Lob
-    @Column private String layout;
+    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "text") private String layout;
 }

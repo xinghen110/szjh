@@ -22,7 +22,7 @@ public class GroovyShellExample {
             e.printStackTrace();
         }
 
-        f();
+        c();
     }
 
     public static void a(){
@@ -58,9 +58,9 @@ public class GroovyShellExample {
     public static void c(){
         Binding binding = new Binding();
         try {
-            binding.setVariable("G121", "0.00");
+            binding.setVariable("G201", "01");
             GroovyShell shell = new GroovyShell(binding);
-            Object value = shell.evaluate("G121 > '0'");
+            Object value = shell.evaluate("(G201=='01'||G201=='04' ) && G170.toDouble()>0");
 
             System.err.println(value);
         } catch (Exception e) {

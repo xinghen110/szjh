@@ -16,36 +16,47 @@ spring:
       charset: UTF-8
       enabled: true
   datasource:
-    druid:
-      #url: jdbc:log4jdbc:mysql://118.31.14.156:20003/szjh?useUnicode=true&amp;characterEncoding=utf8
-      #url: jdbc:mysql://118.31.14.156:20003/szjh?useUnicode=true&amp;characterEncoding=utf8
-      #url: jdbc:mysql://localhost:3306/szjh?useUnicode=true&amp;characterEncoding=utf8
-      #url: jdbc:mysql://localhost:3306/szjh?userSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=CST
-      url: jdbc:mysql://10.154.70.121:3306/szjh?userSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=CST
-      username: root
-      password: P@ssw0rd
-      driver-class-name: com.mysql.cj.jdbc.Driver
-      # 初始化大小，最小，最大
-      initialSize: 5
-      minIdle: 5
-      maxActive: 20
-      # 配置获取连接等待超时的时间
-      maxWait: 60000
-      # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
-      timeBetweenEvictionRunsMillis: 60000
-      # 配置一个连接在池中最小生存的时间，单位是毫秒
-      minEvictableIdleTimeMillis: 300000
-      validationQuery: select 'x'
-      testWhileIdle: true
-      testOnBorrow: false
-      testOnReturn: false
-      # 打开PSCache，并且指定每个连接上PSCache的大小
-      poolPreparedStatements: true
-      maxPoolPreparedStatementPerConnectionSize: 20
-      # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
-      filters: stat,wall,log4j
-      # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
-      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=1000
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://10.154.96.70:3306/szjh
+    username: root
+    password: P@ssw0rd
+    hikari:
+      minimum-idle: 5
+      idle-timeout: 180000
+      maximum-pool-size: 50
+      auto-commit: true
+      pool-name: MyHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+
+  #    druid:
+#      url: jdbc:postgresql://10.154.96.70:3306/szjh
+#      username: root
+#      password: P@ssw0rd
+#      driver-class-name: org.postgresql.Driver
+#      # 初始化大小，最小，最大
+#      initialSize: 5
+#      minIdle: 5
+#      maxActive: 20
+#      # 配置获取连接等待超时的时间
+#      maxWait: 60000
+#      # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+#      timeBetweenEvictionRunsMillis: 60000
+#      # 配置一个连接在池中最小生存的时间，单位是毫秒
+#      minEvictableIdleTimeMillis: 300000
+#      validationQuery: select 'x'
+#      testWhileIdle: true
+#      testOnBorrow: false
+#      testOnReturn: false
+#      # 打开PSCache，并且指定每个连接上PSCache的大小
+#      poolPreparedStatements: true
+#      maxPoolPreparedStatementPerConnectionSize: 20
+#      # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
+#      filters: stat,wall,log4j
+#      # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
+#      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=1000
 
   data:
     mongodb:
@@ -53,11 +64,11 @@ spring:
       database: szjh
       port: 27017
   jpa:
-    database: MYSQL
+    database: POSTGRESQL
     show-sql: true
     hibernate.ddl-auto: update
     hibernate.use-new-id-generator-mappings: true
-    properties.hibernate.dialect: org.hibernate.dialect.MySQL5Dialect
+    properties.hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: true
   session.store-type: redis
   redis:

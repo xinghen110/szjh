@@ -30,7 +30,7 @@ public class InitConfigDataTask {
         System.gc();
     }*/
 
-    @Scheduled(cron = "0 0 3 * * ?")
+    //@Scheduled(cron = "0 0 3 * * ?")
     public void executeFetchBaseData(){
         try {
             long b = System.currentTimeMillis();
