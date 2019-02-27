@@ -312,6 +312,9 @@ public class PlanItemServiceImpl implements PlanItemService {
                 v.forEach(item->{
                     //报表维度，格式：D110:50003521
                     String dmval = item.getDmart()+":"+item.getDmval();
+                    if(ClassUtils.isEmpty(headList)){
+                        return;
+                    }
                     headList.forEach(head->{
                         //如果维度相同，滚动计划时间如果在item日期范围内，则加总金额
                         if(!Strings.isNullOrEmpty(head.getDmval())
