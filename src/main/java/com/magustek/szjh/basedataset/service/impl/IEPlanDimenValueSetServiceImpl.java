@@ -127,7 +127,12 @@ public class IEPlanDimenValueSetServiceImpl implements IEPlanDimenValueSetServic
 
     @Override
     public IEPlanDimenValueSet getDmvalByHtsno(String htsno, String dmart, String version) {
-        return iePlanDimenValueSetDAO.findTopByHtsnoAndVersionAndDmart(htsno,version,dmart);
+        return iePlanDimenValueSetDAO.findTopByHtsnoAndVersionAndDmart(htsno, version, dmart);
+    }
+
+    @Override
+    public List<IEPlanDimenValueSet> getDmvalByDmartAndVersion(String dmart, String version) {
+        return iePlanDimenValueSetDAO.findAllByVersionAndDmart(version, dmart);
     }
 
     private List<IEPlanDimenValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanDimensionSet dimensionSet){

@@ -5,6 +5,7 @@ import com.google.common.base.Strings;
 import com.magustek.szjh.Holiday.service.HolidayService;
 import com.magustek.szjh.basedataset.dao.RollPlanHeadDataDAO;
 import com.magustek.szjh.basedataset.dao.RollPlanItemDataDAO;
+import com.magustek.szjh.basedataset.entity.IEPlanDimenValueSet;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.entity.RollPlanHeadData;
 import com.magustek.szjh.basedataset.entity.RollPlanItemData;
@@ -61,6 +62,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
 
     private String version;//全局变量
     private Map<String, String> dmvalCache;//历史能力值缓存
+    private Map<String, List<IEPlanDimenValueSet>> dimenMap;//维度缓存
     private Set<String> hjendCache;//计算结束环节列表
 
 
@@ -93,6 +95,10 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
 
         //初始化缓存
         dmvalCache = new HashMap<>();
+        dimenMap = iePlanDimenValueSetService
+                .getDmvalByDmartAndVersion("D110", this.version)
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanDimenValueSet::getHtsno));
         //hjendCache = new HashSet<>();
         //获取计算结束环节列表
         hjendCache = iePlanBusinessItemSetService.getAllVO()
@@ -543,7 +549,9 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     //根据版本，维度代码获取【计划能力值】
     private int getDmval(String caart,String htsno){
         try {
-            String dmval = iePlanDimenValueSetService.getDmvalByHtsno(htsno, this.version, "D110").getDmval();
+            //String dmval = iePlanDimenValueSetService.getDmvalByHtsno(htsno, "D110", this.version).getDmval();
+
+            String dmval = dimenMap.get(htsno).get(0).getDmval();
             String caval = dmCalcStatisticsService.getCaval(this.version, "D110", dmval, caart, dmvalCache);
             //四舍五入取整
             if(Strings.isNullOrEmpty(caval)){

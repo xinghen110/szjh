@@ -14,4 +14,5 @@ public interface IEPlanDimenValueSetService {
 
     List<IEPlanDimenValueSetVO> getContractByHtsno(String htsno, String version) throws Exception;
     IEPlanDimenValueSet getDmvalByHtsno(String htsno, String dmart, String version) throws Exception;
+    List<IEPlanDimenValueSet> getDmvalByDmartAndVersion(String dmart, String version);
 }
