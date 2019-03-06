@@ -100,6 +100,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             if("MR".equals(header.getRptyp())){
                 planItemService.initCalcData(itemList, config, header);
             }
+
+            //计算T800（小计）
+            calcT800(itemList);
+
             //保存明细数据
             planItemService.save(itemList);
             //保存布局数据
@@ -107,7 +111,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             layout.setHeaderId(header.getId());
             layout.setLayout(config.toJson());
             planLayoutDAO.save(layout);
-
         }else{
             PlanHeader old = planHeaderDAO.findOne(header.getId());
             if(old != null){
@@ -164,7 +167,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         for(PlanHeader header : content){
             PlanHeaderVO pvo = coverToVO(header);
             pvo.setZbList(planItemService.getZbList(pvo.getId()));
-            voList.add(ClassUtils.coverToMapJson(pvo,"zbList"));
+            voList.add(ClassUtils.coverToMapJson(pvo,"zbList", pvo.getUnit()));
         }
         page.getContent();
         return new PageImpl<>(voList, pageable, page.getTotalElements());
@@ -494,5 +497,24 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         } catch (ParseException e) {
             return false;
         }
+    }
+
+    private void calcT800(List<PlanItem> itemList){
+        // 计算T800（小计）
+        itemList.stream().collect(Collectors.groupingBy(PlanItem::getDmval)).forEach((dmval,dmList)->
+                dmList.stream().collect(Collectors.groupingBy(PlanItem::getZbart)).forEach((zbart, zbartList)->{
+                    BigDecimal count = new BigDecimal(0);
+                    PlanItem T800 = null;
+                    for (PlanItem i : zbartList) {
+                        count = count.add(ClassUtils.coverStringToBigDecimal(i.getZbval()));
+                        if("T800".equals(i.getZtval())){
+                            T800 = i;
+                        }
+                    }
+                    if(T800 != null){
+                        T800.setZbval(count.toString());
+                    }
+                })
+        );
     }
 }

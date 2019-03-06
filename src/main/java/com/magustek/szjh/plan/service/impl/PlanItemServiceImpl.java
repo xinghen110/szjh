@@ -11,6 +11,7 @@ import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.PlanItem;
 import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.vo.PlanItemVO;
+import com.magustek.szjh.plan.dao.PlanHeaderDAO;
 import com.magustek.szjh.plan.dao.PlanItemDAO;
 import com.magustek.szjh.plan.dao.PlanLayoutDAO;
 import com.magustek.szjh.plan.service.PlanItemService;
@@ -22,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
@@ -36,14 +36,16 @@ public class PlanItemServiceImpl implements PlanItemService {
     private OrganizationSetService organizationSetService;
     private IEPlanOperationSetService iePlanOperationSetService;
     private RollPlanArchiveService rollPlanArchiveService;
+    private PlanHeaderDAO planHeaderDAO;
 
 
-    public PlanItemServiceImpl(PlanItemDAO planItemDAO, PlanLayoutDAO planLayoutDAO, OrganizationSetService organizationSetService, IEPlanOperationSetService iePlanOperationSetService, RollPlanArchiveService rollPlanArchiveService) {
+    public PlanItemServiceImpl(PlanItemDAO planItemDAO, PlanLayoutDAO planLayoutDAO, OrganizationSetService organizationSetService, IEPlanOperationSetService iePlanOperationSetService, RollPlanArchiveService rollPlanArchiveService, PlanHeaderDAO planHeaderDAO) {
         this.planItemDAO = planItemDAO;
         this.planLayoutDAO = planLayoutDAO;
         this.organizationSetService = organizationSetService;
         this.iePlanOperationSetService = iePlanOperationSetService;
         this.rollPlanArchiveService = rollPlanArchiveService;
+        this.planHeaderDAO = planHeaderDAO;
     }
 
     //根据ID更新指标值
@@ -203,6 +205,7 @@ public class PlanItemServiceImpl implements PlanItemService {
         List<Map<String, String>> resultList;
         //获取headerId
         Long headerId = list.get(0).getHeaderId();
+        PlanHeader head = planHeaderDAO.findOne(headerId);
         //获取布局数据
         IEPlanReportHeadVO layout = JSON.parseObject(planLayoutDAO.findTopByHeaderId(headerId).getLayout(), IEPlanReportHeadVO.class);
         Map<String, List<PlanItem>> group;
@@ -223,7 +226,7 @@ public class PlanItemServiceImpl implements PlanItemService {
             default:
                 throw new Exception("axis轴错误："+layout.getZaxis());
         }
-        resultList = handleMap(layout, group);
+        resultList = handleMap(layout, group, head);
 
         return resultList;
     }
@@ -269,6 +272,7 @@ public class PlanItemServiceImpl implements PlanItemService {
                 }
             }
         }
+
         return itemList;
     }
 
@@ -396,7 +400,7 @@ public class PlanItemServiceImpl implements PlanItemService {
         }
     }
 
-    private List<Map<String, String>> handleMap(IEPlanReportHeadVO layout, Map<String, List<PlanItem>> group) throws Exception {
+    private List<Map<String, String>> handleMap(IEPlanReportHeadVO layout, Map<String, List<PlanItem>> group, PlanHeader head) throws Exception {
         List<Map<String, String>> resultList = new ArrayList<>(group.size());
         List<PlanItem> pList;
 
@@ -410,7 +414,8 @@ public class PlanItemServiceImpl implements PlanItemService {
             for (PlanItem p : pList) {
                 switch (layout.getXaxis()) {
                     case PlanConstant.AXIS_TIM:
-                        map.put(p.getZtval(), p.getZbval());
+                        //map.put(p.getZtval(), p.getZbval());
+                        map.put(p.getZtval(), ClassUtils.handlePunit(p.getZbval(), head.getUnit()));
                         map.put(p.getZtval() + "_id", p.getId().toString());
                         break;
                     case PlanConstant.AXIS_ORG:

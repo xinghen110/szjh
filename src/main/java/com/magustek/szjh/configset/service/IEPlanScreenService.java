@@ -15,4 +15,5 @@ public interface IEPlanScreenService {
     void deleteAll();
     void getAllFromDatasource() throws Exception;
 
+    List<IEPlanScreenItemSet> getItemListByIntfa(String intfa);
 }

@@ -48,8 +48,8 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     @Override
     public void copyData(PlanHeader planHeader) throws Exception {
         //合同基础数据表相应字段打上标记，不允许删除。
-        int count = iePlanSelectValueSetService.updateReferencedByVersion("X",planHeader.getCkdate());
-        log.warn("将版本为【{}】的合同基础数据打上引用标记，不允许删除！标记数据行数{}。", planHeader.getCkdate(), count);
+        //int count = iePlanSelectValueSetService.updateReferencedByVersion("X",planHeader.getCkdate());
+        //log.warn("将版本为【{}】的合同基础数据打上引用标记，不允许删除！标记数据行数{}。", planHeader.getCkdate(), count);
         //每个合同的维度数据
         List<IEPlanDimenValueSet> dimenList = iePlanDimenValueSetService.getAllByVersion(planHeader.getCkdate());
         if(ClassUtils.isEmpty(dimenList)){
@@ -124,8 +124,8 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
         rollPlanHeadDataArchiveDAO.deleteAllByPlanHeadId(header.getId());
         rollPlanItemDataArchiveDAO.deleteAllByPlanHeadId(header.getId());
         //合同基础数据表相应字段删除引用标记，该数据将允许删除。
-        int count = iePlanSelectValueSetService.updateReferencedByVersion(null,header.getCkdate());
-        log.warn("将版本为【{}】的合同基础数据取消引用标记，将允许删除！标记数据行数{}。", header.getCkdate(), count);
+        //int count = iePlanSelectValueSetService.updateReferencedByVersion(null,header.getCkdate());
+        //log.warn("将版本为【{}】的合同基础数据取消引用标记，将允许删除！标记数据行数{}。", header.getCkdate(), count);
     }
 
     @Override

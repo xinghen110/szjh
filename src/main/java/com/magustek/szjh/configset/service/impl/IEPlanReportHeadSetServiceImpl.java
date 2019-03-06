@@ -237,7 +237,7 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
             }
         });
 
-        StringBuilder strBuilder = new StringBuilder();
+        //StringBuilder strBuilder = new StringBuilder();
         for (;i>=0;i--){
             KeyValueBean item = new KeyValueBean();
             String date = ClassUtils.formatDate(rpdat, punit);
@@ -247,7 +247,7 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
                 item.put(date, date, "M");
             }
 
-            strBuilder.append(date).append("+");
+            //strBuilder.append(date).append("+");
 
             keyValueBeans.add(item);
             rpdat = ClassUtils.getDate(rpdat, punit, 1, true);
@@ -261,14 +261,14 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         if(vo.getRptyp().equals("MR")){
             KeyValueBean firstBean = keyValueBeans.get(firstIndex-1);
             KeyValueBean lastBean = keyValueBeans.get(keyValueBeans.size() - 1);
-            //【小计】指标计算公式
+/*            //【小计】指标计算公式
             String str = strBuilder.toString();
             str = str.substring(0, str.length()-1);//去掉最后一个【+】
             str = str.replaceFirst(firstBean.getKey(), firstBean.getKey()+" ");
             str = str.replaceFirst(lastBean.getKey(), lastBean.getKey()+"后");
             if(!ClassUtils.isEmpty(t800)){
                 t800.get(0).setCalc(t800.get(0).getKey()+"="+str);
-            }
+            }*/
 
             //自定义标识，第一个时间段后面加个空格，方便判断
             firstBean.put(firstBean.getKey()+" ", firstBean.getValue()+" ");
@@ -279,6 +279,25 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
             //去掉最后一个节点
             keyValueBeans.remove(keyValueBeans.size()-1);
         }
+        //【小计】公式计算
+        StringBuilder calc = new StringBuilder();
+        //首次计算标记
+        boolean first = true;
+        for (KeyValueBean keyValueBean : keyValueBeans) {
+            if(ClassUtils.isEmpty(t800)){
+                break;
+            }
+            //统计指标不参与计算
+            if(!"S".equals(keyValueBean.getOpera())){
+                if(first){
+                    calc = new StringBuilder(t800.get(0).getKey()+"=$"+keyValueBean.getKey()+"$");
+                    first = false;
+                }else{
+                    calc.append("+$").append(keyValueBean.getKey()).append("$");
+                }
+            }
+        }
+        t800.get(0).setCalc(calc.toString());
 
         return keyValueBeans;
     }

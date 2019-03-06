@@ -161,6 +161,11 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         //return 0;
     }
 
+    @Override
+    public List<IEPlanSelectValueSet> getAllByVersionAndSdvarIn(String version, List<String> sdvarList) {
+        return iePlanSelectValueSetDAO.findAllByVersionAndSdartIn(version, sdvarList);
+    }
+
     private List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanSelectDataSet selectDataSet) {
         String url = OdataUtils.IEPlanSelectValueSet
                 +"?$filter=sdart eq '"+selectDataSet.getSdart()+"' " +

@@ -228,7 +228,7 @@ public class ClassUtils {
      * 将对象转换为map json格式，处理其中keyValueBean。
      */
     @SuppressWarnings("unchecked")
-    public static Map<String, String> coverToMapJson(Object o, String keyValueBeanName) throws Exception {
+    public static Map<String, String> coverToMapJson(Object o, String keyValueBeanName, String qcode) throws Exception {
         ArrayList<Field> fList = new ArrayList<>();
         //递归遍历获取所有父类的字段
         Class clazz = o.getClass();
@@ -249,10 +249,37 @@ public class ClassUtils {
             }else{
                 Collection<KeyValueBean> list = (Collection<KeyValueBean>) method.invoke(o);
                 for(KeyValueBean bean : list){
-                    map.put(bean.getKey(),bean.getValue());
+                    map.put(bean.getKey(),handlePunit(bean.getValue(), qcode));
                 }
             }
         }
         return map;
+    }
+
+    //处理价格单位问题
+    public static String handlePunit(String price, String qcode){
+        try{
+            BigDecimal value = new BigDecimal(price);
+            switch (qcode){
+                case "UN01": //元
+                    return value.setScale(2,BigDecimal.ROUND_HALF_DOWN).toString();
+                case "UN02": //万元
+                    return value.divide(new BigDecimal(10000),2,BigDecimal.ROUND_HALF_DOWN).toString();
+                case "UN03": //亿元
+                    return value.divide(new BigDecimal(10000*10000),2,BigDecimal.ROUND_HALF_DOWN).toString();
+                default:
+                    return price;
+            }
+        }catch (NumberFormatException e){
+            return price;
+        }
+    }
+
+    public static BigDecimal coverStringToBigDecimal(String s){
+        try{
+            return new BigDecimal(s);
+        }catch (NumberFormatException e){
+            return BigDecimal.ZERO;
+        }
     }
 }

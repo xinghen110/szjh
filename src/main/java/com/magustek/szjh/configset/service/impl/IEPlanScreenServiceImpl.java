@@ -79,4 +79,9 @@ public class IEPlanScreenServiceImpl implements IEPlanScreenService {
         saveHead(headList);
         saveItem(itemList);
     }
+
+    @Override
+    public List<IEPlanScreenItemSet> getItemListByIntfa(String intfa) {
+        return iePlanScreenItemSetDAO.findAllByIntfa(intfa);
+    }
 }
