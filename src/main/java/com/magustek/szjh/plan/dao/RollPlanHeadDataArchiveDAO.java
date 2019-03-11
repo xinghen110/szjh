@@ -20,4 +20,8 @@ public interface RollPlanHeadDataArchiveDAO extends CrudRepository<RollPlanHeadD
     List<RollPlanHeadDataArchive> findAllByPlanHeadIdAndDtvalLessThanEqualAndDmvalContainsAndZbart(Long planHeadId, String dtval, String dmval, String zbart);
 
     List<RollPlanHeadDataArchive> findAllByPlanHeadIdAndDmvalContainsAndZbart(Long planHeadId, String dmval, String zbart);
+
+    @Query(value = "select sum(wears) , zbart from RollPlanHeadDataArchive " +
+            "where planHeadId=?1 and dtval < ?2 and dtval is not null and dtval <> '' group by zbart")
+    List<Object[]> zbvalListByPlanHeadIdGroupByZbart(Long planHeadId, String dtval);
 }

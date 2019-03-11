@@ -13,7 +13,4 @@ public interface PlanItemDAO extends CrudRepository<PlanItem, Long> {
     List<PlanItem> findAllByHeaderIdAndAndZtval(Long headerId, String ztval);
 
     List<PlanItem> findAllByHeaderId(Long headerId);
-
-    @Query("select sum(zbval) , zbart from PlanItem where headerId=?1 and ztval <> 'T800' group by zbart")
-    List<Object[]> zbvalListByHeaderIdGroupByZbart(Long headerId);
 }

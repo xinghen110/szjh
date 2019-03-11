@@ -25,6 +25,5 @@ public interface PlanItemService {
     List<PlanItem> initItemDataByConfig(IEPlanReportHeadVO config, Long headerId) throws Exception;
     //初始化统计数据
     void initCalcData(List<PlanItem> itemList, IEPlanReportHeadVO config, PlanHeader planHeader) throws Exception;
-    //根据指标分组统计计划的zbval值
-    ArrayList<KeyValueBean> getZbList(Long headerId);
+
 }

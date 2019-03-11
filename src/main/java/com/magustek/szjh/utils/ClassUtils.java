@@ -64,7 +64,7 @@ public class ClassUtils {
         return o == null || o.length < 1;
     }
     public static boolean isEmpty(BigDecimal b) {
-        return b == null || b.equals(BigDecimal.ZERO);
+        return b == null || b.compareTo(BigDecimal.ZERO) == 0;
     }
     /**
      * 判断列表是否为空

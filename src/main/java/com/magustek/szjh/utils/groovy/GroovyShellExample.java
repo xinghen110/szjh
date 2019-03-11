@@ -83,12 +83,8 @@ public class GroovyShellExample {
     }
 
     private static void f(){
-        StringBuffer sb = new StringBuffer();
-        //sb.append("sdfsdfsdf").append("$");
-        if(sb.charAt(sb.length()-1) == '$'){
-            sb.deleteCharAt(sb.length()-1);
-        }
-        System.out.println(sb.toString());
+        BigDecimal bigDecimal = new BigDecimal(0.00);
+        System.out.println(bigDecimal.compareTo(BigDecimal.ZERO));
     }
 
 }

@@ -170,7 +170,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         valueListByHtsno.forEach((htsno, valueList)->{
             List<IEPlanBusinessHeadSetVO> headList = new ArrayList<>();
             //TODO debug only
-            if("60101800029082".equals(htsno)){
+            if("60101700021446".equals(htsno)){
                 System.out.println("debug point");
             }
             headSetList.forEach(h->{
@@ -187,7 +187,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         /* 计算滚动计划明细单 */
         htsnoHeadList.forEach((htsno, headSetList)->{
             //TODO debug only
-            if("60101800029082".equals(htsno)){
+            if("60101700021446".equals(htsno)){
                 System.out.println("debug point");
             }
             List<RollPlanDataHelper> rollPlanDataHelperList = new ArrayList<>();//同一个合同的计划列表
@@ -206,7 +206,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                         .stream()
                         .collect(Collectors.groupingBy(IEPlanBusinessItemSetVO::getSdtyp));
                 //TODO debug only
-                if("60101800029082".equals(htsno)){
+                if("60101800000250".equals(htsno)){
                     System.out.println("debug point");
                 }
                 //处理类型为【G】的指标
@@ -256,16 +256,17 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 calcList.forEach(item->{
                     String maxDate = "";//当前节点日期最大值
                     String maxHtnum = "";//当前节点日期最大值对应的htnum
-                    double sumCurr = 0d;//当前节点金额总和
+                    BigDecimal sumCurr = BigDecimal.ZERO;//当前节点金额总和
                     List<IEPlanSelectValueSet> sdcurList = sdartValueMap.get(item.getSdcur());
                     if (!ClassUtils.isEmpty(sdcurList)) {
-                        sumCurr = sdcurList.stream().mapToDouble(v -> {
+                        for (IEPlanSelectValueSet v : sdcurList) {
                             try {
-                                return Double.parseDouble(v.getSdval());
+                                sumCurr = sumCurr.add(new BigDecimal(v.getSdval()));
                             } catch (NumberFormatException e) {
-                                return 0d;
+                                log.warn(e.toString());
+                                e.printStackTrace();
                             }
-                        }).sum();
+                        }
                     }
 
                     //取得最新的日期及其对应的htnum
@@ -279,7 +280,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     }
                     item.setSdartValue(maxDate);//最新取数日期（如果取不到则为空）
                     item.setCaartValue(getDmval(item.getCaart(), htsno));//历史能力值
-                    item.setSdcutValue(BigDecimal.valueOf(sumCurr));//累计金额
+                    item.setSdcutValue(sumCurr);//累计金额
                     item.setMaxHtnum(maxHtnum);//最新日期对应的合同管理编号
 
                 });
@@ -292,6 +293,8 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     int i = 0;
 
                     while(true){
+                        //TODO debug only
+                        //log.warn("endless loop htsno:{},  localHelperList.size():{}", htsno, localHelperList.size());
                         //取待处理计划（因为列表一直在增加，只能使用程序判断循环。）
                         if(i < localHelperList.size()){
                             helper = localHelperList.get(i);
@@ -339,6 +342,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                         noDiff(helper,itemVO);
                         //设置上一个环节
                         lastItemVO = itemVO;
+                        lastItemVO.setSdcutValue(sdcut);
                     }
                 }
 
@@ -364,12 +368,21 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 //删除第一个计划（由【G】创建的）
                 if(!ClassUtils.isEmpty(localHelperList) && localHelperList.size()>1){
                     //TODO debug only
-                    if("60101800029082".equals(htsno)){
-                        log.error("debug point: 0-{}", JSON.toJSONString(localHelperList.get(0)));
-                        log.error("debug point: 1-{}", JSON.toJSONString(localHelperList.get(1)));
+                    if("60101700021446".equals(htsno)){
+                        log.error("debug point: 0-{}", JSON.toJSONString(localHelperList));
+                        //log.error("debug point: 1-{}", JSON.toJSONString(localHelperList.get(1)));
                     }
                     localHelperList.remove(0);
                 }
+                //TODO debug only
+                if("60101800000250".equals(htsno)){
+                    log.error("debug point: 0-{}", JSON.toJSONString(localHelperList));
+                    //log.error("debug point: 1-{}", JSON.toJSONString(localHelperList.get(1)));
+                }
+                //删除计划金额为0的计划
+                localHelperList.removeIf(help->
+                   help.getHeadData().getWears().compareTo(BigDecimal.ZERO) == 0
+                );
                 rollPlanDataHelperList.addAll(localHelperList);
             });
             rollPlanHeadDataList.addAll(
@@ -579,6 +592,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         itemData.setCtdtp(IEPlanBusinessItemSet.CALC);
         itemData.setCaval(itemVO.getCaartValue());
         itemData.setSdart(itemVO.getSdart());
+        itemData.setDtval(itemVO.getSdartValue());
 
         //待计算项目：如果没有上一节点，则返回。
         if(itemList.size()<=1){

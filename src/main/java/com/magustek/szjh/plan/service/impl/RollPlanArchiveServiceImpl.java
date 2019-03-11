@@ -13,6 +13,7 @@ import com.magustek.szjh.plan.dao.RollPlanHeadDataArchiveDAO;
 import com.magustek.szjh.plan.dao.RollPlanItemDataArchiveDAO;
 import com.magustek.szjh.plan.service.RollPlanArchiveService;
 import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.KeyValueBean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.jpa.repository.Modifying;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -190,5 +192,19 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     public void saveItemList(List<RollPlanItemDataArchive> changedList) {
         Iterable<RollPlanItemDataArchive> save = rollPlanItemDataArchiveDAO.save(changedList);
         save.forEach(s-> log.warn("id:{}, dtval:{}",s.getId(),s.getDtval()));
+    }
+
+
+    //根据指标分组统计计划的zbval值
+    @Override
+    public ArrayList<KeyValueBean> getZbList(Long planHeadId, String date) {
+        List<Object[]> zbList = rollPlanHeadDataArchiveDAO.zbvalListByPlanHeadIdGroupByZbart(planHeadId, date);
+        ArrayList<KeyValueBean> list = new ArrayList<>(zbList.size());
+        for (Object[] s : zbList){
+            KeyValueBean bean = new KeyValueBean();
+            bean.put(s[1].toString(), new BigDecimal(s[0].toString()).setScale(2, BigDecimal.ROUND_HALF_EVEN).toString());
+            list.add(bean);
+        }
+        return list;
     }
 }

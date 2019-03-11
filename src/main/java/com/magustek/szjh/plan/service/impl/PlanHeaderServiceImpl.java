@@ -34,6 +34,7 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -143,7 +144,13 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     public PlanHeader getById(PlanHeader header){
         Assert.isTrue(!ClassUtils.isEmpty(header.getId()), "计划ID不得为空");
         header = planHeaderDAO.findOne(header.getId());
-        return coverToVO(header);
+
+        PlanHeaderVO vo = coverToVO(header);
+
+        Map<String, BigDecimal> zbval = planItemService.getZBValByHeaderId(header.getId());
+        ArrayList<KeyValueBean> keyValueBeans = KeyValueBean.paresMap(zbval);
+        vo.setZbList(keyValueBeans);
+        return vo;
     }
 
     @SuppressWarnings("unused")
@@ -166,7 +173,11 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
         for(PlanHeader header : content){
             PlanHeaderVO pvo = coverToVO(header);
-            pvo.setZbList(planItemService.getZbList(pvo.getId()));
+            //获取计划日期
+            String jhval = header.getJhval()+"-01";
+            //计算计划日期月最后一天
+            jhval = LocalDate.parse(jhval).with(TemporalAdjusters.lastDayOfMonth()).toString().replace("-","");
+            pvo.setZbList(rollPlanArchiveService.getZbList(pvo.getId(), jhval));
             voList.add(ClassUtils.coverToMapJson(pvo,"zbList", pvo.getUnit()));
         }
         page.getContent();
@@ -208,7 +219,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         //计算周期内合同的金额
         rollPlanMapByHtsno.forEach((htsno, rollPlanList)->{
             //TODO debug point
-            if ("60101800019313".equals(htsno)){
+            if ("60101700021446".equals(htsno)){
                 log.debug("debug point!");
             }
             Map<String, WearsType> htsnoMap = new HashMap<>();
@@ -252,14 +263,14 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                         if(!Strings.isNullOrEmpty(sb.toString())){
                             sb.append("$");
                         }
-                        sb.append("结：").append(v.getBudget().add(v.getProgress()).toString());
+                        sb.append("结：").append(v.getSettlement().add(v.getProgress()).toString());
                         amount = amount.add(v.getSettlement()).add(v.getProgress());
                     }
                     if(v.getWarranty().compareTo(BigDecimal.ZERO)>0){
                         if(!Strings.isNullOrEmpty(sb.toString())){
                             sb.append("$");
                         }
-                        sb.append("质：").append(v.getBudget().toString());
+                        sb.append("质：").append(v.getWarranty().toString());
                         amount = amount.add(v.getWarranty());
                     }
                     if(!Strings.isNullOrEmpty(sb.toString())){
@@ -419,11 +430,8 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     }
 
     private PlanHeaderVO coverToVO(PlanHeader header){
-        Map<String, BigDecimal> zbval = planItemService.getZBValByHeaderId(header.getId());
         PlanHeaderVO vo = new PlanHeaderVO();
         BeanUtils.copyProperties(header, vo);
-        ArrayList<KeyValueBean> keyValueBeans = KeyValueBean.paresMap(zbval);
-        vo.setZbList(keyValueBeans);
         //公司代码描述
         vo.setButxt(organizationSetService.getByBukrs(vo.getBukrs()).getButxt());
         //审批状态描述

@@ -12,6 +12,7 @@ import java.util.List;
 public interface RollPlanHeadDataDAO extends CrudRepository<RollPlanHeadData, Long> {
     @Transactional
     @Modifying
+    @Query("delete from RollPlanHeadData where version=?1")
     void deleteAllByVersion(String version);
 
     //@Query(value="select * from roll_plan_head_data WHERE version= :version and bukrs= :bukrs", nativeQuery = true)

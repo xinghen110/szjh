@@ -203,18 +203,28 @@ public class IEPlanConfigSetController {
 
     @ApiOperation(value="刷新所有配置数据。")
     @RequestMapping("/initAll")
-    public void initAll() throws Exception {
-        getIEPlanOperationSet();
-        getIEPlanCalculationSet();
-        getIEPlanDimensionSet();
-        getIEPlanSelectDataSet();
-        getOrganizationSet();
-        getIEPlanReportHeadSet();
-        getIEPlanReportItemSet();
-        fetchDatasourceSet();
-        getIEPlanStatisticSet();
-        getIEPlanBusinessHeadSet();
-        getIEPlanBusinessItemSet();
-        getIEPlanScreen();
+    public String initAll() {
+
+        try {
+            long l = System.currentTimeMillis();
+            getIEPlanOperationSet();
+            getIEPlanCalculationSet();
+            getIEPlanDimensionSet();
+            getIEPlanSelectDataSet();
+            getOrganizationSet();
+            getIEPlanReportHeadSet();
+            getIEPlanReportItemSet();
+            fetchDatasourceSet();
+            getIEPlanStatisticSet();
+            getIEPlanBusinessHeadSet();
+            getIEPlanBusinessItemSet();
+            getIEPlanScreen();
+            log.error("配置数据已更新，耗时"+((System.currentTimeMillis()-l)/1000.00)+"秒");
+            return resp.setStateCode(BaseResponse.SUCCESS).setMsg("配置数据已更新，耗时"+((System.currentTimeMillis()-l)/1000.00)+"秒").toJson();
+        }catch (Exception e){
+            log.error("配置数据更新失败："+e.getMessage());
+            e.printStackTrace();
+            return resp.setStateCode(BaseResponse.ERROR).setMsg("配置数据更新失败："+e.getMessage()).toJson();
+        }
     }
 }

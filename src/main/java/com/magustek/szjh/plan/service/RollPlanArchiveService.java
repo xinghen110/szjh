@@ -3,8 +3,10 @@ package com.magustek.szjh.plan.service;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
+import com.magustek.szjh.utils.KeyValueBean;
 
 import javax.swing.text.StyledEditorKit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,4 +23,7 @@ public interface RollPlanArchiveService {
     List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String>imnumList);
 
     void saveItemList(List<RollPlanItemDataArchive> changedList);
+
+    //根据指标分组统计计划的zbval值
+    ArrayList<KeyValueBean> getZbList(Long headerId, String date);
 }

@@ -14,15 +14,7 @@ public class InitConfigData {
     }
 
 
-    public void init() throws Exception{
-        try {
-            long start = System.currentTimeMillis();
-            log.warn("配置信息初始化开始！");
-            iePlanConfigSetController.initAll();
-            log.warn("配置信息初始化完成！耗时："+((System.currentTimeMillis()-start)/1000.00)+"秒");
-        } catch (Exception e) {
-            log.error("配置信息初始化出错！"+e.getMessage());
-            throw e;
-        }
+    public void init(){
+        iePlanConfigSetController.initAll();
     }
 }

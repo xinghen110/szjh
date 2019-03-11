@@ -13,6 +13,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
     public static final String ORG_MAP = "org_map";
     public static final String ZB_MAP = "zb_map";
+    public static final String ConfigDataSourceSet = "ConfigDataSourceSet";
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
