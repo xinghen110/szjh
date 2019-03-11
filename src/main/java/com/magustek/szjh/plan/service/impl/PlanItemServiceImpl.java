@@ -332,6 +332,23 @@ public class PlanItemServiceImpl implements PlanItemService {
         });
     }
 
+    //根据指标分组统计计划的zbval值
+    @Override
+    public ArrayList<KeyValueBean> getZbList(Long headerId, String rptyp) {
+        List<Object[]> zbList;
+        if("AR".equals(rptyp)){
+            zbList = planItemDAO.arZbvalListByHeaderIdGroupByZbart(headerId);
+        }else{
+            zbList = planItemDAO.mrZbvalListByHeaderIdGroupByZbart(headerId);
+        }
+        ArrayList<KeyValueBean> list = new ArrayList<>(zbList.size());
+        for (Object[] s : zbList){
+            KeyValueBean bean = new KeyValueBean();
+            bean.put(s[1].toString(), new BigDecimal(s[0].toString()).setScale(2, BigDecimal.ROUND_HALF_EVEN).toString());
+            list.add(bean);
+        }
+        return list;
+    }
 
     //初始化明细数据
     private PlanItem constructItem(String[] axis, KeyValueBean[] value, IEPlanReportHeadVO config, Long headerId) throws Exception{

@@ -173,11 +173,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
         for(PlanHeader header : content){
             PlanHeaderVO pvo = coverToVO(header);
-            //获取计划日期
-            String jhval = header.getJhval()+"-01";
-            //计算计划日期月最后一天
-            jhval = LocalDate.parse(jhval).with(TemporalAdjusters.lastDayOfMonth()).toString().replace("-","");
-            pvo.setZbList(rollPlanArchiveService.getZbList(pvo.getId(), jhval));
+            pvo.setZbList(planItemService.getZbList(pvo.getId(), header.getRptyp()));
             voList.add(ClassUtils.coverToMapJson(pvo,"zbList", pvo.getUnit()));
         }
         page.getContent();
@@ -327,7 +323,29 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     headList.stream().map(RollPlanHeadDataArchive::getRollId).collect(Collectors.toList()),
                     new ArrayList<>(imnumMap.keySet())
             );
+
+            //获取待计算账期列表
+            itemList = itemList.stream().filter(i->i.getCaval()!=null).collect(Collectors.toList());
             //取账期平均值
+            OptionalDouble opt = itemList.stream().mapToInt(RollPlanItemDataArchive::getCaval).average();
+            if(opt.isPresent()){
+                map.put("caval",new BigDecimal(opt.getAsDouble()).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue());
+            }else{
+                map.put("caval",0);
+            }
+            map.put("cavalHis", map.get("caval"));
+
+            //合同数量
+            List<Long> rollIdList = itemList.stream().map(RollPlanItemDataArchive::getHeadId).collect(Collectors.toList());
+            headList = headList.stream().filter(i->rollIdList.contains(i.getRollId())).collect(Collectors.toList());
+            long count = headList.stream().map(RollPlanHeadDataArchive::getHtsno).distinct().count();
+            map.put("count", count);
+
+            //合同总金额
+            BigDecimal wears = headList.stream().map(RollPlanHeadDataArchive::getWears).reduce(BigDecimal.ZERO, BigDecimal::add);
+            map.put("wears", wears.doubleValue());
+
+/*            //取账期平均值
             OptionalDouble opt = itemList.stream().filter(i->i.getCaval()!=null).mapToInt(RollPlanItemDataArchive::getCaval).average();
             if(opt.isPresent()){
                 map.put("caval",new BigDecimal(opt.getAsDouble()).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue());
@@ -340,7 +358,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             map.put("count", count);
             //合同总金额
             BigDecimal wears = headList.stream().map(RollPlanHeadDataArchive::getWears).reduce(BigDecimal.ZERO, BigDecimal::add);
-            map.put("wears", wears.doubleValue());
+            map.put("wears", wears.doubleValue());*/
             list.add(map);
         });
         return list;

@@ -23,7 +23,4 @@ public interface RollPlanArchiveService {
     List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String>imnumList);
 
     void saveItemList(List<RollPlanItemDataArchive> changedList);
-
-    //根据指标分组统计计划的zbval值
-    ArrayList<KeyValueBean> getZbList(Long headerId, String date);
 }

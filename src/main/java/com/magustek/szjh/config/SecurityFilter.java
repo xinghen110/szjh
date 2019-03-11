@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SecurityFilter extends GenericFilterBean{
     private List<AntPathRequestMatcher> resourceList;
+    private List<String> superUser= Arrays.asList("shihao1","yangjiawei","biwuke","liuhaiyan");
     //初始化匿名访问资源列表
     SecurityFilter(){
         resourceList = new ArrayList<>(AllowResource.resource.length);
@@ -59,8 +60,7 @@ public class SecurityFilter extends GenericFilterBean{
                 response.setMsg("用户未登陆或session已经过期");
             }else{
                 //超级管理员
-                if(userInfo.getLoginname().equalsIgnoreCase("shihao1")
-                        || userInfo.getLoginname().equalsIgnoreCase("yangjiawei")){
+                if(superUser.contains(userInfo.getLoginname().toLowerCase())){
                     flag = true;
                     log.info("超级管理员放行");
                 }else{
