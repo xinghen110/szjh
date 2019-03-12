@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 public interface RollPlanItemDataArchiveDAO extends CrudRepository<RollPlanItemDataArchive, Long> {
@@ -15,4 +16,11 @@ public interface RollPlanItemDataArchiveDAO extends CrudRepository<RollPlanItemD
     void deleteAllByPlanHeadId(Long planHeadId);
 
     List<RollPlanItemDataArchive> findAllByHeadIdInAndImnumIn(List<Long> headIdList, List<String> imnumList);
+
+    @Transactional
+    @Modifying
+    @Query(value = "insert into roll_plan_item_data_archive (id,crtime,crname,status,chdate,chname,caval,ctdtp,dtval,head_id,imnum,odue,plan_head_id,sdart,stval) " +
+            "select id,crtime,crname,status,chdate,chname,caval,ctdtp,dtval,head_id,imnum,odue,?2,sdart,stval" +
+            " from roll_plan_item_data where head_id in (select id from roll_plan_head_data where version=?1)", nativeQuery = true)
+    int copyRollPlanItemByVersionAndPlanHeadId(String version, Long planHeadId);
 }

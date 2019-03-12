@@ -4,7 +4,6 @@ import com.magustek.szjh.basedataset.entity.IEPlanDimenValueSet;
 import com.magustek.szjh.basedataset.entity.RollPlanHeadData;
 import com.magustek.szjh.basedataset.entity.RollPlanItemData;
 import com.magustek.szjh.basedataset.service.IEPlanDimenValueSetService;
-import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.basedataset.service.RollPlanDataService;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
@@ -13,7 +12,6 @@ import com.magustek.szjh.plan.dao.RollPlanHeadDataArchiveDAO;
 import com.magustek.szjh.plan.dao.RollPlanItemDataArchiveDAO;
 import com.magustek.szjh.plan.service.RollPlanArchiveService;
 import com.magustek.szjh.utils.ClassUtils;
-import com.magustek.szjh.utils.KeyValueBean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,7 +19,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import javax.transaction.Transactional;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -37,14 +34,12 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     private RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO;
     private RollPlanDataService rollPlanDataService;
     private IEPlanDimenValueSetService iePlanDimenValueSetService;
-    private IEPlanSelectValueSetService iePlanSelectValueSetService;
 
-    public RollPlanArchiveServiceImpl(RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, RollPlanDataService rollPlanDataService, IEPlanDimenValueSetService iePlanDimenValueSetService, IEPlanSelectValueSetService iePlanSelectValueSetService) {
+    public RollPlanArchiveServiceImpl(RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, RollPlanDataService rollPlanDataService, IEPlanDimenValueSetService iePlanDimenValueSetService) {
         this.rollPlanHeadDataArchiveDAO = rollPlanHeadDataArchiveDAO;
         this.rollPlanItemDataArchiveDAO = rollPlanItemDataArchiveDAO;
         this.rollPlanDataService = rollPlanDataService;
         this.iePlanDimenValueSetService = iePlanDimenValueSetService;
-        this.iePlanSelectValueSetService = iePlanSelectValueSetService;
     }
 
     @Override
@@ -112,8 +107,8 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
         log.warn("滚动计划行项目数据数据计算完毕，复制行数{}。", rollPlanItemDataArchiveList.size());
         rollPlanHeadDataArchiveDAO.save(rollPlanHeadDataArchiveList);
         log.warn("滚动计划抬头数据保存完毕，复制行数{}。", rollPlanHeadDataArchiveList.size());
-        rollPlanItemDataArchiveDAO.save(rollPlanItemDataArchiveList);
-        log.warn("滚动计划行项目数据数据保存完毕，复制行数{}。", rollPlanItemDataArchiveList.size());
+        int i = rollPlanItemDataArchiveDAO.copyRollPlanItemByVersionAndPlanHeadId(planHeader.getCkdate(), planHeader.getId());
+        log.warn("滚动计划行项目数据数据保存完毕，复制行数{}。", i);
     }
 
     @Transactional
