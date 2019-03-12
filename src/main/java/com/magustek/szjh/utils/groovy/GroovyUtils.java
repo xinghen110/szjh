@@ -1,5 +1,6 @@
 package com.magustek.szjh.utils.groovy;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Strings;
 import com.magustek.szjh.utils.ClassUtils;
 import groovy.lang.Binding;
@@ -55,6 +56,9 @@ public class GroovyUtils {
             script.setBinding(getBinding(bean.getBinding()));
             try {
                 return script.run();
+            } catch (NumberFormatException e) {
+                log.error(e.getMessage()+ JSONObject.toJSONString(getBinding(bean.getBinding()))+"@"+bean.getCommand());
+                return null;
             } catch (Exception e) {
                 log.warn(e.getMessage());
                 return null;

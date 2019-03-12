@@ -261,9 +261,14 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     if (!ClassUtils.isEmpty(sdcurList)) {
                         for (IEPlanSelectValueSet v : sdcurList) {
                             try {
-                                sumCurr = sumCurr.add(new BigDecimal(v.getSdval()));
+                                //处理ABAP金额为负数时，负号在数字最右面的情况。
+                                String s = v.getSdval();
+                                if(s.charAt(s.length()-1) == '-'){
+                                    s = "-"+s.substring(0,s.length()-1);
+                                }
+                                sumCurr = sumCurr.add(new BigDecimal(s));
                             } catch (NumberFormatException e) {
-                                log.warn(e.toString());
+                                log.error(e.toString()+"@"+v.getSdval());
                                 e.printStackTrace();
                             }
                         }

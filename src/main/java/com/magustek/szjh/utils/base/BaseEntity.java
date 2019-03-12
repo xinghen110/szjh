@@ -27,7 +27,7 @@ public class BaseEntity extends BasePage{
              pkColumnValue = "custom_id",
              valueColumnName = "value_id",
              initialValue = 1,
-             allocationSize=100)
+             allocationSize=1000)
     @GeneratedValue(generator = "ID_GENERATOR") @Id private Long id;                            //记录主键，自动生成
     @CreatedDate @Column(name = "CRTIME") protected Date createDate;//创建日期
     @CreatedBy @Column(name = "CRNAME",length = 40) protected String creator;//创建人

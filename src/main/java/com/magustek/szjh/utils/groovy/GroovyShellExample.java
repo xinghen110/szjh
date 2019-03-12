@@ -1,6 +1,7 @@
 package com.magustek.szjh.utils.groovy;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.magustek.szjh.utils.ClassUtils;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
@@ -13,7 +14,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 public class GroovyShellExample {
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         String a = "";
         try {
             System.out.println(ClassUtils.dfYMD.parse("20180116"));
@@ -22,7 +23,7 @@ public class GroovyShellExample {
             e.printStackTrace();
         }
 
-        f();
+        d();
     }
 
     public static void a(){
@@ -58,9 +59,11 @@ public class GroovyShellExample {
     public static void c(){
         Binding binding = new Binding();
         try {
-            binding.setVariable("G121", "0.00");
+            ArrayList<String> g121 = Lists.newArrayList("10.1","20.2","30.3");
+            binding.setVariable("G201", "01");
+            binding.setVariable("G411", "4600.00");
             GroovyShell shell = new GroovyShell(binding);
-            Object value = shell.evaluate("G121 > '0'");
+            Object value = shell.evaluate("(G201=='01'||G201=='04' ) && G411.toBigDecimal().compareTo(BigDecimal.ZERO) >0");
 
             System.err.println(value);
         } catch (Exception e) {
@@ -70,9 +73,13 @@ public class GroovyShellExample {
     }
 
     public static void d(){
-        String a = "a";
-        a = a.substring(0, a.length()-1);
-        System.out.println(a);
+        String[] s = {"713.00-","789.00"};
+        for (String s1 : s) {
+            if(s1.charAt(s1.length()-1) == '-'){
+                s1 = "-"+s1.substring(0,s1.length()-1);
+            }
+            System.out.println(s1);
+        }
     }
 
     public static void e(){

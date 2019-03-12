@@ -11,6 +11,7 @@ import lombok.Setter;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -54,9 +55,16 @@ public class IEPlanBusinessHeadSetVO extends IEPlanBusinessHeadSet {
         }
         Map<String, Object> binding = new HashMap<>();
         //取出所有待计算数据
-        valueList.forEach(v->{
-            if(vars.contains(v.getSdart())){
-                binding.put(v.getSdart(), v.getSdval());
+        valueList.stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart)).forEach((k, v)->{
+            if(vars.contains(k)){
+                List<String> sdvalList = v.stream().map(IEPlanSelectValueSet::getSdval).collect(Collectors.toList());
+                if(!ClassUtils.isEmpty(sdvalList)){
+                    if(sdvalList.size()>1){
+                        binding.put(k, sdvalList);
+                    }else{
+                        binding.put(k, v.get(0).getSdval());
+                    }
+                }
             }
         });
         //优化运行速度，如果取数指标的值数量小于待计算指标数量（部分待计算指标没有值），则返回。
