@@ -61,59 +61,59 @@ public class IEPlanConfigSetController {
         log.info("初始化 IEPlanConfigSetController");
     }
 
-    @ApiOperation(value="从Odata获取经营指标分类，并存入数据库。")
+    @ApiOperation(value="获取经营指标分类")
     @RequestMapping("/getIEPlanOperationSet")
-    public String getIEPlanOperationSet() throws Exception {
-        List<IEPlanOperationSet> list = iePlanOperationSetService.getAllFromDatasource();
+    public String getIEPlanOperationSet(){
+        List<IEPlanOperationSet> list = iePlanOperationSetService.getAll();
         log.warn("从Odata获取经营指标分类：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="从Odata获取业务计算指标，并存入数据库。")
+    @ApiOperation(value="获取业务计算指标")
     @RequestMapping("/getIEPlanCalculationSet")
-    public String getIEPlanCalculationSet() throws Exception {
-        List<IEPlanCalculationSet> list = iePlanCalculationSetService.getAllFromDatasource();
+    public String getIEPlanCalculationSet(){
+        List<IEPlanCalculationSet> list = iePlanCalculationSetService.getAll();
         log.warn("从Odata获取业务计算指标：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
     @ApiOperation(value="从Odata获取维度指标，并存入数据库。")
     @RequestMapping("/getIEPlanDimensionSet")
-    public String getIEPlanDimensionSet() throws Exception {
-        List<IEPlanDimensionSet> list = iePlanDimensionSetService.getAllFromDatasource();
+    public String getIEPlanDimensionSet(){
+        List<IEPlanDimensionSet> list = iePlanDimensionSetService.getAll();
         log.warn("从Odata获取维度指标：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="从Odata获取业务取数指标，并存入数据库。")
+    @ApiOperation(value="获取业务取数指标")
     @RequestMapping("/getIEPlanSelectDataSet")
-    public String getIEPlanSelectDataSet() throws Exception {
-        List<IEPlanSelectDataSet> list = iePlanSelectDataSetService.getAllFromDatasource();
+    public String getIEPlanSelectDataSet(){
+        List<IEPlanSelectDataSet> list = iePlanSelectDataSetService.getAll();
         log.warn("从Odata获取维度指标：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="从Odata获取组织机构数据，并存入数据库。")
+    @ApiOperation(value="获取组织机构数据")
     @RequestMapping("/getOrganizationSet")
-    public String getOrganizationSet() throws Exception {
-        List<OrganizationSet> list = organizationSetService.getAllFromDatasource();
+    public String getOrganizationSet(){
+        List<OrganizationSet> list = organizationSetService.getAll();
 
         log.warn("从Odata获取组织机构数据：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="从Odata获取报表抬头数据，并存入数据库。")
+    @ApiOperation(value="获取报表抬头数据")
     @RequestMapping("/getIEPlanReportHeadSet")
-    public String getIEPlanReportHeadSet() throws Exception {
-        List<IEPlanReportHeadSet> list = iePlanReportHeadSetService.getAllFromDatasource();
+    public String getIEPlanReportHeadSet() {
+        List<IEPlanReportHeadSet> list = iePlanReportHeadSetService.getAll();
         log.warn("从Odata获取报表抬头数据：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
     @ApiOperation(value="从Odata获取报表行项目数据，并存入数据库。")
     @RequestMapping("/getIEPlanReportItemSet")
-    public String getIEPlanReportItemSet() throws Exception {
-        List<IEPlanReportItemSet> list = iePlanReportItemSetService.getAllFromDatasource();
+    public String getIEPlanReportItemSet() {
+        List<IEPlanReportItemSet> list = iePlanReportItemSetService.getAll();
         log.warn("从Odata获取报表行项目数据：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
@@ -167,26 +167,26 @@ public class IEPlanConfigSetController {
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="从Odata获取统计指标配置数据。")
+    @ApiOperation(value="获取统计指标配置数据")
     @RequestMapping("/getIEPlanStatisticSet")
-    public String getIEPlanStatisticSet() throws Exception {
-        List<IEPlanStatisticSet> list = iePlanStatisticSetService.getAllFromDatasource();
+    public String getIEPlanStatisticSet() {
+        List<IEPlanStatisticSet> list = iePlanStatisticSetService.getAll();
         log.warn("从Odata获取统计指标配置数据：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="从Odata获取滚动计划-抬头配置数据。")
+    @ApiOperation(value="获取滚动计划-抬头配置数据")
     @RequestMapping("/getIEPlanBusinessHeadSet")
-    public String getIEPlanBusinessHeadSet() throws Exception {
-        List<IEPlanBusinessHeadSet> list = iePlanBusinessHeadSetService.getAllFromDatasource();
+    public String getIEPlanBusinessHeadSet(){
+        List<IEPlanBusinessHeadSet> list = iePlanBusinessHeadSetService.getAll();
         log.warn("从Odata获取滚动计划-抬头配置数据：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="从Odata获取滚动计划-计算逻辑明细配置数据。")
+    @ApiOperation(value="获取滚动计划-计算逻辑明细配置数据")
     @RequestMapping("/getIEPlanBusinessItemSet")
-    public String getIEPlanBusinessItemSet() throws Exception {
-        List<IEPlanBusinessItemSet> list = iePlanBusinessItemSetService.getAllFromDatasource();
+    public String getIEPlanBusinessItemSet() {
+        List<IEPlanBusinessItemSet> list = iePlanBusinessItemSetService.getAll();
         log.warn("从Odata获取滚动计划-计算逻辑明细配置数据：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
@@ -215,17 +215,18 @@ public class IEPlanConfigSetController {
 
         try {
             long l = System.currentTimeMillis();
-            getIEPlanOperationSet();
+            iePlanOperationSetService.getAllFromDatasource();
             getIEPlanCalculationSet();
-            getIEPlanDimensionSet();
-            getIEPlanSelectDataSet();
-            getOrganizationSet();
-            getIEPlanReportHeadSet();
-            getIEPlanReportItemSet();
+            iePlanCalculationSetService.getAllFromDatasource();
+            iePlanSelectDataSetService.getAllFromDatasource();
+            iePlanDimensionSetService.getAllFromDatasource();
+            organizationSetService.getAllFromDatasource();
+            iePlanReportHeadSetService.getAllFromDatasource();
+            iePlanReportItemSetService.getAllFromDatasource();
             fetchDatasourceSet();
-            getIEPlanStatisticSet();
-            getIEPlanBusinessHeadSet();
-            getIEPlanBusinessItemSet();
+            iePlanStatisticSetService.getAllFromDatasource();
+            iePlanBusinessHeadSetService.getAllFromDatasource();
+            iePlanBusinessItemSetService.getAllFromDatasource();
             getIEPlanScreen();
             log.error("配置数据已更新，耗时"+((System.currentTimeMillis()-l)/1000.00)+"秒");
             return resp.setStateCode(BaseResponse.SUCCESS).setMsg("配置数据已更新，耗时"+((System.currentTimeMillis()-l)/1000.00)+"秒").toJson();

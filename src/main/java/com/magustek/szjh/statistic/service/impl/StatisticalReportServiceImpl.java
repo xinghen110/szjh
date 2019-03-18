@@ -60,7 +60,4 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         int pageSize = report.getPageRequest().getPageSize();
         return new PageImpl<>(detailList.subList(start, start+pageSize), report.getPageRequest(), detailList.size());
     }
-
-
-
 }
