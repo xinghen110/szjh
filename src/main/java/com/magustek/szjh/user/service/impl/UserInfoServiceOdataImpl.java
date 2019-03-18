@@ -49,7 +49,7 @@ public class UserInfoServiceOdataImpl implements UserInfoServiceOdata {
 
             UserInfo userInfo = UserInfo.paresMap(result);
             userInfo.setAuthList(UserAuthSet.paresMap(authResult));
-            return UserInfo.paresMap(result);
+            return userInfo;
         } catch (Exception e) {
             log.error("调用ODATA接口认证用户失败："+e.getMessage());
         }

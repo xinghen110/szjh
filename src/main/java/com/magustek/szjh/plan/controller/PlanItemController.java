@@ -1,12 +1,12 @@
 package com.magustek.szjh.plan.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.plan.bean.PlanItem;
 import com.magustek.szjh.plan.bean.vo.PlanItemVO;
 import com.magustek.szjh.plan.service.PlanItemService;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
-import com.magustek.szjh.utils.KeyValueBean;
 import com.magustek.szjh.utils.base.BaseResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,16 +35,6 @@ public class PlanItemController {
         resp = new BaseResponse();
     }
 
-/*    @ApiOperation(value="保存计划明细", notes = "参数：参考PlanItemVO结构")
-    @RequestMapping("/save")
-    public String save(@RequestBody PlanItemVO vo) throws Exception {
-        List<PlanItem> list = planItemService.coverVOToList(vo);
-        list = planItemService.save(list);
-        String userName = ContextUtils.getUserName();
-        log.warn("{}保存计划明细：{}", userName, JSON.toJSONString(list));
-        return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
-    }*/
-
     @ApiOperation(value="更新计划明细指标值", notes = "参数：id、zbval")
     @RequestMapping("/updateById")
     public String updateById(@RequestBody PlanItem[] items) throws Exception {
@@ -61,6 +51,22 @@ public class PlanItemController {
         List<Map<String, String>> maps = planItemService.coverListToMap(list);
         String userName = ContextUtils.getUserName();
         log.warn("{}根据headerId获取计划明细：{}", userName, JSON.toJSONString(maps));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(maps).setMsg("成功！").toJson();
+    }
+
+    @ApiOperation(value="根据计划抬头ID代码获取报表布局信息（对比），参数：1、id。")
+    @RequestMapping("/getCompareLayoutByHeaderId")
+    public String getCompareLayoutByHeaderId(@RequestBody PlanItemVO vo) {
+        IEPlanReportHeadVO config = planItemService.getCompareLayoutByHeaderId(vo.getHeaderId());
+        log.warn("根据计划抬头ID代码获取报表布局信息：{}", JSON.toJSONString(config));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(config).setMsg("成功！").toJson();
+    }
+    @ApiOperation(value="根据headerId获取计划明细调整前后对比数据", notes = "参数：headerId、zaxis、zvalue")
+    @RequestMapping("/getCompareItemByHeaderId")
+    public String getCompareItemByHeaderId(@RequestBody PlanItemVO vo) throws Exception {
+        List<PlanItem> list = planItemService.getComparedListByHeaderId(vo);
+        List<Map<String, String>> maps = planItemService.coverListToMap(list);
+        log.warn("根据headerId获取计划明细：{}", JSON.toJSONString(maps));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(maps).setMsg("成功！").toJson();
     }
 }

@@ -1,6 +1,5 @@
 package com.magustek.szjh.configset.service.impl;
 
-import com.google.common.collect.Lists;
 import com.magustek.szjh.config.RedisConfig;
 import com.magustek.szjh.configset.bean.IEPlanOperationSet;
 import com.magustek.szjh.configset.dao.IEPlanOperationSetDAO;
@@ -13,7 +12,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -46,7 +44,7 @@ public class IEPlanOperationSetServiceImpl implements IEPlanOperationSetService 
 
     @Override
     public List<IEPlanOperationSet> getAll() {
-        return Lists.newArrayList(iePlanOperationSetDAO.findAll());
+        return iePlanOperationSetDAO.findAllByOrderByZsortAsc();
     }
 
     @Override

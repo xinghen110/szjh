@@ -10,4 +10,5 @@ public interface DmCalcStatisticsDAO extends CrudRepository<DmCalcStatistics, Lo
     DmCalcStatistics findFirstByVersionAndDmartAndDmvalAndCaart(String version, String dmart, String dmval, String caart);
 
     List<DmCalcStatistics> findAllByDmartAndVersion(String dmart, String version);
+    List<DmCalcStatistics> findAllByDmartAndCaartAndVersion(String dmart, String caart, String version);
 }

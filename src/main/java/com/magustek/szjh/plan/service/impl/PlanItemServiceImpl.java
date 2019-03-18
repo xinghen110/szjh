@@ -3,6 +3,10 @@ package com.magustek.szjh.plan.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.magustek.szjh.basedataset.entity.IEPlanDimenValueSet;
+import com.magustek.szjh.basedataset.entity.RollPlanHeadData;
+import com.magustek.szjh.basedataset.service.IEPlanDimenValueSetService;
+import com.magustek.szjh.basedataset.service.RollPlanDataService;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportItemVO;
 import com.magustek.szjh.configset.service.IEPlanOperationSetService;
@@ -23,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
@@ -37,15 +42,19 @@ public class PlanItemServiceImpl implements PlanItemService {
     private IEPlanOperationSetService iePlanOperationSetService;
     private RollPlanArchiveService rollPlanArchiveService;
     private PlanHeaderDAO planHeaderDAO;
+    private RollPlanDataService rollPlanDataService;
+    private IEPlanDimenValueSetService iePlanDimenValueSetService;
 
 
-    public PlanItemServiceImpl(PlanItemDAO planItemDAO, PlanLayoutDAO planLayoutDAO, OrganizationSetService organizationSetService, IEPlanOperationSetService iePlanOperationSetService, RollPlanArchiveService rollPlanArchiveService, PlanHeaderDAO planHeaderDAO) {
+    public PlanItemServiceImpl(PlanItemDAO planItemDAO, PlanLayoutDAO planLayoutDAO, OrganizationSetService organizationSetService, IEPlanOperationSetService iePlanOperationSetService, RollPlanArchiveService rollPlanArchiveService, PlanHeaderDAO planHeaderDAO, RollPlanDataService rollPlanDataService, IEPlanDimenValueSetService iePlanDimenValueSetService) {
         this.planItemDAO = planItemDAO;
         this.planLayoutDAO = planLayoutDAO;
         this.organizationSetService = organizationSetService;
         this.iePlanOperationSetService = iePlanOperationSetService;
         this.rollPlanArchiveService = rollPlanArchiveService;
         this.planHeaderDAO = planHeaderDAO;
+        this.rollPlanDataService = rollPlanDataService;
+        this.iePlanDimenValueSetService = iePlanDimenValueSetService;
     }
 
     //根据ID更新指标值
@@ -78,18 +87,82 @@ public class PlanItemServiceImpl implements PlanItemService {
         List<PlanItem> list;
         switch (zaxis){
             case PlanConstant.AXIS_TIM:
-                list = planItemDAO.findAllByHeaderIdAndAndZtval(vo.getHeaderId(), zvalue);
+                list = planItemDAO.findAllByHeaderIdAndZtval(vo.getHeaderId(), zvalue);
                 break;
             case PlanConstant.AXIS_ORG:
-                list = planItemDAO.findAllByHeaderIdAndAndDmval(vo.getHeaderId(), zvalue);
+                list = planItemDAO.findAllByHeaderIdAndDmval(vo.getHeaderId(), zvalue);
                 break;
             case PlanConstant.AXIS_ZB:
-                list = planItemDAO.findAllByHeaderIdAndAndZbart(vo.getHeaderId(), zvalue);
+                list = planItemDAO.findAllByHeaderIdAndZbart(vo.getHeaderId(), zvalue);
                 break;
             default:
                 throw new Exception("Y轴类型错误！");
         }
         return list;
+    }
+
+    @Override
+    public List<PlanItem> getComparedListByHeaderId(PlanItemVO vo) throws Exception {
+        //获取计划抬头
+        PlanHeader planHeader = planHeaderDAO.findOne(vo.getHeaderId());
+        //获取计划值
+        List<PlanItem> itemList = getListByHeaderId(vo);
+        //获取计算值
+        Map<String, List<RollPlanHeadData>> rollPlanMap = rollPlanDataService
+                .getRollPlanHeadDataByVersionAndDtvalIsNotNullAndDtvalIsNotAndZbart(planHeader.getCkdate(), vo.getZvalue())
+                .stream()
+                .collect(Collectors.groupingBy(RollPlanHeadData::getHtsno));
+        //获取报表配置数据
+        IEPlanReportHeadVO config = getCompareLayoutByHeaderId(vo.getHeaderId());
+
+        //获取组织机构对应的htsno
+        Map<String, List<IEPlanDimenValueSet>> htsnoByDmvalMap = iePlanDimenValueSetService
+                .getDmvalByDmartAndVersion(config.getDmart(), planHeader.getCkdate())
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanDimenValueSet::getDmval));
+        //先遍历Y轴（组织），再遍历X轴（时间），创建item
+        config.getYvalue().forEach(y->
+            config.getXvalue().forEach(x->{
+                //只处理对比数据
+                if(!x.getKey().contains("_compare")){
+                    return;
+                }
+                //新建一个item，并加入列表
+                PlanItem item = new PlanItem();
+
+                item.setDmart(y.getKey());        //组织编码
+                item.setDmval(y.getKey());        //组织名称
+                item.setZbart(vo.getZvalue());      //指标编码
+                item.setZbval("0.00");              //指标值
+                item.setZtime(x.getOpera());        //编辑类型
+                item.setZtval(x.getKey());          //时间key
+                item.setId(0L);                      //默认ID
+                //获取这个维度值的htsno列表
+                List<IEPlanDimenValueSet> htsnoList = htsnoByDmvalMap.get(y.getKey());
+                if(!ClassUtils.isEmpty(htsnoList)){
+                    htsnoList.forEach(h->{
+                        String htsno = h.getHtsno();
+                        List<RollPlanHeadData> rollPlanHeadList = rollPlanMap.get(htsno);
+                        if(!ClassUtils.isEmpty(rollPlanHeadList)){
+                            rollPlanHeadList.forEach(rollPlan->{
+                                String dtval = rollPlan.getDtval();
+                                if(checkPeriod(dtval, x.getKey())){
+                                    BigDecimal sum = BigDecimal.ZERO;
+                                    try{
+                                        sum = new BigDecimal(item.getZbval());
+                                    }catch (Exception ignored){}
+
+                                    sum = sum.add(rollPlan.getWears());
+                                    item.setZbval(sum.toString());
+                                }
+                            });
+                        }
+                    });
+                }
+                itemList.add(item);
+            })
+        );
+        return itemList;
     }
 
     @Override
@@ -407,16 +480,16 @@ public class PlanItemServiceImpl implements PlanItemService {
 
     private List<Map<String, String>> handleMap(IEPlanReportHeadVO layout, Map<String, List<PlanItem>> group, PlanHeader head) throws Exception {
         List<Map<String, String>> resultList = new ArrayList<>(group.size());
-        List<PlanItem> pList;
+        //List<PlanItem> pList;
 
         Map<String, String> orgKeyValue = organizationSetService.orgKeyValue();
         Map<String, String> zbnamMap = iePlanOperationSetService.getZbnamMap();
         //按行处理数据
-        for(Map.Entry<String, List<PlanItem>> i : group.entrySet()) {
+        //for (Map.Entry<String, List<PlanItem>> i : group.entrySet()) {
+        group.forEach((key, value)->{
             Map<String, String> map = new HashMap<>();
-            pList = i.getValue();
             //处理每个单元格数据
-            for (PlanItem p : pList) {
+            value.forEach(p->{
                 switch (layout.getXaxis()) {
                     case PlanConstant.AXIS_TIM:
                         //map.put(p.getZtval(), p.getZbval());
@@ -434,22 +507,22 @@ public class PlanItemServiceImpl implements PlanItemService {
                         map.put(zbnamMap.get(p.getZbart()) + "_id", p.getId().toString());
                         break;
                 }
-            }
+            });
             //设置y轴key以及描述
-            map.put("y_key",i.getKey());
+            map.put("y_key", key);
             switch (layout.getYaxis()) {
                 case PlanConstant.AXIS_TIM:
-                    map.put("y_name",i.getKey());
+                    map.put("y_name", key);
                     break;
                 case PlanConstant.AXIS_ORG:
-                    map.put("y_name",orgKeyValue.get(i.getKey()));
+                    map.put("y_name", orgKeyValue.get(key));
                     break;
                 case PlanConstant.AXIS_ZB:
-                    map.put("y_name",zbnamMap.get(i.getKey()));
+                    map.put("y_name", zbnamMap.get(key));
                     break;
             }
             resultList.add(map);
-        }
+        });
         return resultList;
     }
 
@@ -515,5 +588,68 @@ public class PlanItemServiceImpl implements PlanItemService {
             BigDecimal zbval = new BigDecimal(item.getZbval());
             item.setZbval(zbval.add(head.getWears()).toString());
         }
+    }
+    //调整布局，增加对比列
+    @Override
+    public IEPlanReportHeadVO getCompareLayoutByHeaderId(Long headId){
+        IEPlanReportHeadVO config = JSON.parseObject(planLayoutDAO.findTopByHeaderId(headId).getLayout(), IEPlanReportHeadVO.class);
+        ArrayList<KeyValueBean> xCompare = new ArrayList<>(config.getXvalue().size() * 2);
+        config.getXvalue().forEach(x->{
+            KeyValueBean bean = new KeyValueBean();
+            bean.put(x.getKey()+"_compare", "调整前 "+x.getValue(), "S");
+            xCompare.add(bean);
+            xCompare.add(x);
+            //处理【小计】列
+            if("T800".equals(x.getKey())){
+                String[] $s = x.getCalc().split("\\$");
+                StringBuilder a = new StringBuilder();
+                boolean flag = false;
+                for (String s : $s) {
+                    if(flag){
+                        a.append(s).append("_compare$");
+                        flag = false;
+                    }else{
+                        a.append(s).append("$");
+                        flag = true;
+                    }
+                }
+                String b = a.toString();
+                b = b.replace("T800","T800_compare");
+                bean.setCalc(b);
+            }
+        });
+        config.setXvalue(xCompare);
+        return config;
+    }
+
+    //判断日期是否在时间段内
+    private boolean checkPeriod(String yyyyMMdd, String period){
+        if(period.contains("T800")){
+            return false;
+        }
+        period = period.replace("_compare",""); //去掉后缀
+        LocalDate source;
+        try {
+            source = ClassUtils.StringToLocalDate(yyyyMMdd);
+        } catch (ParseException e) {
+            log.error("日期转换错误：{}, {}", e.toString(), yyyyMMdd);
+            return false;
+        }
+        if(period.contains(" ")){
+            //当月及之前所有时间
+            period = period.replace(" ","")+"-01";
+            LocalDate endTime = LocalDate.parse(period).with(TemporalAdjusters.lastDayOfMonth());
+            return source.compareTo(endTime) <= 0;
+        }
+        if(period.contains("后")){
+            //当月及之后所有时间
+            period = period.replace("后","")+"-01";
+            LocalDate startTime = LocalDate.parse(period);
+            return source.compareTo(startTime) >= 0;
+        }
+
+        LocalDate startTime = LocalDate.parse(period + "-01");
+        LocalDate endTime = startTime.with(TemporalAdjusters.lastDayOfMonth());
+        return source.compareTo(startTime)>=0 && source.compareTo(endTime)<=0;
     }
 }

@@ -261,14 +261,6 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         if(vo.getRptyp().equals("MR")){
             KeyValueBean firstBean = keyValueBeans.get(firstIndex-1);
             KeyValueBean lastBean = keyValueBeans.get(keyValueBeans.size() - 1);
-/*            //【小计】指标计算公式
-            String str = strBuilder.toString();
-            str = str.substring(0, str.length()-1);//去掉最后一个【+】
-            str = str.replaceFirst(firstBean.getKey(), firstBean.getKey()+" ");
-            str = str.replaceFirst(lastBean.getKey(), lastBean.getKey()+"后");
-            if(!ClassUtils.isEmpty(t800)){
-                t800.get(0).setCalc(t800.get(0).getKey()+"="+str);
-            }*/
 
             //自定义标识，第一个时间段后面加个空格，方便判断
             firstBean.put(firstBean.getKey()+" ", firstBean.getValue()+" ");

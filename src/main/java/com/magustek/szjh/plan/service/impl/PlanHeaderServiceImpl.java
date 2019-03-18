@@ -2,7 +2,9 @@ package com.magustek.szjh.plan.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
+import com.magustek.szjh.basedataset.entity.DmCalcStatistics;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
+import com.magustek.szjh.basedataset.service.DmCalcStatisticsService;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.configset.bean.IEPlanBusinessHeadSet;
 import com.magustek.szjh.configset.bean.IEPlanBusinessItemSet;
@@ -34,7 +36,6 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,6 +54,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
     private IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
     private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
+    private DmCalcStatisticsService dmCalcStatisticsService;
 
     public PlanHeaderServiceImpl(PlanHeaderDAO planHeaderDAO,
                                  PlanItemService planItemService,
@@ -61,7 +63,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                                  IEPlanReportHeadSetService iePlanReportHeadSetService,
                                  PlanLayoutDAO planLayoutDAO,
                                  RollPlanArchiveService rollPlanArchiveService,
-                                 IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService) {
+                                 IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, DmCalcStatisticsService dmCalcStatisticsService) {
         this.planHeaderDAO = planHeaderDAO;
         this.planItemService = planItemService;
         this.organizationSetService = organizationSetService;
@@ -72,6 +74,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
         this.iePlanBusinessHeadSetService = iePlanBusinessHeadSetService;
         this.iePlanBusinessItemSetService = iePlanBusinessItemSetService;
+        this.dmCalcStatisticsService = dmCalcStatisticsService;
     }
 
     @Override
@@ -304,6 +307,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         if(orgMap==null){
             return list;
         }
+        Map<String, List<DmCalcStatistics>> statisticsMap = dmCalcStatisticsService
+                .getStatisticsByDmartAndCaartAndVersion(dmart, caart, planHeaderDAO.findOne(planHeadId).getCkdate())
+                .stream()
+                .collect(Collectors.groupingBy(DmCalcStatistics::getDmval));
         //计划能力值相关项目编号列表
         Map<String, List<IEPlanBusinessItemSet>> imnumMap = iePlanBusinessItemSetService
                 .getAllByCaart(caart)
@@ -330,10 +337,12 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             OptionalDouble opt = itemList.stream().mapToInt(RollPlanItemDataArchive::getCaval).average();
             if(opt.isPresent()){
                 map.put("caval",new BigDecimal(opt.getAsDouble()).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue());
+                map.put("cavalNew",map.get("caval"));
             }else{
-                map.put("caval",0);
+                return;
+                // map.put("caval",0);
             }
-            map.put("cavalHis", map.get("caval"));
+            map.put("cavalHis", statisticsMap.get(k).get(0).getHisval());
 
             //合同数量
             List<Long> rollIdList = itemList.stream().map(RollPlanItemDataArchive::getHeadId).collect(Collectors.toList());
@@ -344,21 +353,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             //合同总金额
             BigDecimal wears = headList.stream().map(RollPlanHeadDataArchive::getWears).reduce(BigDecimal.ZERO, BigDecimal::add);
             map.put("wears", wears.doubleValue());
-
-/*            //取账期平均值
-            OptionalDouble opt = itemList.stream().filter(i->i.getCaval()!=null).mapToInt(RollPlanItemDataArchive::getCaval).average();
-            if(opt.isPresent()){
-                map.put("caval",new BigDecimal(opt.getAsDouble()).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue());
-            }else{
-                map.put("caval",0);
-            }
-            map.put("cavalHis", map.get("caval"));
-            //合同数量
-            long count = headList.stream().map(RollPlanHeadDataArchive::getHtsno).distinct().count();
-            map.put("count", count);
-            //合同总金额
-            BigDecimal wears = headList.stream().map(RollPlanHeadDataArchive::getWears).reduce(BigDecimal.ZERO, BigDecimal::add);
-            map.put("wears", wears.doubleValue());*/
             list.add(map);
         });
         return list;

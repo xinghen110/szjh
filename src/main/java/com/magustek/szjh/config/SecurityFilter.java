@@ -29,12 +29,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SecurityFilter extends GenericFilterBean{
     private List<AntPathRequestMatcher> resourceList;
-    private List<String> superUser= Arrays.asList("shihao1","yangjiawei","biwuke","liuhaiyan");
+    private List<String> superUser= Arrays.asList("cg_yangsy");
     //初始化匿名访问资源列表
     SecurityFilter(){
         resourceList = new ArrayList<>(AllowResource.resource.length);
         Arrays.stream(AllowResource.resource).forEach(resource-> resourceList.add(new AntPathRequestMatcher(resource)));
-
     }
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
@@ -57,7 +56,7 @@ public class SecurityFilter extends GenericFilterBean{
         if(ClassUtils.isEmpty(allowList)){
             UserInfo userInfo = (UserInfo)req.getSession().getAttribute("userInfo");
             if(userInfo == null){
-                response.setMsg("用户未登陆或session已经过期");
+                response.setStateCode(BaseResponse.NOTLOGIN).setMsg("用户未登陆或session已经过期");
             }else{
                 //超级管理员
                 if(superUser.contains(userInfo.getLoginname().toLowerCase())){
@@ -70,7 +69,7 @@ public class SecurityFilter extends GenericFilterBean{
                     List<UserAuthSet> collect = Arrays.stream(authList)
                             .filter(auth -> auth.getUrl().equalsIgnoreCase(req.getServletPath()))
                             .collect(Collectors.toList());
-                    flag = ClassUtils.isEmpty(collect);
+                    flag = !ClassUtils.isEmpty(collect);
                 }
             }
         }else{

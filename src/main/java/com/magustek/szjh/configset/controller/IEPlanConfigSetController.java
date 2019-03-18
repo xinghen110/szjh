@@ -151,6 +151,14 @@ public class IEPlanConfigSetController {
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 
+    @ApiOperation(value="获取经营指标列表。")
+    @RequestMapping("/getIEPlanOperationSetList")
+    public String getIEPlanOperationSetList() {
+        List<IEPlanOperationSet> list = iePlanOperationSetService.getAll();
+        log.warn("获取经营指标列表：{}", JSON.toJSONString(list));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
+    }
+
     @ApiOperation(value="从Odata获取数据源数据。")
     @RequestMapping("/fetchDatasourceSet")
     public String fetchDatasourceSet() throws Exception {

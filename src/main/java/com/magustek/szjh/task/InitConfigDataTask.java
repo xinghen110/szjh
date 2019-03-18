@@ -32,15 +32,18 @@ public class InitConfigDataTask {
 
     @Scheduled(cron = "0 0 3 * * ?")
     public void executeFetchBaseData(){
-        try {
-            long b = System.currentTimeMillis();
-            basedataSetController.fetchBaseData(null);
-            long e = System.currentTimeMillis();
-            log.warn("计划任务{}执行完毕，耗时：{}s", "executeFetchBaseData", (e-b)/1000.00);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            e.printStackTrace();
+        synchronized (this){
+            try {
+                log.warn("计划任务{}开始执行，Thread id：{}，name：{}", "executeFetchBaseData", Thread.currentThread().getId(), Thread.currentThread().getName());
+                long b = System.currentTimeMillis();
+                basedataSetController.fetchBaseData(null);
+                long e = System.currentTimeMillis();
+                log.warn("计划任务{}执行完毕，耗时：{}s", "executeFetchBaseData", (e-b)/1000.00);
+            } catch (Exception e) {
+                log.error(e.getMessage());
+                e.printStackTrace();
+            }
+            System.gc();
         }
-        System.gc();
     }
 }

@@ -31,7 +31,7 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
         log.warn("初始化开始！");
         try {
             if(initConfigData!=null){
-                initConfigData.init();
+                //initConfigData.init();
             }
         } catch (Exception e) {
             e.printStackTrace();

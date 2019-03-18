@@ -64,6 +64,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private Map<String, String> dmvalCache;//历史能力值缓存
     private Map<String, List<IEPlanDimenValueSet>> dimenMap;//维度缓存
     private Set<String> hjendCache;//计算结束环节列表
+    private LocalDate today;//计划日期
 
 
     public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataDAO rollPlanItemDataDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanDimenValueSetService iePlanDimenValueSetService, DmCalcStatisticsService dmCalcStatisticsService, HolidayService holidayService, ConfigDataSourceSetService configDataSourceSetService) {
@@ -82,7 +83,8 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         this.configDataSourceSetService = configDataSourceSetService;
     }
     //初始化数据
-    private void init(){
+    private void init(String version){
+        today = LocalDate.parse(version);
         headSetList = new ArrayList<>();
         //获取所有报表配置
         List<IEPlanReportHeadSet> reportHeadSetList = iePlanReportHeadSetService.getAll();
@@ -148,8 +150,9 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
 
     @Override
     public List<RollPlanHeadData> calculateByVersion(String version) {
+
         this.version = version;
-        this.init();
+        this.init(version);
 
         List<RollPlanHeadData> rollPlanHeadDataList = new ArrayList<>();
         List<RollPlanItemData> rollPlanItemDataList = new ArrayList<>();
@@ -159,6 +162,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 【业务取数指标】表中选取【PFLAG】="X" and sdart in 【取数指标集合】的【合同数据】数据 */
         List<IEPlanSelectValueSet> basicValueList = iePlanSelectValueSetService
                 .getAllByVersionAndPflag(this.version, "X");
+        log.error("basicValueList:{}", basicValueList.size());
         //根据htsno分组
         Map<String, List<IEPlanSelectValueSet>> valueListByHtsno = basicValueList.stream()
                 .collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtsno));
@@ -482,6 +486,11 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         return map;
     }
 
+    @Override
+    public List<RollPlanHeadData> getRollPlanHeadDataByVersionAndDtvalIsNotNullAndDtvalIsNotAndZbart(String version, String zbart) {
+        return rollPlanHeadDataDAO.findAllByVersionAndDtvalIsNotNullAndDtvalIsNotAndZbart(version, "", zbart);
+    }
+
     //处理类型为【G】的指标
     private void GetPlanData(Map<String, List<IEPlanBusinessItemSetVO>> groupBySdtyp,
                              String htsno,
@@ -597,7 +606,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         itemData.setCtdtp(IEPlanBusinessItemSet.CALC);
         itemData.setCaval(itemVO.getCaartValue());
         itemData.setSdart(itemVO.getSdart());
-        itemData.setDtval(itemVO.getSdartValue());
+        //itemData.setDtval(itemVO.getSdartValue());
 
         //待计算项目：如果没有上一节点，则返回。
         if(itemList.size()<=1){
@@ -621,9 +630,15 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     itemVO.getCaartValue() == null){
                 calcDate = "";
             }else{
-                calcDate = ClassUtils.StringToLocalDate(lastItem.getDtval())
-                        .plusDays(itemVO.getCaartValue())
-                        .toString().replace("-","");
+                LocalDate temp = ClassUtils.StringToLocalDate(lastItem.getDtval())
+                        .plusDays(itemVO.getCaartValue());
+                //如果计算出来的日期比计划当天还早，则计划日期安排为计划当天
+                if(temp.compareTo(today)>=0){
+                    calcDate = temp.toString().replace("-","");
+                }else{
+                    calcDate = today.toString().replace("-","");
+                    itemData.setCaval((int) (itemVO.getCaartValue()+today.toEpochDay()-temp.toEpochDay()));
+                }
             }
         } catch (Exception e) {
             log.error(e.getMessage());

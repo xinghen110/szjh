@@ -19,4 +19,6 @@ public interface RollPlanHeadDataDAO extends CrudRepository<RollPlanHeadData, Lo
 
     //@Query(value="select * from roll_plan_head_data WHERE version= :version and htsno= :htsno", nativeQuery = true)
     List<RollPlanHeadData> findAllByVersionAndHtsno(String version, String htsno);
+
+    List<RollPlanHeadData> findAllByVersionAndDtvalIsNotNullAndDtvalIsNotAndZbart(String version, String not, String zbart);
 }

@@ -15,6 +15,7 @@ public interface PlanItemService {
     PlanItem[] save(PlanItem[] items) throws Exception;
     List<PlanItem> save(List<PlanItem> list);
     List<PlanItem> getListByHeaderId(PlanItemVO vo) throws Exception;
+    List<PlanItem> getComparedListByHeaderId(PlanItemVO vo) throws Exception;
     List<PlanItem> delete(List<PlanItem> list);
     void deleteByHeaderId(Long headerId);
     List<PlanItem> coverVOToList(PlanItemVO vo) throws Exception;
@@ -28,4 +29,5 @@ public interface PlanItemService {
 
     //根据指标分组统计计划的zbval值
     ArrayList<KeyValueBean> getZbList(Long headerId, String rptyp);
+    IEPlanReportHeadVO getCompareLayoutByHeaderId(Long headId);
 }

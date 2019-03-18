@@ -17,4 +17,6 @@ public interface RollPlanDataService {
     List<RollPlanHeaderVO> getRollPlanVOByIdAndHtsno(Long id, String htsno);
     List<Map<String, String>> coverToMap(List<RollPlanHeaderVO> list);
     Map<String, String> getContractDataByVersionAndHtsno(String version, String htsno) throws Exception;
+
+    List<RollPlanHeadData> getRollPlanHeadDataByVersionAndDtvalIsNotNullAndDtvalIsNotAndZbart(String version, String zbart);
 }

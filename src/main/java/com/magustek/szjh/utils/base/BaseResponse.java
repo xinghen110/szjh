@@ -15,7 +15,8 @@ public class BaseResponse {
     public static final int ERROR = 600;        //出错
     public static final int REDIRECT = 601;     //跳转
     public static final int EMPTY = 602;        //无数据
-    public static final int FORBIDDEN = 603;    //无权限
+    public static final int NOTLOGIN = 603;    //未登录
+    public static final int FORBIDDEN = 604;    //无权限
 
 
     private Object data;

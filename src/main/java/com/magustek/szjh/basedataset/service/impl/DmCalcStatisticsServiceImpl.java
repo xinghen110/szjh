@@ -11,6 +11,7 @@ import com.magustek.szjh.basedataset.service.IEPlanDimenValueSetService;
 import com.magustek.szjh.configset.bean.OrganizationSet;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.utils.ClassUtils;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -210,5 +211,10 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
             cache.put(key, "");
             return "";
         }
+    }
+
+    @Override
+    public List<DmCalcStatistics> getStatisticsByDmartAndCaartAndVersion(String dmart, String caart, String version) {
+        return dmCalcStatisticsDAO.findAllByDmartAndCaartAndVersion(dmart, caart, version);
     }
 }

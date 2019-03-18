@@ -105,7 +105,7 @@ public class PlanHeaderController {
         //Assert.isTrue(!ClassUtils.isEmpty(voList),"参数不正确！");
         int count = 0;
         for(RollPlanHeadDataArchiveVO vo : voList){
-            if(vo.getCaval()>0){
+            if(vo.getCaval() != 0){
                 count += planHeaderService.updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(
                     vo.getPlanHeadId(),
                     vo.getCaart(),
