@@ -413,14 +413,16 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     adjustDtval(i, days);
                     changedList.add(i);
                     //更新后续节点日期
-                    item.remove(0);//去掉当前已处理的节点
-                    item.forEach(nextItem->{
-                        List<RollPlanItemDataArchive> nextItemList = itemGroup.get(nextItem.getImnum());
-                        if(!ClassUtils.isEmpty(nextItemList)){
-                            nextItemList.forEach(l-> adjustDtval(l, days));
-                            changedList.addAll(nextItemList);
-                        }
-                    });
+                    if(!ClassUtils.isEmpty(item)){
+                        item.remove(0);//去掉当前已处理的节点
+                        item.forEach(nextItem->{
+                            List<RollPlanItemDataArchive> nextItemList = itemGroup.get(nextItem.getImnum());
+                            if(!ClassUtils.isEmpty(nextItemList)){
+                                nextItemList.forEach(l-> adjustDtval(l, days));
+                                changedList.addAll(nextItemList);
+                            }
+                        });
+                    }
                 });
             });
         });

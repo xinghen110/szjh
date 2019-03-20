@@ -29,6 +29,7 @@ public class IEPlanScreenItemSet extends BaseEntity{
     @Column(length = 1) private String hyplk;       //超链接标识
     @Column(length = 1) private String freez;       //冻结标识
     @Column(length = 1) private String hiden;       //隐藏标识
+    @Column(length = 1) private String serch;       //检索标识
     @Column(length = 10) private String vtype;      //取值类型
     @Column(length = 10) private String frtyp;      //冻结类型
     @Column              private int zsort;         //排序

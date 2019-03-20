@@ -1,5 +1,6 @@
 package com.magustek.szjh.statistic.service.impl;
 
+import com.google.common.base.Strings;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.configset.bean.IEPlanScreenItemSet;
@@ -12,10 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,17 +29,27 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     }
 
     @Override
-    public Page<Map<String, String>> getOutputTaxDetailByVersion(Report report) {
+    public Page<Map<String, String>> getOutputTaxDetailByVersion(Report report) throws Exception{
         List<Map<String, String>> detailList = new ArrayList<>();
+        List<IEPlanSelectValueSet> selectValueSetList;
         //获取待使用取数指标集合
         String outputTax = "statisticalReport/getOutputTaxDetailByVersion";
         List<IEPlanScreenItemSet> itemListByIntfa = iePlanScreenService.getItemListByIntfa(outputTax);
         if(ClassUtils.isEmpty(itemListByIntfa)){
             return new PageImpl<>(new ArrayList<>());
         }
+        //获取【检索项标识】字段
+        List<IEPlanScreenItemSet> serchList = itemListByIntfa.stream().filter(i -> "X".equals(i.getSerch())).collect(Collectors.toList());
         List<String> sdvarList = itemListByIntfa.stream().map(IEPlanScreenItemSet::getSdvar).collect(Collectors.toList());
-        //根据取数指标取出数据
-        List<IEPlanSelectValueSet> selectValueSetList = iePlanSelectValueSetService.getAllByVersionAndSdvarIn(report.getVersion(), sdvarList);
+        //根据serch过滤
+        if(!ClassUtils.isEmpty(serchList)){
+            //根据取数指标取出数据
+            selectValueSetList = iePlanSelectValueSetService.getAllByVersionAndSdvarIn(report.getVersion(), serchList.get(0).getSdvar(), sdvarList);
+        }else{
+            throw new Exception("屏幕配置出错，无【检索项标识】！");
+        }
+
+
 
         if(ClassUtils.isEmpty(selectValueSetList)){
             return new PageImpl<>(new ArrayList<>());
@@ -56,6 +64,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
             );
             detailList.add(map);
         });
+
         int start = report.getPageRequest().getOffset();
         int pageSize = report.getPageRequest().getPageSize();
         return new PageImpl<>(detailList.subList(start, start+pageSize), report.getPageRequest(), detailList.size());

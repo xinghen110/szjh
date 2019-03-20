@@ -35,7 +35,7 @@ public class StatisticalReportController {
 
     @ApiOperation(value="根据version获取【销项发票】数据", notes = "参数：version")
     @RequestMapping("/getOutputTaxDetailByVersion")
-    public String getOutputTaxDetailByVersion(@RequestBody Report report) {
+    public String getOutputTaxDetailByVersion(@RequestBody Report report) throws Exception{
         Page<Map<String, String>> detail = statisticalReportService.getOutputTaxDetailByVersion(report);
         String userName = ContextUtils.getUserName();
         log.warn("{}根据headerId获取计划明细：{}", userName, JSON.toJSONString(detail));
