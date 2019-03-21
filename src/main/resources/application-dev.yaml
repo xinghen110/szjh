@@ -90,3 +90,5 @@ zconnection:
   odataPasswd: siemens
   odataClient: 103
   esbIp: http://10.154.97.1:8010/
+schedule:
+  executeFetchBaseData: 0 0/10 * * * ?

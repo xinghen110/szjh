@@ -97,7 +97,8 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         List<IEPlanSelectValueSet> list = new ArrayList<>();
         List<KeyValueBean> reportList = organizationSetService.getRangeList();
 
-        reportList.parallelStream().forEach(item->list.addAll(getAllFromDatasource(item.getValue(), item.getOpera(), item.getKey())));
+        //reportList.parallelStream().forEach(item->list.addAll(getAllFromDatasource(item.getValue(), item.getOpera(), item.getKey())));
+        reportList.forEach(item->list.addAll(getAllFromDatasource(item.getValue(), item.getOpera(), item.getKey())));
         //清除今天的版本
         deleteAllByVersion(LocalDate.now().toString());
         //保存新的今天版本

@@ -34,6 +34,11 @@
       "name": "zconnection.esbIp",
       "type": "java.lang.String",
       "description": "esb server ip."
+    },
+    {
+      "name": "schedule.executeFetchBaseData",
+      "type": "java.lang.String",
+      "description": "Description for schedule.executeFetchBaseData."
     }
   ]
 }

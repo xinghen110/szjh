@@ -81,3 +81,5 @@ zconnection:
   odataPasswd: zn_odata_p
   odataClient: 300
   esbIp: http://10.154.97.1:8010/
+schedule:
+  executeFetchBaseData: 0 0 3 * * ?

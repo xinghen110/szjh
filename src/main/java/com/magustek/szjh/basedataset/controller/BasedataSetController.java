@@ -151,7 +151,7 @@ public class BasedataSetController {
         getIEPlanSelectValueSet();
         getIEPlanDimenValueSet();
         //getIEPlanPaymentSet();
-        //getIEPlanTermsSet();
+        getIEPlanTermsSet();
         executeAllCalc(result);
         log.warn("从Odata获取所有配置及业务数据耗时{}", (System.currentTimeMillis()-l)/1000.00);
     }
