@@ -20,6 +20,7 @@ public class IEPlanBusinessItemSet extends BaseEntity{
     public static final transient String NAT_DAY = "N"; //合同约定-自然日
     @Column(nullable = false, length = 10) private String hdnum;//抬头编号
     @Column(nullable = false, length = 10) private String imnum;//项目编号
+    @Column(nullable = false, length = 50) private String imtxt;//项目编号描述
     @Column(nullable = false, length = 10) private String nimnu;//下一个项目编号
     @Column(length = 4) private String sdtyp;//取数类型（G-取值，C-计算）
     @Column(length = 4) private String sdart;//取数指标

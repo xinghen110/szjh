@@ -5,6 +5,8 @@ import com.magustek.szjh.basedataset.entity.RollPlanHeadData;
 import com.magustek.szjh.basedataset.entity.RollPlanItemData;
 import com.magustek.szjh.basedataset.service.IEPlanDimenValueSetService;
 import com.magustek.szjh.basedataset.service.RollPlanDataService;
+import com.magustek.szjh.configset.bean.IEPlanBusinessItemSet;
+import com.magustek.szjh.configset.service.IEPlanBusinessItemSetService;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
@@ -35,12 +37,14 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     private RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO;
     private RollPlanDataService rollPlanDataService;
     private IEPlanDimenValueSetService iePlanDimenValueSetService;
+    private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
 
-    public RollPlanArchiveServiceImpl(RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, RollPlanDataService rollPlanDataService, IEPlanDimenValueSetService iePlanDimenValueSetService) {
+    public RollPlanArchiveServiceImpl(RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, RollPlanDataService rollPlanDataService, IEPlanDimenValueSetService iePlanDimenValueSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService) {
         this.rollPlanHeadDataArchiveDAO = rollPlanHeadDataArchiveDAO;
         this.rollPlanItemDataArchiveDAO = rollPlanItemDataArchiveDAO;
         this.rollPlanDataService = rollPlanDataService;
         this.iePlanDimenValueSetService = iePlanDimenValueSetService;
+        this.iePlanBusinessItemSetService = iePlanBusinessItemSetService;
     }
 
     @Override
@@ -192,6 +196,7 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
 
     @Override
     public List<RollPlanItemDataArchiveVO> getItemListByPlanHeaderIdAndStartEndDate(Long id, String start, String end) {
-        return RollPlanItemDataArchiveVO.cover(rollPlanItemDataArchiveDAO.findAllByPlanHeadIdAndCtdtpAndDtvalBetween(id, start, end));
+        Map<String, List<IEPlanBusinessItemSet>> businessItemMap = iePlanBusinessItemSetService.getAll().stream().collect(Collectors.groupingBy(IEPlanBusinessItemSet::getImnum));
+        return RollPlanItemDataArchiveVO.cover(rollPlanItemDataArchiveDAO.findAllByPlanHeadIdAndCtdtpAndDtvalBetween(id, start, end),businessItemMap);
     }
 }

@@ -1,5 +1,7 @@
 package com.magustek.szjh.plan.bean.vo;
 
+import com.magustek.szjh.configset.bean.IEPlanBusinessItemSet;
+import com.magustek.szjh.configset.service.IEPlanBusinessItemSetService;
 import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
 import io.swagger.annotations.ApiModel;
 import lombok.Getter;
@@ -9,6 +11,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 待处理合同列表bean，用于接收数据库数据
@@ -29,12 +32,13 @@ public class RollPlanItemDataArchiveVO extends RollPlanItemDataArchive implement
     private String hdnum;       //抬头编号
     private String zbart;       //经营指标分类
     private BigDecimal wears;   //金额
+    private String imtxt;       //环节编号描述
     //private String dtval;       //第一个计划日期(yyyyMMdd)
     //private String stval;       //合同条款
     //private String version;     //明细版本（储存编制日期或计划编号）
 
 
-    public static RollPlanItemDataArchiveVO cover(Object[] o){
+    public static RollPlanItemDataArchiveVO cover(Object[] o, Map<String, List<IEPlanBusinessItemSet>> businessItemMap){
         RollPlanItemDataArchiveVO vo = new RollPlanItemDataArchiveVO();
         //head.htsno, head.htnum, head.stval, head.wears, head.dmval, head.bukrs, head.hdnum, head.zbart, head.version
         //item.caval, item.dtval, item.imnum, item.odue, item.sdart
@@ -48,14 +52,15 @@ public class RollPlanItemDataArchiveVO extends RollPlanItemDataArchive implement
         vo.setCaval((Integer)o[9]);
         vo.setDtval((String)o[10]);
         vo.setImnum((String)o[11]);
+        vo.setImtxt(businessItemMap.get(vo.getImnum()).get(0).getImtxt());
         vo.setOdue((String)o[12]);
         vo.setSdart((String)o[13]);
         return vo;
     }
 
-    public static List<RollPlanItemDataArchiveVO> cover(List<Object[]> list){
+    public static List<RollPlanItemDataArchiveVO> cover(List<Object[]> list, Map<String, List<IEPlanBusinessItemSet>> businessItemMap){
         List<RollPlanItemDataArchiveVO> voList = new ArrayList<>();
-        list.forEach(o->voList.add(cover(o)));
+        list.forEach(o->voList.add(cover(o, businessItemMap)));
         return voList;
     }
 }
