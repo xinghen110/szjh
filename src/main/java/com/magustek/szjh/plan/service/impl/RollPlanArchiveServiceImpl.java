@@ -8,6 +8,7 @@ import com.magustek.szjh.basedataset.service.RollPlanDataService;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
+import com.magustek.szjh.plan.bean.vo.RollPlanItemDataArchiveVO;
 import com.magustek.szjh.plan.dao.RollPlanHeadDataArchiveDAO;
 import com.magustek.szjh.plan.dao.RollPlanItemDataArchiveDAO;
 import com.magustek.szjh.plan.service.RollPlanArchiveService;
@@ -187,5 +188,10 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     public void saveItemList(List<RollPlanItemDataArchive> changedList) {
         Iterable<RollPlanItemDataArchive> save = rollPlanItemDataArchiveDAO.save(changedList);
         save.forEach(s-> log.warn("id:{}, dtval:{}",s.getId(),s.getDtval()));
+    }
+
+    @Override
+    public List<RollPlanItemDataArchiveVO> getItemListByPlanHeaderIdAndStartEndDate(Long id, String start, String end) {
+        return RollPlanItemDataArchiveVO.cover(rollPlanItemDataArchiveDAO.findAllByPlanHeadIdAndCtdtpAndDtvalBetween(id, start, end));
     }
 }

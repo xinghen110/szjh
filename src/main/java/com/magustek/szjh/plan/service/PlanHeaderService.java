@@ -9,6 +9,9 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author hexin
+ */
 public interface PlanHeaderService {
     PlanHeader save(PlanHeader header) throws Exception;
     PlanHeader delete(PlanHeader header);
@@ -21,4 +24,10 @@ public interface PlanHeaderService {
 
     List<Map<String, Object>> getCavalByPlanHeadIdAndCaartAndDmart(Long planHeadId, String caart, String dmart, String zbart);
     int updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(Long planHeadId, String caart, String dmart, String dmval, String zbart, Integer caval);
+
+    /**
+     * 获取系统中ckdate最新的月度计划
+     * @return 月度计划
+     */
+    PlanHeader getLastMRPlan();
 }

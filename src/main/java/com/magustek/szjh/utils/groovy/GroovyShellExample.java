@@ -3,9 +3,13 @@ package com.magustek.szjh.utils.groovy;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.KeyValueBean;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import org.springframework.beans.BeanUtils;
 
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -23,7 +27,7 @@ public class GroovyShellExample {
             e.printStackTrace();
         }
 
-        d();
+        e();
     }
 
     public static void a(){
@@ -83,10 +87,16 @@ public class GroovyShellExample {
     }
 
     public static void e(){
-        BigDecimal aa = new BigDecimal(2);
-        BigDecimal bb = new BigDecimal(3);
-        aa.add(bb);
-        System.out.println(aa.toString());
+        KeyValueBean bean = new KeyValueBean();
+        bean.put("ke123y", "value", "opera");
+        Object o = (Object) bean;
+        PropertyDescriptor key = BeanUtils.getPropertyDescriptor(o.getClass(), "key");
+        try {
+            System.out.println(key.getReadMethod().invoke(bean));
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private static void f(){

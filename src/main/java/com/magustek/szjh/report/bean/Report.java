@@ -1,4 +1,4 @@
-package com.magustek.szjh.statistic.bean;
+package com.magustek.szjh.report.bean;
 
 import com.google.common.base.Strings;
 import com.magustek.szjh.utils.base.BasePage;

@@ -164,7 +164,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
 
     @Override
     public List<IEPlanSelectValueSet> getAllByVersionAndSdvarIn(String version, String serch, List<String> sdvarList) {
-        return iePlanSelectValueSetDAO.findAllByVersionAndSdartIn(version, serch, sdvarList);
+        return iePlanSelectValueSetDAO.findAllByVersionAndSdartInWithSerch(version, serch, sdvarList);
     }
 
     private List<IEPlanSelectValueSet> getAllFromDatasource(String begin, String end, String bukrs, IEPlanSelectDataSet selectDataSet) {

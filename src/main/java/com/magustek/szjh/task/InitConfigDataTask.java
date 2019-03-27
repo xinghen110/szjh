@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class InitConfigDataTask {
 
     @Value("${schedule.executeFetchBaseData}")
-    private String executeFetchBaseData;
+    public String executeFetchBaseData;
     private InitConfigData initConfigData;
     private BasedataSetController basedataSetController;
 

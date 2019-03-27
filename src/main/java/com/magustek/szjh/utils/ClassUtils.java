@@ -1,9 +1,19 @@
 package com.magustek.szjh.utils;
 
 import com.google.common.base.Strings;
+import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
+import com.magustek.szjh.configset.bean.IEPlanScreenItemSet;
+import com.magustek.szjh.utils.base.BasePage;
+import com.magustek.szjh.utils.constant.IEPlanSelectDataConstant;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.DateFormat;
@@ -14,6 +24,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 日期、时间工具类
@@ -223,6 +234,19 @@ public class ClassUtils {
             return null;
         }
     }
+    /**
+     * yyyyMMdd转LocalDate
+     * @param yyyyMMdd    yyyyMMdd
+     * @return          计算后的日期
+     */
+    public static String StringToLocalDateString(String yyyyMMdd) {
+        try {
+            return StringToLocalDate(yyyyMMdd).toString();
+        } catch (ParseException e) {
+            log.error(e.getMessage());
+            return "";
+        }
+    }
 
     /**
      * 将对象转换为map json格式，处理其中keyValueBean。
@@ -281,5 +305,83 @@ public class ClassUtils {
         }catch (NumberFormatException e){
             return BigDecimal.ZERO;
         }
+    }
+
+    public static List<Map<String, String>> coverBeanToMapWithSdvarMap(List itemList,
+                                                  Map<String, List<IEPlanSelectValueSet>> selectValueMap,
+                                                  Map<String, List<IEPlanScreenItemSet>> sdvarMap){
+        List<Map<String, String>> list = new ArrayList<>();
+        //getter方法列表
+        Map<String, Method> methodList = new HashMap<>(sdvarMap.size());
+        sdvarMap.forEach((key,value)->{
+            PropertyDescriptor propertyDescriptor = BeanUtils.getPropertyDescriptor(itemList.get(0).getClass(), key);
+            //如果getter方法不为空，则需要从itemList里取值。
+            if(propertyDescriptor != null){
+                methodList.put(key, propertyDescriptor.getReadMethod());
+            }
+        });
+        //获取合同流水号方法
+        PropertyDescriptor htsnoPD = BeanUtils.getPropertyDescriptor(itemList.get(0).getClass(), "htsno");
+        Method htsnoMethod;
+        if(htsnoPD==null){
+            return list;
+        }else {
+            htsnoMethod = htsnoPD.getReadMethod();
+        }
+        for(Object item : itemList){
+            Map<String, String> map = new HashMap<>(sdvarMap.size());
+            list.add(map);
+            sdvarMap.forEach((k,v)->{
+                try {
+                    //构造临时变量
+                    IEPlanSelectValueSet temp = new IEPlanSelectValueSet();
+                    temp.setSdart(k);
+                    if(methodList.containsKey(k)){
+                        //从计划表里取数据
+                        temp.setSdval(methodList.get(k).invoke(item).toString());
+
+                    }else{
+                        //从取数表里取数据
+                        String htsno = htsnoMethod.invoke(item).toString();
+                        //容错处理
+                        if(!Strings.isNullOrEmpty(htsno)){
+                            List<IEPlanSelectValueSet> htsnoList = selectValueMap.get(htsno);
+                            if(!isEmpty(htsnoList)){
+                                Map<String, List<IEPlanSelectValueSet>> sdartMap = htsnoList.stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
+                                if(!isEmpty(sdartMap)){
+                                    List<IEPlanSelectValueSet> sdartList = sdartMap.get(k);
+                                    if(!isEmpty(sdartList)){
+                                        temp = sdartList.get(0);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    handleDate(map, sdvarMap, temp);
+                } catch (Exception e) {
+                    log.warn(e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+        }
+        return list;
+    }
+
+    /**
+     * 日期类型，需要特殊处理
+     * */
+    public static void handleDate(Map<String, String> map, Map<String, List<IEPlanScreenItemSet>> sdvarMap, IEPlanSelectValueSet item ){
+        if(IEPlanSelectDataConstant.RESULT_TYPE_DATS.equals(sdvarMap.get(item.getSdart()).get(0).getVtype())){
+            map.put(item.getSdart(), ClassUtils.StringToLocalDateString(item.getSdval()));
+        }else{
+            map.put(item.getSdart(), item.getSdval());
+        }
+    }
+
+    public static Page<Map<String, String>> constructPage(BasePage page, List<Map<String, String>> list){
+        int start = page.getPageRequest().getOffset();
+        int pageSize = page.getPageRequest().getPageSize();
+        int end = start+pageSize > list.size()? list.size() : start+pageSize;
+        return new PageImpl<>(list.subList(start, end), page.getPageRequest(), list.size());
     }
 }

@@ -432,6 +432,11 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         return changedList.size();
     }
 
+    @Override
+    public PlanHeader getLastMRPlan() {
+        return planHeaderDAO.findTopByRptypOrderByCkdateDesc("MR");
+    }
+
     private void adjustDtval(RollPlanItemDataArchive i, int days){
         String dtval = i.getDtval();
         if(!Strings.isNullOrEmpty(dtval)){

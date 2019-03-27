@@ -1,8 +1,9 @@
-package com.magustek.szjh.statistic.controller;
+package com.magustek.szjh.report.controller;
 
 import com.alibaba.fastjson.JSON;
-import com.magustek.szjh.statistic.bean.Report;
-import com.magustek.szjh.statistic.service.StatisticalReportService;
+import com.magustek.szjh.report.bean.Report;
+import com.magustek.szjh.report.bean.vo.DateVO;
+import com.magustek.szjh.report.service.StatisticalReportService;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.base.BaseResponse;
@@ -19,7 +20,8 @@ import java.util.Map;
 
 /**
  * 统计报表
- * */
+ *
+ * @author hexin*/
 @Api("统计报表")
 @Slf4j
 @RestController
@@ -39,6 +41,15 @@ public class StatisticalReportController {
         Page<Map<String, String>> detail = statisticalReportService.getOutputTaxDetailByVersion(report);
         String userName = ContextUtils.getUserName();
         log.warn("{}根据headerId获取计划明细：{}", userName, JSON.toJSONString(detail));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(detail).setMsg("成功！").toJson();
+    }
+
+    @ApiOperation(value="根据version获取【销项发票】数据", notes = "参数：version")
+    @RequestMapping("/getPendingItemListByDate")
+    public String getPendingItemListByDate(@RequestBody DateVO dateVO) throws Exception{
+        Page<Map<String, String>> detail = statisticalReportService.getPendingItemListByDate(dateVO);
+        //String userName = ContextUtils.getUserName();
+        //log.warn("{}根据headerId获取计划明细：{}", userName, JSON.toJSONString(detail));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(detail).setMsg("成功！").toJson();
     }
 }

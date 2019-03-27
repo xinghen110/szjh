@@ -11,7 +11,8 @@ import java.math.BigDecimal;
 
 /**
  * 计划表：合同滚动计划抬头数据（每个计划一版）
- * */
+ *
+ * @author hexin*/
 @ApiModel(value = "计划相关-合同滚动计划抬头数据")
 @Getter
 @Setter
