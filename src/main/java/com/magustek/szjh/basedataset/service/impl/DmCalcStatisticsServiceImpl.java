@@ -217,4 +217,9 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
     public List<DmCalcStatistics> getStatisticsByDmartAndCaartAndVersion(String dmart, String caart, String version) {
         return dmCalcStatisticsDAO.findAllByDmartAndCaartAndVersion(dmart, caart, version);
     }
+
+    @Override
+    public List<DmCalcStatistics> getDmCalcChart(String[] versionList, String[] dmvalList, String caart) {
+        return dmCalcStatisticsDAO.findAllByVersionInAndDmvalInAndAndCaartOrderByVersion(versionList, dmvalList, caart);
+    }
 }

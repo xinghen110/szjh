@@ -3,10 +3,13 @@ package com.magustek.szjh.configset.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.magustek.szjh.config.RedisConfig;
+import com.magustek.szjh.configset.bean.IEPlanDimensionSet;
 import com.magustek.szjh.configset.bean.OrganizationSet;
 import com.magustek.szjh.configset.dao.OrganizationSetDAO;
 import com.magustek.szjh.configset.service.OrganizationSetService;
+import com.magustek.szjh.user.bean.CompanyModel;
 import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.KeyValueBean;
 import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.http.HttpUtils;
@@ -182,5 +185,54 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
                 map.put("sort",orgMap.get(dmval).get(0).getDsort());
                 break;
         }
+    }
+
+    @Override
+    //返回指定组织机构树
+    public ArrayList<KeyValueBean> getORG(String voBukrs, String voDmart, String dmart) throws Exception {
+        ArrayList<KeyValueBean> keyValueBeans = new ArrayList<>();
+        List<Object[]> list;
+        KeyValueBean bean;
+        CompanyModel company = ContextUtils.getCompany();
+        switch (voDmart){
+            case IEPlanDimensionSet.DM_Company:
+                OrganizationSet org = getByBukrs(voBukrs);
+                bean = new KeyValueBean();
+                bean.put(org.getBukrs(), org.getButxt());
+                keyValueBeans.add(bean);
+                break;
+            case IEPlanDimensionSet.DM_Department:
+                //如果是编制部门计划，就取当前用户所在部门
+                if(IEPlanDimensionSet.DM_Department.equals(dmart)){
+                    bean = new KeyValueBean();
+                    bean.put(company.getDeptcode(), company.getGtext());
+                    keyValueBeans.add(bean);
+                }else{
+                    list = getDpnumByBukrs(voBukrs);
+                    for(Object[] o : list) {
+                        bean = new KeyValueBean();
+                        bean.put((String)o[0], (String)o[1]);
+                        keyValueBeans.add(bean);
+                    }
+                }
+                break;
+            case IEPlanDimensionSet.DM_User:
+                //如果是编制部门计划，就取当前用户所在部门的用户
+                if(IEPlanDimensionSet.DM_Department.equals(dmart)){
+                    list = getUnameByDpnum(company.getDeptcode());
+                }else {
+                    list = getUnameByBukrs(voBukrs);
+                }
+                for(Object[] o : list) {
+                    bean = new KeyValueBean();
+                    bean.put((String)o[0], (String)o[1]);
+                    keyValueBeans.add(bean);
+                }
+                break;
+            default :
+                log.error("axis error:" + voDmart);
+                throw new Exception("axis error:" + voDmart);
+        }
+        return keyValueBeans;
     }
 }

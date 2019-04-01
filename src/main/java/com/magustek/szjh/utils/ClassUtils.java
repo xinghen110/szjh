@@ -250,32 +250,43 @@ public class ClassUtils {
 
     /**
      * 将对象转换为map json格式，处理其中keyValueBean。
+     * @param superClass    是否包含父类字段
      */
     @SuppressWarnings("unchecked")
-    public static Map<String, String> coverToMapJson(Object o, String keyValueBeanName, String qcode) throws Exception {
+    public static Map<String, String> coverToMapJson(Object o, String keyValueBeanName, String qcode, boolean superClass) {
         ArrayList<Field> fList = new ArrayList<>();
         //递归遍历获取所有父类的字段
         Class clazz = o.getClass();
-        for(; clazz != Object.class ; clazz = clazz.getSuperclass()) {
+        if(superClass){
+            for(; clazz != Object.class ; clazz = clazz.getSuperclass()) {
+                fList.addAll(Arrays.asList(clazz.getDeclaredFields()));
+            }
+        }else{
             fList.addAll(Arrays.asList(clazz.getDeclaredFields()));
         }
 
+
         //根据字段名获取值
         Map<String, String> map = new HashMap<>();
-        for(Field f : fList){
-            String name = f.getName();
-            Method method = o.getClass().getMethod("get" + name.substring(0, 1).toUpperCase() + name.substring(1));
-            if(!keyValueBeanName.equals(name)) {
-                Object value = method.invoke(o);
-                if(value != null){
-                    map.put(name, value.toString());
-                }
-            }else{
-                Collection<KeyValueBean> list = (Collection<KeyValueBean>) method.invoke(o);
-                for(KeyValueBean bean : list){
-                    map.put(bean.getKey(),handlePunit(bean.getValue(), qcode));
+        try{
+            for(Field f : fList){
+                String name = f.getName();
+                Method method = o.getClass().getMethod("get" + name.substring(0, 1).toUpperCase() + name.substring(1));
+                if(!name.equals(keyValueBeanName)) {
+                    Object value = method.invoke(o);
+                    if(value != null){
+                        map.put(name, value.toString());
+                    }
+                }else{
+                    Collection<KeyValueBean> list = (Collection<KeyValueBean>) method.invoke(o);
+                    for(KeyValueBean bean : list){
+                        map.put(bean.getKey(),handlePunit(bean.getValue(), qcode));
+                    }
                 }
             }
+        }catch (Exception e){
+            log.error("json转换错误："+ e.getMessage());
+            e.printStackTrace();
         }
         return map;
     }

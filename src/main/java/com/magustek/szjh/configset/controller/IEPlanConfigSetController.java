@@ -9,6 +9,7 @@ import com.magustek.szjh.configset.service.*;
 import com.magustek.szjh.user.bean.UserInfo;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
+import com.magustek.szjh.utils.KeyValueBean;
 import com.magustek.szjh.utils.base.BaseResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -97,6 +98,15 @@ public class IEPlanConfigSetController {
     @RequestMapping("/getOrganizationSet")
     public String getOrganizationSet(){
         List<OrganizationSet> list = organizationSetService.getAll();
+
+        log.warn("从Odata获取组织机构数据：{}", JSON.toJSONString(list));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
+    }
+
+    @ApiOperation(value="根据dmart获取组织列表（部门、人员）")
+    @RequestMapping("/getOrganizationListByDmart")
+    public String getOrganizationListByDmart(@RequestBody IEPlanDimensionSet iePlanDimensionSet) throws Exception {
+        List<KeyValueBean> list = organizationSetService.getORG(ContextUtils.getCompany().getOrgcode(), iePlanDimensionSet.getDmart(), null);
 
         log.warn("从Odata获取组织机构数据：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
