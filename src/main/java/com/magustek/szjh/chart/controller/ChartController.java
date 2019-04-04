@@ -36,7 +36,7 @@ public class ChartController {
     @ApiOperation(value="根据日期范围（起始、截止日期）、组织机构代码（多个）、业务计算指标，返回业务计算指标值")
     @RequestMapping("/dmCalc")
     public String dmCalc(@RequestBody DmCalcVO vo){
-        Map<String, List<Map<String, String>>> list = chartService.dmCalc(vo);
+        Map<String, Map<String, List<Map<String, String>>>> list = chartService.dmCalc(vo);
         log.warn("根据日期范围（起始、截止日期）、组织机构代码（多个）、业务计算指标，返回业务计算指标值：{}", JSON.toJSONString(list));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }

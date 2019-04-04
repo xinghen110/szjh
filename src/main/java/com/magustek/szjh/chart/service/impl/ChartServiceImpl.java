@@ -26,7 +26,7 @@ public class ChartServiceImpl implements ChartService {
     }
 
     @Override
-    public Map<String, List<Map<String, String>>> dmCalc(DmCalcVO vo){
+    public Map<String, Map<String, List<Map<String, String>>>> dmCalc(DmCalcVO vo){
         LocalDate start = LocalDate.parse(vo.getStartDate());
         LocalDate end = LocalDate.parse(vo.getEndDate());
         ArrayList<String> versionList = new ArrayList<>();
@@ -37,21 +37,29 @@ public class ChartServiceImpl implements ChartService {
             start = start.plusDays(1);
         }
 
-
+        //获取组织机构列表（用来获取组织机构名称）
         Map<String, String> orgMap = organizationSetService.orgKeyValue();
-        Map<String, List<Map<String, String>>> dmCalcMap = new TreeMap<>();
-        Map<String, List<DmCalcStatistics>> dmMap = dmCalcStatisticsService.
+        Map<String, Map<String, List<Map<String, String>>>> dmCalcMap = new TreeMap<>();
+        //获取数据，根据历史能力值分组
+        Map<String, List<DmCalcStatistics>> caartMap = dmCalcStatisticsService.
                 getDmCalcChart(versionList.toArray(new String[0]), vo.getDmval(), vo.getCaart())
                 .stream()
-                .collect(Collectors.groupingBy(DmCalcStatistics::getVersion));
-        dmMap.forEach((k,v)->{
-            List<Map<String, String>> list = new ArrayList<>();
-            v.forEach(chart->{
-                Map<String, String> map = ClassUtils.coverToMapJson(chart, null, null, false);
-                map.put("dmtxt",orgMap.get(map.get("dmval")));
-                list.add(map);
+                .collect(Collectors.groupingBy(DmCalcStatistics::getCaart));
+        //返回数据根据历史能力值分组
+        caartMap.forEach((caart, caartList)->{
+            Map<String, List<DmCalcStatistics>> dmMap = caartList.stream().collect(Collectors.groupingBy(DmCalcStatistics::getVersion));
+            Map<String, List<Map<String, String>>> versionMap = new TreeMap<>();
+            //根据日期分组
+            dmMap.forEach((k,v)->{
+                List<Map<String, String>> list = new ArrayList<>();
+                v.forEach(chart->{
+                    Map<String, String> map = ClassUtils.coverToMapJson(chart, null, null, false);
+                    map.put("dmtxt",orgMap.get(map.get("dmval")));
+                    list.add(map);
+                });
+                versionMap.put(k, list);
             });
-            dmCalcMap.put(k, list);
+            dmCalcMap.put(caart, versionMap);
         });
         return dmCalcMap;
     }
