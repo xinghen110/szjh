@@ -13,6 +13,7 @@ import com.magustek.szjh.report.bean.vo.DateVO;
 import com.magustek.szjh.report.service.StatisticalReportService;
 import com.magustek.szjh.utils.ClassUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         this.rollPlanArchiveService = rollPlanArchiveService;
     }
 
+    //@Cacheable(value = "getOutputTaxDetailByVersion")
     @Override
     public Page<Map<String, String>> getOutputTaxDetailByVersion(Report report) throws Exception{
         List<Map<String, String>> detailList = new ArrayList<>();
@@ -86,7 +88,8 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
 
             detailList.add(map);
         });
-        return ClassUtils.constructPage(report, detailList);
+
+        return ClassUtils.constructPage(report, report.filter(detailList));
     }
 
     @Override

@@ -118,4 +118,18 @@ public class PlanHeaderController {
         log.warn("根据计划ID-planHeadId、业务计算指标-caart、维度-dmart、经营指标分类-zbart，更新账期列表：{}", count);
         return resp.setStateCode(BaseResponse.SUCCESS).setData(count).setMsg("成功！").toJson();
     }
+
+    @ApiOperation(value="获取审批界面", notes = "参数：id")
+    @RequestMapping("/getApprovalPage")
+    public String getApprovalPage(@RequestBody PlanHeaderVO vo) throws Exception{
+        PlanHeader planHeader = planHeaderService.getApprovalPage(vo);
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(planHeader).setMsg("成功！").toJson();
+    }
+
+    @ApiOperation(value="审批模块:提交审批、同意、驳回", notes = "参数：id、apinfo、approvalMode")
+    @RequestMapping("/approvalProcess")
+    public String approvalProcess(@RequestBody PlanHeaderVO vo) throws Exception{
+        PlanHeader planHeader = planHeaderService.approvalProcess(vo);
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(planHeader).setMsg("成功！").toJson();
+    }
 }

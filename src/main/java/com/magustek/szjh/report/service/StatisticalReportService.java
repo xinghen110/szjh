@@ -20,8 +20,8 @@ public interface StatisticalReportService {
     Page<Map<String, String>> getOutputTaxDetailByVersion(Report report) throws Exception;
 
     /**
-     * 根据选择的【起始日期】、【截止日期】，从最新一版月度计划中检索待
-     * 处理（item-ctdtp=C）合同，并返回其列表
+     * 根据选择的【起始日期】、【截止日期】，从最新一版月度计划中检索履约待办
+     * （item-ctdtp=C）合同，并返回其列表
      * @param dateVO 包含起始日期、截止日期、分页信息
      * @return  分页数据
      * @throws Exception    无

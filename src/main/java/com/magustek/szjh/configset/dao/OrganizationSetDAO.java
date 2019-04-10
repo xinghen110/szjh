@@ -29,4 +29,8 @@ public interface OrganizationSetDAO extends CrudRepository<OrganizationSet,Long>
     List<OrganizationSet> findDistinctDpnumByOrderByDsort();
     List<OrganizationSet> findDistinctPonumByOrderByDsort();
     List<OrganizationSet> findDistinctUnameByOrderByDsort();
+
+    OrganizationSet findByBukrsAndUname(String bukrs, String uname);
+
+
 }

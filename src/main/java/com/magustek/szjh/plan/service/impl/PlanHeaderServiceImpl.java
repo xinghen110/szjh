@@ -2,15 +2,15 @@ package com.magustek.szjh.plan.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
+import com.magustek.szjh.approval.bean.ApprovalLog;
+import com.magustek.szjh.approval.dao.ApprovalLogDAO;
 import com.magustek.szjh.basedataset.entity.DmCalcStatistics;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.service.DmCalcStatisticsService;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
-import com.magustek.szjh.configset.bean.IEPlanBusinessHeadSet;
-import com.magustek.szjh.configset.bean.IEPlanBusinessItemSet;
-import com.magustek.szjh.configset.bean.IEPlanDimensionSet;
-import com.magustek.szjh.configset.bean.OrganizationSet;
+import com.magustek.szjh.configset.bean.*;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
+import com.magustek.szjh.configset.dao.IEPlanReleaseSetDAO;
 import com.magustek.szjh.configset.service.*;
 import com.magustek.szjh.plan.bean.*;
 import com.magustek.szjh.plan.bean.vo.PlanHeaderVO;
@@ -55,6 +55,8 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     private IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
     private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
     private DmCalcStatisticsService dmCalcStatisticsService;
+    private final IEPlanReleaseSetDAO iePlanReleaseSetDAO;
+    private ApprovalLogDAO approvalLogDAO;
 
     public PlanHeaderServiceImpl(PlanHeaderDAO planHeaderDAO,
                                  PlanItemService planItemService,
@@ -63,7 +65,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                                  IEPlanReportHeadSetService iePlanReportHeadSetService,
                                  PlanLayoutDAO planLayoutDAO,
                                  RollPlanArchiveService rollPlanArchiveService,
-                                 IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, DmCalcStatisticsService dmCalcStatisticsService) {
+                                 IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, DmCalcStatisticsService dmCalcStatisticsService, IEPlanReleaseSetDAO iePlanReleaseSetDAO, ApprovalLogDAO approvalLogDAO) {
         this.planHeaderDAO = planHeaderDAO;
         this.planItemService = planItemService;
         this.organizationSetService = organizationSetService;
@@ -75,6 +77,8 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         this.iePlanBusinessHeadSetService = iePlanBusinessHeadSetService;
         this.iePlanBusinessItemSetService = iePlanBusinessItemSetService;
         this.dmCalcStatisticsService = dmCalcStatisticsService;
+        this.iePlanReleaseSetDAO = iePlanReleaseSetDAO;
+        this.approvalLogDAO = approvalLogDAO;
     }
 
     @Override
@@ -159,16 +163,28 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     @SuppressWarnings("unused")
     @Override
     public Page<Map<String, String>> getListByBukrs(PlanHeaderVO vo, Pageable pageable) throws Exception{
-        Page<PlanHeader> page;
-        switch (vo.getRporg()) {
-            case IEPlanDimensionSet.DM_Company:
-                page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(), ContextUtils.getCompany().getOrgcode(), vo.getRptyp(), pageable);
-                break;
-            case IEPlanDimensionSet.DM_Department:
-                page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(), ContextUtils.getCompany().getDeptcode(), vo.getRptyp(), pageable);
-                break;
-            default:
-                throw new Exception("请指定公司报表还是部门报表！");
+
+        Page<PlanHeader> page ;
+        //查询正在审批中的计划
+        if(vo.getPowerModel().equals("3")){
+            String name = ContextUtils.getUserName();
+            String orgcode = ContextUtils.getCompany().getOrgcode();
+            String wflsh = vo.getRptyp()+"01";
+            List<IEPlanReleaseSet> iePlanReleaseSetList = iePlanReleaseSetDAO.findAllBySpnamAndBukrsAndWflsh(ContextUtils.getUserName(),ContextUtils.getCompany().getOrgcode(),vo.getRptyp()+"01");
+            List<String> bbstas = iePlanReleaseSetList.stream().map(IEPlanReleaseSet::getBbsta).collect(Collectors.toList());
+            page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypAndStonrAndBstaInOrderByIdDesc(ContextUtils.getCompany().getOrgcode(), ContextUtils.getCompany().getOrgcode(), vo.getRptyp(), "20",bbstas, pageable);
+        }
+        else{
+            switch (vo.getRporg()) {
+                case IEPlanDimensionSet.DM_Company:
+                    page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(), ContextUtils.getCompany().getOrgcode(), vo.getRptyp(), pageable);
+                    break;
+                case IEPlanDimensionSet.DM_Department:
+                    page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(), ContextUtils.getCompany().getDeptcode(), vo.getRptyp(), pageable);
+                    break;
+                default:
+                    throw new Exception("请指定公司报表还是部门报表！");
+            }
         }
 
         List<PlanHeader> content = page.getContent();
@@ -177,7 +193,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         for(PlanHeader header : content){
             PlanHeaderVO pvo = coverToVO(header);
             pvo.setZbList(planItemService.getZbList(pvo.getId(), header.getRptyp()));
-            voList.add(ClassUtils.coverToMapJson(pvo,"zbList", pvo.getUnit()));
+            voList.add(ClassUtils.coverToMapJson(pvo,"zbList", pvo.getUnit(), true));
         }
         page.getContent();
         return new PageImpl<>(voList, pageable, page.getTotalElements());
@@ -543,5 +559,165 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     }
                 })
         );
+    }
+
+    //展示审批界面
+    @Override
+    public PlanHeader getApprovalPage(PlanHeaderVO vo) throws Exception {
+        PlanHeader planHeader = planHeaderDAO.findById(vo.getId());
+        IEPlanReleaseSet curApproval =  getCurApproval(planHeader);
+        IEPlanReleaseSet nextApprover;
+        if(planHeader.getStonr().equals("10")){
+            vo.setBsta("");
+            vo.setCurponum("");
+            nextApprover = iePlanReleaseSetDAO.findByBukrsAndHjbgn(ContextUtils.getCompany().getOrgcode(),"X");
+            String str = nextApprover.getHjtxt();
+            String[] strs = str.split(",");
+            vo.setNtdpnam(strs[0]);
+            vo.setNtponum(strs[1]);
+            vo.setNtusnam(strs[2]);
+            vo.setNtuname(nextApprover.getSpnam());
+        }
+        if(planHeader.getStonr().equals("20")){
+            String bbsta = planHeader.getBsta();
+            nextApprover = iePlanReleaseSetDAO.findByBukrsAndBbsta(ContextUtils.getCompany().getOrgcode(),bbsta);
+            nextApprover = iePlanReleaseSetDAO.findByBukrsAndBbsta(ContextUtils.getCompany().getOrgcode(),nextApprover.getEbsta());
+            String msg = curApproval.getHjtxt();
+            String[] msgs = msg.split(",");
+            vo.setBsta(planHeader.getBsta());
+            vo.setCurponum(msgs[1]);
+            if(nextApprover != null){
+                String str = nextApprover.getHjtxt();
+                String[] strs = str.split(",");
+                vo.setNtdpnam(strs[0]);
+                vo.setNtponum(strs[1]);
+                vo.setNtusnam(strs[2]);
+                vo.setNtuname(nextApprover.getSpnam());
+            }else{
+                vo.setNtdpnam("");
+                vo.setNtponum("");
+                vo.setNtusnam("");
+                vo.setNtuname("");
+            }
+        }
+        return vo;
+    }
+
+    //审批流程（审批提交、同意、驳回）
+    @Transactional
+    @Override
+    public PlanHeader approvalProcess(PlanHeaderVO vo) throws Exception {
+        String mode = vo.getApprovalMode();
+        ApprovalLog approvalLog = new ApprovalLog();
+        PlanHeader planHeader = planHeaderDAO.findById(vo.getId());
+        IEPlanReleaseSet iePlanReleaseSetBgn = iePlanReleaseSetDAO.findByBukrsAndHjbgn(planHeader.getBukrs(),"X");
+        IEPlanReleaseSet iePlanReleaseSetEnd = iePlanReleaseSetDAO.findByBukrsAndHjend(planHeader.getBukrs(),"X");
+        approvalLog.setHeaderid(planHeader.getId());
+        approvalLog.setApinfo(vo.getApinfo());
+        approvalLog.setBukrs(planHeader.getBukrs());
+        approvalLog.setButxt(ContextUtils.getCompany().getOrgName());
+        if(mode.equals("1")){ //提交
+            if(planHeader.getStonr().equals("10")){
+                planHeader.setStonr("20");
+                planHeader.setBsta(iePlanReleaseSetBgn.getBbsta());
+                // 记录审批日志
+                OrganizationSet curApproval = getCurApprover();
+                approvalLog.setHjtxt(curApproval.getDpnam()+","+curApproval.getPonam()+","+curApproval.getUsnam());
+                approvalLog.setHjbgn("");
+                approvalLog.setHjend("");
+                approvalLog.setBgnstat("");
+                approvalLog.setEbsta(planHeader.getBsta());
+                approvalLog.setEbtyp("");
+                approvalLog.setSpnam("");
+                approvalLog.setSbname(ContextUtils.getUserName());
+                log.info("审批提交，审批日志记录成功");
+            }
+        }else if(mode.equals("2")){  //审批同意
+            String bbsta = planHeader.getBsta();
+            IEPlanReleaseSet iePlanReleaseSet = iePlanReleaseSetDAO.findByBukrsAndBbsta(planHeader.getBukrs(),bbsta);
+            IEPlanReleaseSet curApproval =  getCurApproval(planHeader);
+            approvalLog.setHjtxt(curApproval.getHjtxt());
+            approvalLog.setBgnstat(bbsta);
+            approvalLog.setSpnam(ContextUtils.getUserName());
+            approvalLog.setEbtyp("AP");
+            approvalLog.setSbname("");
+            if(planHeader.getStonr().equals("20")){
+                //非最后环节
+                if( !planHeader.getBsta().equals(iePlanReleaseSetEnd.getBbsta()) ){
+                    //是否为第一环节
+                    if(planHeader.getBsta().equals(iePlanReleaseSetBgn.getBbsta())){
+                        planHeader.setBsta(iePlanReleaseSet.getEbsta());
+                        //设置审批日志
+                        approvalLog.setEbsta(planHeader.getBsta());
+                        approvalLog.setHjbgn("X");
+                    }else {
+                        planHeader.setBsta(iePlanReleaseSet.getEbsta());
+                        //设置审批日志
+                        approvalLog.setEbsta(planHeader.getBsta());
+                    }
+                    approvalLog.setHjend("");
+                }
+                //最后环节
+                else {
+                    planHeader.setStonr("90");
+                    //设置审批日志
+                    approvalLog.setEbsta("");
+                    approvalLog.setHjbgn("");
+                    approvalLog.setHjend("X");
+                }
+            }
+            log.info("审批通过，审批日志记录成功");
+        }else{ //审批驳回
+            //记录审批日志
+            IEPlanReleaseSet curApproval =  getCurApproval(planHeader);
+            approvalLog.setHjtxt(curApproval.getHjtxt());
+            approvalLog.setBgnstat(planHeader.getBsta());
+            approvalLog.setEbsta("");
+            approvalLog.setEbtyp("RJ");
+            approvalLog.setHjbgn("");
+            approvalLog.setHjend("");
+            approvalLog.setSbname("");
+            approvalLog.setSpnam(ContextUtils.getUserName());
+
+            planHeader.setStonr("10");
+            planHeader.setBsta("J01");
+            vo.setNthjtxt("");
+            log.info("审批驳回，审批日志记录成功");
+        }
+        BeanUtils.copyProperties(planHeader,vo);
+        planHeaderDAO.save(planHeader);
+        approvalLogDAO.save(approvalLog);
+        return vo;
+    }
+
+    //从组织架构中获取当前审批人信息
+    private OrganizationSet getCurApprover() throws Exception {
+        OrganizationSet organizationSet = organizationSetService.getApprover(ContextUtils.getCompany().getOrgcode(),ContextUtils.getUserName());
+        return organizationSet;
+    }
+
+    //从审批流中获取当前审批人信息
+    private IEPlanReleaseSet getCurApproval(PlanHeader planHeader) throws Exception{
+        String bbsta = planHeader.getBsta();
+        IEPlanReleaseSet iePlanReleaseSet;
+        if(Strings.isNullOrEmpty(bbsta)){
+            iePlanReleaseSet = iePlanReleaseSetDAO.findByBukrsAndHjbgn(ContextUtils.getCompany().getOrgcode(),"X");
+        }else{
+            iePlanReleaseSet = iePlanReleaseSetDAO.findByBukrsAndBbsta(ContextUtils.getCompany().getOrgcode(),bbsta);
+        }
+        return iePlanReleaseSet;
+    }
+
+    //从审批流中获取下一个审批人信息
+    private IEPlanReleaseSet getNextApprover(PlanHeader planHeader) throws Exception {
+        String bbsta = planHeader.getBsta();
+        IEPlanReleaseSet iePlanReleaseSet;
+        if(planHeader.getStonr().equals("10")){
+            iePlanReleaseSet = iePlanReleaseSetDAO.findByBukrsAndHjbgn(ContextUtils.getCompany().getOrgcode(),"X");
+        }else{
+            iePlanReleaseSet = iePlanReleaseSetDAO.findByBukrsAndBbsta(ContextUtils.getCompany().getOrgcode(),bbsta);
+            iePlanReleaseSet = iePlanReleaseSetDAO.findByBukrsAndBbsta(ContextUtils.getCompany().getOrgcode(),iePlanReleaseSet.getEbsta());
+        }
+        return iePlanReleaseSet;
     }
 }

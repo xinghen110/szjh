@@ -30,4 +30,10 @@ public interface PlanHeaderService {
      * @return 月度计划
      */
     PlanHeader getLastMRPlan();
+
+    //审批流程(提交/同意/驳回)
+    PlanHeader approvalProcess(PlanHeaderVO vo) throws Exception;
+
+    //获取审批界面
+    PlanHeader getApprovalPage(PlanHeaderVO vo) throws Exception;
 }

@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.Column;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 
 @Getter
@@ -32,5 +33,13 @@ public class PlanHeaderVO extends PlanHeader{
     private String zbart;
     private String dtval;
     private String dmval;
-
+    private String powerModel;
+    private String apinfo;    //审批意见
+    private String approvalMode; // 审批模式（1：提交；2：同意；3：驳回
+    private String nthjtxt;    //下一步审批人环节描述
+    private String ntdpnam; //下一个审批人部门
+    private String ntponum; //下一个审批人岗位名称
+    private String ntuname; //下一个审批人拼音名字
+    private String ntusnam;  //下一个审批人中文名字
+    private String curponum; //当前审批人岗位
 }

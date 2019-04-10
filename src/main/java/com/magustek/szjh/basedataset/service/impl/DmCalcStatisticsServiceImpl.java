@@ -8,10 +8,11 @@ import com.magustek.szjh.basedataset.entity.IEPlanDimenValueSet;
 import com.magustek.szjh.basedataset.service.CalculateResultService;
 import com.magustek.szjh.basedataset.service.DmCalcStatisticsService;
 import com.magustek.szjh.basedataset.service.IEPlanDimenValueSetService;
+import com.magustek.szjh.configset.bean.IEPlanCalculationSet;
 import com.magustek.szjh.configset.bean.OrganizationSet;
+import com.magustek.szjh.configset.service.IEPlanCalculationSetService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.utils.ClassUtils;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -27,12 +28,14 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
     private CalculateResultService calculateResultService;
     private DmCalcStatisticsDAO dmCalcStatisticsDAO;
     private OrganizationSetService organizationSetService;
+    private IEPlanCalculationSetService iePlanCalculationSetService;
 
-    public DmCalcStatisticsServiceImpl(IEPlanDimenValueSetService iePlanDimenValueSetService, CalculateResultService calculateResultService, DmCalcStatisticsDAO dmCalcStatisticsDAO, OrganizationSetService organizationSetService) {
+    public DmCalcStatisticsServiceImpl(IEPlanDimenValueSetService iePlanDimenValueSetService, CalculateResultService calculateResultService, DmCalcStatisticsDAO dmCalcStatisticsDAO, OrganizationSetService organizationSetService, IEPlanCalculationSetService iePlanCalculationSetService) {
         this.iePlanDimenValueSetService = iePlanDimenValueSetService;
         this.calculateResultService = calculateResultService;
         this.dmCalcStatisticsDAO = dmCalcStatisticsDAO;
         this.organizationSetService = organizationSetService;
+        this.iePlanCalculationSetService = iePlanCalculationSetService;
     }
 
     @Override
@@ -216,5 +219,16 @@ public class DmCalcStatisticsServiceImpl implements DmCalcStatisticsService {
     @Override
     public List<DmCalcStatistics> getStatisticsByDmartAndCaartAndVersion(String dmart, String caart, String version) {
         return dmCalcStatisticsDAO.findAllByDmartAndCaartAndVersion(dmart, caart, version);
+    }
+
+    @Override
+    public List<DmCalcStatistics> getDmCalcChart(String[] versionList, String[] dmvalList, String caart) {
+        List<String> caartList = new ArrayList<>();
+        if(Strings.isNullOrEmpty(caart)){
+            caartList = iePlanCalculationSetService.getAll().stream().map(IEPlanCalculationSet::getCaart).collect(Collectors.toList());
+        }else{
+            caartList.add(caart);
+        }
+        return dmCalcStatisticsDAO.findAllByVersionInAndDmvalInAndAndCaartInOrderByVersion(versionList, dmvalList, caartList.toArray(new String[0]));
     }
 }

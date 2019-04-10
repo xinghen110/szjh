@@ -146,7 +146,7 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         for(String s : axis){
             switch (s){
                 case PlanConstant.AXIS_ORG:
-                    value.add(getORG(vo.getBukrs(), vo.getDmart(), dmart));
+                    value.add(organizationSetService.getORG(vo.getBukrs(), vo.getDmart(), dmart));
                     break;
                 case PlanConstant.AXIS_TIM:
                     value.add(getTIM(startDate, vo));
@@ -163,53 +163,7 @@ public class IEPlanReportHeadSetServiceImpl implements IEPlanReportHeadSetServic
         vo.setYvalue(value.get(1));
         vo.setZvalue(value.get(2));
     }
-    //返回指定组织机构树
-    private ArrayList<KeyValueBean> getORG(String voBukrs, String voDmart, String dmart) throws Exception{
-        ArrayList<KeyValueBean> keyValueBeans = new ArrayList<>();
-        List<Object[]> list;
-        KeyValueBean bean;
-        CompanyModel company = ContextUtils.getCompany();
-        switch (voDmart){
-            case IEPlanDimensionSet.DM_Company:
-                OrganizationSet org = organizationSetService.getByBukrs(voBukrs);
-                bean = new KeyValueBean();
-                bean.put(org.getBukrs(), org.getButxt());
-                keyValueBeans.add(bean);
-                break;
-            case IEPlanDimensionSet.DM_Department:
-                //如果是编制部门计划，就取当前用户所在部门
-                if(IEPlanDimensionSet.DM_Department.equals(dmart)){
-                    bean = new KeyValueBean();
-                    bean.put(company.getDeptcode(), company.getGtext());
-                    keyValueBeans.add(bean);
-                }else{
-                    list = organizationSetService.getDpnumByBukrs(voBukrs);
-                    for(Object[] o : list) {
-                        bean = new KeyValueBean();
-                        bean.put((String)o[0], (String)o[1]);
-                        keyValueBeans.add(bean);
-                    }
-                }
-                break;
-            case IEPlanDimensionSet.DM_User:
-                //如果是编制部门计划，就取当前用户所在部门的用户
-                if(IEPlanDimensionSet.DM_Department.equals(dmart)){
-                    list = organizationSetService.getUnameByDpnum(company.getDeptcode());
-                }else {
-                    list = organizationSetService.getUnameByBukrs(voBukrs);
-                }
-                for(Object[] o : list) {
-                    bean = new KeyValueBean();
-                    bean.put((String)o[0], (String)o[1]);
-                    keyValueBeans.add(bean);
-                }
-                break;
-            default :
-                log.error("axis error:" + voDmart);
-                throw new Exception("axis error:" + voDmart);
-        }
-        return keyValueBeans;
-    }
+
     //返回指定日期列表
     private ArrayList<KeyValueBean> getTIM(LocalDate rpdat, IEPlanReportHeadVO vo){
 
