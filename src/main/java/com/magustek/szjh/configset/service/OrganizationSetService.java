@@ -26,4 +26,6 @@ public interface OrganizationSetService {
 
     Map<String, List<OrganizationSet>> getOrgMapByDmart(String dmart);
     void fillMap(Map<String, List<OrganizationSet>> orgMap, Map<String, Object> map, String dmart, String dmval);
+
+    OrganizationSet getApprover(String bukrs, String uname);
 }
