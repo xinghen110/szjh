@@ -42,9 +42,10 @@ public class IEPlanConfigSetController {
     private IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
     private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
     private IEPlanScreenService iePlanScreenService;
+    private IEPlanReleaseSetService iePlanReleaseSetService;
     private BaseResponse resp;
 
-    public IEPlanConfigSetController(IEPlanOperationSetService iePlanOperationSetService, IEPlanCalculationSetService iePlanCalculationSetService, IEPlanDimensionSetService iePlanDimensionSetService, IEPlanSelectDataSetService iePlanSelectDataSetService, ConfigDataSourceSetService configDataSourceSetService, OrganizationSetService organizationSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanStatisticSetService iePlanStatisticSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanScreenService iePlanScreenService) {
+    public IEPlanConfigSetController(IEPlanOperationSetService iePlanOperationSetService, IEPlanCalculationSetService iePlanCalculationSetService, IEPlanDimensionSetService iePlanDimensionSetService, IEPlanSelectDataSetService iePlanSelectDataSetService, ConfigDataSourceSetService configDataSourceSetService, OrganizationSetService organizationSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanStatisticSetService iePlanStatisticSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanScreenService iePlanScreenService, IEPlanReleaseSetService iePlanReleaseSetService) {
         this.iePlanOperationSetService = iePlanOperationSetService;
         this.iePlanCalculationSetService = iePlanCalculationSetService;
         this.iePlanDimensionSetService = iePlanDimensionSetService;
@@ -57,6 +58,7 @@ public class IEPlanConfigSetController {
         this.iePlanBusinessHeadSetService = iePlanBusinessHeadSetService;
         this.iePlanBusinessItemSetService = iePlanBusinessItemSetService;
         this.iePlanScreenService = iePlanScreenService;
+        this.iePlanReleaseSetService = iePlanReleaseSetService;
         resp = new BaseResponse();
         log.info("初始化 IEPlanConfigSetController");
     }
@@ -228,6 +230,7 @@ public class IEPlanConfigSetController {
             iePlanBusinessHeadSetService.getAllFromDatasource();
             iePlanBusinessItemSetService.getAllFromDatasource();
             getIEPlanScreen();
+            iePlanReleaseSetService.getAllFromDatasource();
             log.error("配置数据已更新，耗时"+((System.currentTimeMillis()-l)/1000.00)+"秒");
             return resp.setStateCode(BaseResponse.SUCCESS).setMsg("配置数据已更新，耗时"+((System.currentTimeMillis()-l)/1000.00)+"秒").toJson();
         }catch (Exception e){
