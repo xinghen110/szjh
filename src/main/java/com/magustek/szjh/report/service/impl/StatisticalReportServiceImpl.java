@@ -43,7 +43,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     //@Cacheable(value = "getOutputTaxDetailByVersion")
     @Override
     public Page<Map<String, String>> getOutputTaxDetailByVersion(Report report) throws Exception{
-        List<Map<String, String>> detailList = new ArrayList<>();
+        Vector<Map<String, String>> detailList = new Vector<>();
         List<IEPlanSelectValueSet> selectValueSetList;
         //获取待使用取数指标集合
         String outputTax = "statisticalReport/getOutputTaxDetailByVersion";
@@ -55,6 +55,9 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         //获取【检索项标识】字段
         List<IEPlanScreenItemSet> serchList = itemListByIntfa.stream().filter(i -> "X".equals(i.getSerch())).collect(Collectors.toList());
         List<String> sdvarList = itemListByIntfa.stream().map(IEPlanScreenItemSet::getSdvar).collect(Collectors.toList());
+        //获取【检索依据字段】为【htnum】、【htsno】的指标
+        List<String> htnumSdart = itemListByIntfa.stream().filter(i->"htnum".equals(i.getRefld())).map(IEPlanScreenItemSet::getSdvar).collect(Collectors.toList());
+        List<String> htsnoSdart = itemListByIntfa.stream().filter(i->"htsno".equals(i.getRefld())).map(IEPlanScreenItemSet::getSdvar).collect(Collectors.toList());
         //根据serch过滤
         if(!ClassUtils.isEmpty(serchList)){
             //根据取数指标取出数据
@@ -70,25 +73,39 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         Map<String, List<IEPlanSelectValueSet>> htnumList = selectValueSetList.stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtnum));
         Map<String, List<IEPlanSelectValueSet>> htsnoList = selectValueSetList.stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtsno));
 
-        htnumList.forEach((key,value)->{
+        long start = System.currentTimeMillis();
+        log.warn("开始计算");
+        htnumList.entrySet().parallelStream().forEach(set->{
             Map<String, String> map = new HashMap<>(2);
-            value.forEach(item-> ClassUtils.handleDate(map, sdvarMap, item));
+
+            //根据htnum填充值
+            set.getValue().forEach(item-> {
+                if(htnumSdart.contains(item.getSdart())){
+                    ClassUtils.handleDate(map, sdvarMap, item);
+                }
+            });
+            //如果取数指标没有包含检索项，则返回
             if(!map.containsKey(serchList.get(0).getSdvar())){
                 return;
             }
+
             //补充其他字段值
-            Map<String, List<IEPlanSelectValueSet>> sdartList = htsnoList.get(value.get(0).getHtsno())
+            Map<String, List<IEPlanSelectValueSet>> sdartList = htsnoList.get(set.getValue().get(0).getHtsno())
                     .stream()
                     .collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
             sdartList.forEach((k,v)->{
-                if(!map.containsKey(k)){
+                if(!map.containsKey(k) && htsnoSdart.contains(k)){
                     ClassUtils.handleDate(map, sdvarMap, v.get(0));
                 }
             });
 
-            detailList.add(map);
-        });
+            if(!ClassUtils.isEmpty(map)){
+                map.put("htnum",set.getKey());
+                detailList.add(map);
+            }
 
+        });
+        log.warn("计算耗时{}秒", (System.currentTimeMillis()-start) / 1000.00);
         return ClassUtils.constructPage(report, report.filter(detailList));
     }
 

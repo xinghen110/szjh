@@ -242,7 +242,7 @@ public class ClassUtils {
     public static String StringToLocalDateString(String yyyyMMdd) {
         try {
             return StringToLocalDate(yyyyMMdd).toString();
-        } catch (ParseException e) {
+        } catch (Exception e) {
             log.error(e.getMessage());
             return "";
         }
@@ -381,7 +381,7 @@ public class ClassUtils {
     /**
      * 日期类型，需要特殊处理
      * */
-    public static void handleDate(Map<String, String> map, Map<String, List<IEPlanScreenItemSet>> sdvarMap, IEPlanSelectValueSet item ){
+    public static synchronized void handleDate(Map<String, String> map, Map<String, List<IEPlanScreenItemSet>> sdvarMap, IEPlanSelectValueSet item ){
         if(IEPlanSelectDataConstant.RESULT_TYPE_DATS.equals(sdvarMap.get(item.getSdart()).get(0).getVtype())){
             map.put(item.getSdart(), ClassUtils.StringToLocalDateString(item.getSdval()));
         }else{
@@ -390,9 +390,12 @@ public class ClassUtils {
     }
 
     public static Page<Map<String, String>> constructPage(BasePage page, List<Map<String, String>> list){
+        long l = System.currentTimeMillis();
         int start = page.getPageRequest().getOffset();
         int pageSize = page.getPageRequest().getPageSize();
         int end = start+pageSize > list.size()? list.size() : start+pageSize;
-        return new PageImpl<>(list.subList(start, end), page.getPageRequest(), list.size());
+        PageImpl<Map<String, String>> mapPage = new PageImpl<>(list.subList(start, end), page.getPageRequest(), list.size());
+        log.warn("分页耗时{}秒", (System.currentTimeMillis()-start) / 1000.00);
+        return mapPage;
     }
 }
