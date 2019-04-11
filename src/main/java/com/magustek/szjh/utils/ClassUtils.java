@@ -395,7 +395,7 @@ public class ClassUtils {
         int pageSize = page.getPageRequest().getPageSize();
         int end = start+pageSize > list.size()? list.size() : start+pageSize;
         PageImpl<Map<String, String>> mapPage = new PageImpl<>(list.subList(start, end), page.getPageRequest(), list.size());
-        log.warn("分页耗时{}秒", (System.currentTimeMillis()-start) / 1000.00);
+        log.warn("分页耗时{}秒", (System.currentTimeMillis()-l) / 1000.00);
         return mapPage;
     }
 }
