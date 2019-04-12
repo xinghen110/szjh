@@ -5,16 +5,19 @@ import com.google.common.base.Strings;
 import com.magustek.szjh.utils.ClassUtils;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.persistence.Transient;
 import java.util.*;
 
 @Getter
 @Setter
+@Slf4j
 public class BaseFilter {
     @Transient private FilterParam filterParam;
 
     public List<Map<String, String>> filter(List<Map<String, String>> list){
+        long l = System.currentTimeMillis();
         if(filterParam == null || filterParam.filterData==null || ClassUtils.isEmpty(filterParam.filterData.domains)){
             return list;
         }
@@ -111,6 +114,7 @@ public class BaseFilter {
                 resultList.addAll(domainList);
             }
         });
+        log.warn("列表条件过滤耗时{}秒", (System.currentTimeMillis()-l) / 1000.00);
         return resultList;
     }
 }

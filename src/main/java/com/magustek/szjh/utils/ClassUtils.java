@@ -390,12 +390,9 @@ public class ClassUtils {
     }
 
     public static Page<Map<String, String>> constructPage(BasePage page, List<Map<String, String>> list){
-        long l = System.currentTimeMillis();
         int start = page.getPageRequest().getOffset();
         int pageSize = page.getPageRequest().getPageSize();
         int end = start+pageSize > list.size()? list.size() : start+pageSize;
-        PageImpl<Map<String, String>> mapPage = new PageImpl<>(list.subList(start, end), page.getPageRequest(), list.size());
-        log.warn("分页耗时{}秒", (System.currentTimeMillis()-l) / 1000.00);
-        return mapPage;
+        return new PageImpl<>(list.subList(start, end), page.getPageRequest(), list.size());
     }
 }
