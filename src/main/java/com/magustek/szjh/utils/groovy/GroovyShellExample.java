@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GroovyShellExample {
     public static void main(String[] args) {
@@ -27,7 +28,7 @@ public class GroovyShellExample {
             e.printStackTrace();
         }
 
-        e();
+        h();
     }
 
     public static void a(){
@@ -102,6 +103,16 @@ public class GroovyShellExample {
     private static void f(){
         BigDecimal bigDecimal = new BigDecimal(0.00);
         System.out.println(bigDecimal.compareTo(BigDecimal.ZERO));
+    }
+
+    private static void g(){
+        List<String> s = Arrays.asList("201901011","20190102","20190105","20190108","20190103","20190101","");
+        s = s.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList());
+        s.forEach(System.out::println);
+    }
+
+    private static void h(){
+        System.out.println("2019-01-11".compareTo("")>0);
     }
 
 }

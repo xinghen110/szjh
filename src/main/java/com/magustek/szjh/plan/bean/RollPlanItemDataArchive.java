@@ -19,7 +19,7 @@ public class RollPlanItemDataArchive extends BaseEntity {
     //@Column(nullable = false)private Long headArchiveId;//归档的滚动计划抬头ID
     @Column(nullable = false)private Long planHeadId;//计划抬头ID（使用父类的-headId与headArchive关联）
 
-    @Column private Long headId;                                //抬头id
+    @Column private Long headId;                      //抬头id
     @Column(length = 10)   private String imnum;      //项目编号
     @Column(length = 10)   private String dtval;      //日期
     @Column(length = 1000) private String stval;      //合同条款

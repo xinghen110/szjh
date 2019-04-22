@@ -1,23 +1,25 @@
 package com.magustek.szjh.report.service.impl;
 
+import com.google.common.base.Strings;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.configset.bean.IEPlanScreenItemSet;
 import com.magustek.szjh.configset.service.IEPlanScreenService;
 import com.magustek.szjh.plan.bean.PlanHeader;
+import com.magustek.szjh.plan.bean.vo.RollPlanHeadDataArchiveVO;
 import com.magustek.szjh.plan.bean.vo.RollPlanItemDataArchiveVO;
 import com.magustek.szjh.plan.service.PlanHeaderService;
 import com.magustek.szjh.plan.service.RollPlanArchiveService;
-import com.magustek.szjh.report.bean.Report;
+import com.magustek.szjh.report.bean.vo.ReportVO;
 import com.magustek.szjh.report.bean.vo.DateVO;
 import com.magustek.szjh.report.service.StatisticalReportService;
 import com.magustek.szjh.utils.ClassUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,17 +34,19 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
     private PlanHeaderService planHeaderService;
     private RollPlanArchiveService rollPlanArchiveService;
+    private StatisticalReportCache statisticalReportCache;
 
-    public StatisticalReportServiceImpl(IEPlanScreenService iePlanScreenService, IEPlanSelectValueSetService iePlanSelectValueSetService, PlanHeaderService planHeaderService, RollPlanArchiveService rollPlanArchiveService) {
+    public StatisticalReportServiceImpl(IEPlanScreenService iePlanScreenService, IEPlanSelectValueSetService iePlanSelectValueSetService, PlanHeaderService planHeaderService, RollPlanArchiveService rollPlanArchiveService, StatisticalReportCache statisticalReportCache) {
         this.iePlanScreenService = iePlanScreenService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
         this.planHeaderService = planHeaderService;
         this.rollPlanArchiveService = rollPlanArchiveService;
+        this.statisticalReportCache = statisticalReportCache;
     }
 
     //@Cacheable(value = "getOutputTaxDetailByVersion")
     @Override
-    public Page<Map<String, String>> getOutputTaxDetailByVersion(Report report) throws Exception{
+    public Page<Map<String, String>> getOutputTaxDetailByVersion(ReportVO reportVO) throws Exception{
         Vector<Map<String, String>> detailList = new Vector<>();
         List<IEPlanSelectValueSet> selectValueSetList;
         //获取待使用取数指标集合
@@ -61,7 +65,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         //根据serch过滤
         if(!ClassUtils.isEmpty(serchList)){
             //根据取数指标取出数据
-            selectValueSetList = iePlanSelectValueSetService.getAllByVersionAndSdvarIn(report.getVersion(), serchList.get(0).getSdvar(), sdvarList);
+            selectValueSetList = iePlanSelectValueSetService.getAllByVersionAndSdvarIn(reportVO.getVersion(), serchList.get(0).getSdvar(), sdvarList);
         }else{
             throw new Exception("屏幕配置出错，无【检索项标识】！");
         }
@@ -106,7 +110,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
 
         });
         log.warn("计算耗时{}秒", (System.currentTimeMillis()-start) / 1000.00);
-        return ClassUtils.constructPage(report, report.filter(detailList));
+        return ClassUtils.constructPage(reportVO, reportVO.filter(detailList));
     }
 
     @Override
@@ -133,4 +137,84 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
 
         return ClassUtils.constructPage(dateVO, maps);
     }
+
+    @Override
+    public List<Map<String, String>> getExecutionByPlan(Long id, String version, String caart) {
+        List<Map<String, String>> list = statisticalReportCache.getExecuteData(id, version);
+        List<Map<String, String>> statisticsList = new ArrayList<>();
+        //根据历史能力值进行筛选
+        list = list
+                .stream()
+                .filter(m->caart.equals(m.get("caart")))
+                .collect(Collectors.toList());
+        //根据部门分组
+        Map<String, List<Map<String, String>>> dpnumMap = list
+                .stream()
+                .collect(Collectors.groupingBy(m -> m.get("dpnum")));
+        //分部门统计
+        dpnumMap.forEach((k, v)->{
+            //容错处理
+            if(ClassUtils.isEmpty(v)){
+                return;
+            }
+            Map<String, String> map = new HashMap<>();
+            statisticsList.add(map);
+            map.put("dpnum", k);
+            map.put("dpnam", v.get(0).get("dpnam"));
+            //完成
+            List<Map<String, String>> completedList = v
+                    .stream()
+                    .filter(m -> !Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.CPDAT)))
+                    .collect(Collectors.toList());
+            map.put("completedRate", BigDecimal.valueOf(completedList.size())
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
+                    .toString()+"%");
+            map.put("completedContractNumber", completedList.stream().map(m->m.get("htsno")).count()+"");
+            map.put("completedWears", completedList
+                    .stream()
+                    .map(m-> new BigDecimal(m.get("wears")))
+                    .reduce(BigDecimal.ZERO,BigDecimal::add)
+                    .toString());
+            //未完成
+            List<Map<String, String>> uncompletedList = v
+                    .stream()
+                    .filter(m -> Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.CPDAT)))
+                    .collect(Collectors.toList());
+            map.put("uncompletedRate", BigDecimal.valueOf(uncompletedList.size())
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
+                    .toString()+"%");
+            map.put("uncompletedContractNumber", uncompletedList.stream().map(m->m.get("htsno")).count()+"");
+            map.put("uncompletedWears", uncompletedList
+                    .stream()
+                    .map(m-> new BigDecimal(m.get("wears")))
+                    .reduce(BigDecimal.ZERO,BigDecimal::add)
+                    .toString());
+            //延期
+            List<Map<String, String>> delayList = v
+                    .stream()
+                    .filter(m -> Boolean.valueOf(m.get(RollPlanHeadDataArchiveVO.DLFLG)))
+                    .collect(Collectors.toList());
+            map.put("delayRate", BigDecimal.valueOf(delayList.size())
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
+                    .toString()+"%");
+            map.put("delayContractNumber", delayList.stream().map(m->m.get("htsno")).count()+"");
+            map.put("delayWears", delayList
+                    .stream()
+                    .map(m-> new BigDecimal(m.get("wears")))
+                    .reduce(BigDecimal.ZERO,BigDecimal::add)
+                    .toString());
+        });
+        return statisticsList;
+    }
+
+    @Override
+    public List<Map<String, String>> getExecutionByPlanAndDpnum(Long id, String version, String dpnum, String caart) {
+        List<Map<String, String>> list = statisticalReportCache.getExecuteData(id, version);
+        return list.stream().filter(m -> caart.equals(m.get("caart")) && dpnum.equals(m.get("dpnum"))).collect(Collectors.toList());
+    }
+
+
 }

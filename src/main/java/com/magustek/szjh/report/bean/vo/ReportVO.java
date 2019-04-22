@@ -1,4 +1,4 @@
-package com.magustek.szjh.report.bean;
+package com.magustek.szjh.report.bean.vo;
 
 import com.google.common.base.Strings;
 import com.magustek.szjh.utils.base.BasePage;
@@ -15,9 +15,13 @@ import java.time.LocalDate;
 @ApiModel(value = "统计报表-报表bean")
 @Getter
 @Setter
-public class Report extends BasePage {
+public class ReportVO extends BasePage {
     @ApiModelProperty(value = "版本，格式：yyyy-MM-dd")
     private String version;
+    private Long id;
+    private String caart;
+    private String dpnum;
+
 
     public String getVersion() {
         return Strings.isNullOrEmpty(version)? LocalDate.now().toString():version;

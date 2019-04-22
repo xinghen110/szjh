@@ -1,7 +1,6 @@
 package com.magustek.szjh.plan.dao;
 
 import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
-import com.magustek.szjh.plan.bean.vo.RollPlanItemDataArchiveVO;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;

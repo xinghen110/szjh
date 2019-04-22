@@ -10,6 +10,7 @@ import com.magustek.szjh.configset.service.IEPlanBusinessItemSetService;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
+import com.magustek.szjh.plan.bean.vo.RollPlanHeadDataArchiveVO;
 import com.magustek.szjh.plan.bean.vo.RollPlanItemDataArchiveVO;
 import com.magustek.szjh.plan.dao.RollPlanHeadDataArchiveDAO;
 import com.magustek.szjh.plan.dao.RollPlanItemDataArchiveDAO;
@@ -198,5 +199,10 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     public List<RollPlanItemDataArchiveVO> getItemListByPlanHeaderIdAndStartEndDate(Long id, String start, String end) {
         Map<String, List<IEPlanBusinessItemSet>> businessItemMap = iePlanBusinessItemSetService.getAll().stream().collect(Collectors.groupingBy(IEPlanBusinessItemSet::getImnum));
         return RollPlanItemDataArchiveVO.cover(rollPlanItemDataArchiveDAO.findAllByPlanHeadIdAndCtdtpAndDtvalBetween(id, start, end),businessItemMap);
+    }
+
+    @Override
+    public List<RollPlanHeadDataArchiveVO> getListByPlanHeaderId(Long id) {
+        return RollPlanHeadDataArchiveVO.cover(rollPlanHeadDataArchiveDAO.findHeadWithItemByPlanHeadId(id));
     }
 }

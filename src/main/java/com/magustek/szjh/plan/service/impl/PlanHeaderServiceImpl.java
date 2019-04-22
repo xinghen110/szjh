@@ -170,17 +170,30 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             String name = ContextUtils.getUserName();
             String orgcode = ContextUtils.getCompany().getOrgcode();
             String wflsh = vo.getRptyp()+"01";
-            List<IEPlanReleaseSet> iePlanReleaseSetList = iePlanReleaseSetDAO.findAllBySpnamAndBukrsAndWflsh(ContextUtils.getUserName(),ContextUtils.getCompany().getOrgcode(),vo.getRptyp()+"01");
+            List<IEPlanReleaseSet> iePlanReleaseSetList = iePlanReleaseSetDAO
+                    .findAllBySpnamAndBukrsAndWflsh(ContextUtils.getUserName(), ContextUtils.getCompany().getOrgcode(), vo.getRptyp()+"01");
+
             List<String> bbstas = iePlanReleaseSetList.stream().map(IEPlanReleaseSet::getBbsta).collect(Collectors.toList());
-            page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypAndStonrAndBstaInOrderByIdDesc(ContextUtils.getCompany().getOrgcode(), ContextUtils.getCompany().getOrgcode(), vo.getRptyp(), "20",bbstas, pageable);
-        }
-        else{
+            page = planHeaderDAO
+                    .findAllByBukrsAndOrgvalAndRptypAndStonrAndBstaInOrderByIdDesc(ContextUtils.getCompany().getOrgcode(),
+                            ContextUtils.getCompany().getOrgcode(),
+                            vo.getRptyp(),
+                            "20",
+                            bbstas,
+                            pageable);
+        } else{
             switch (vo.getRporg()) {
                 case IEPlanDimensionSet.DM_Company:
-                    page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(), ContextUtils.getCompany().getOrgcode(), vo.getRptyp(), pageable);
+                    page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(),
+                            ContextUtils.getCompany().getOrgcode(),
+                            vo.getRptyp(),
+                            pageable);
                     break;
                 case IEPlanDimensionSet.DM_Department:
-                    page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(), ContextUtils.getCompany().getDeptcode(), vo.getRptyp(), pageable);
+                    page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(),
+                            ContextUtils.getCompany().getDeptcode(),
+                            vo.getRptyp(),
+                            pageable);
                     break;
                 default:
                     throw new Exception("请指定公司报表还是部门报表！");
@@ -692,8 +705,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
     //从组织架构中获取当前审批人信息
     private OrganizationSet getCurApprover() throws Exception {
-        OrganizationSet organizationSet = organizationSetService.getApprover(ContextUtils.getCompany().getOrgcode(),ContextUtils.getUserName());
-        return organizationSet;
+        return organizationSetService.getApprover(ContextUtils.getCompany().getOrgcode(),ContextUtils.getUserName());
     }
 
     //从审批流中获取当前审批人信息

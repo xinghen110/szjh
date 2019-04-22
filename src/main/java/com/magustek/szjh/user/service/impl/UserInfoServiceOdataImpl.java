@@ -52,6 +52,7 @@ public class UserInfoServiceOdataImpl implements UserInfoServiceOdata {
             return userInfo;
         } catch (Exception e) {
             log.error("调用ODATA接口认证用户失败："+e.getMessage());
+            e.printStackTrace();
         }
         return null;
     }

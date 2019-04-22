@@ -3,6 +3,7 @@ package com.magustek.szjh.plan.service;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
+import com.magustek.szjh.plan.bean.vo.RollPlanHeadDataArchiveVO;
 import com.magustek.szjh.plan.bean.vo.RollPlanItemDataArchiveVO;
 import com.magustek.szjh.utils.KeyValueBean;
 
@@ -33,4 +34,11 @@ public interface RollPlanArchiveService {
      * @return      相关Item列表
      */
     List<RollPlanItemDataArchiveVO> getItemListByPlanHeaderIdAndStartEndDate(Long id, String start, String end);
+
+    /**
+     * 根据计划ID获取所有滚动计划head及其Item
+     * @param id    计划ID
+     * @return      相关Item列表
+     */
+    List<RollPlanHeadDataArchiveVO> getListByPlanHeaderId(Long id);
 }
