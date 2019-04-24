@@ -9,6 +9,7 @@ import com.magustek.szjh.plan.service.PlanHeaderService;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.base.BaseResponse;
+import com.magustek.szjh.utils.constant.ModelCons;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -66,9 +67,12 @@ public class PlanHeaderController {
         return resp.setStateCode(BaseResponse.SUCCESS).setData(header).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="根据公司获取计划列表", notes = "参数：rporg、rptyp")
+    @ApiOperation(value="根据公司获取计划列表", notes = "参数：rporg、rptyp、powerModel")
     @RequestMapping("/getPlanHeaderByBukrs")
     public String getPlanHeaderByBukrs(@RequestBody PlanHeaderVO vo) throws Exception {
+        if(vo.getPowerModel().equals(ModelCons.APPROVAL)){
+            vo.setStonr("20");
+        }
         Page<Map<String, String>> listByBukrs = planHeaderService.getListByBukrs(vo, vo.getPageRequest());
         String userName = ContextUtils.getUserName();
         log.warn("{}根据公司获取计划列表：{}", userName, JSON.toJSONString(listByBukrs));

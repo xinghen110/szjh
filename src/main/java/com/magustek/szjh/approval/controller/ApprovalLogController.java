@@ -34,7 +34,7 @@ public class ApprovalLogController {
     @ApiOperation(value="获取该计划审批日志", notes = "参数：id")
     @RequestMapping("/getApprovalLogList")
     public String getApprovalLogList(@RequestBody PlanHeader planHeader){
-        List<ApprovalLog> list = approvalLogService.getAllLogsByHeaderid(planHeader.getId());
+        List<ApprovalLog> list = approvalLogService.getAllLogsByHeaderId(planHeader.getId());
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
     }
 

@@ -16,7 +16,8 @@ public class ApprovalLogServiceImpl implements ApprovalLogService {
     }
 
     @Override
-    public List<ApprovalLog> getAllLogsByHeaderid(Long headerid) {
-        return approvalLogDao.findAllByHeaderidOrderByIdAsc(headerid);
+    public List<ApprovalLog> getAllLogsByHeaderId(Long headerId) {
+        return approvalLogDao.findAllByHeaderIdOrderByIdAsc(headerId);
     }
+
 }

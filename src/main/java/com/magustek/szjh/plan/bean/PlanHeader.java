@@ -44,4 +44,6 @@ public class PlanHeader extends BaseEntity{
     @Column(length = 10)  private String unit;
     @ApiModelProperty(value = "编制参考日期（yyyy-MM-dd）")
     @Column(length = 10)  private String ckdate;
+    @ApiModelProperty(value = "当前审批人中文名")
+    @Column(length = 50) private String spname;
 }

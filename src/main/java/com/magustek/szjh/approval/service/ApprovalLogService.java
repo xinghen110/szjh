@@ -5,5 +5,5 @@ import com.magustek.szjh.approval.bean.ApprovalLog;
 import java.util.List;
 
 public interface ApprovalLogService {
-    List<ApprovalLog> getAllLogsByHeaderid(Long headerid);
+    List<ApprovalLog> getAllLogsByHeaderId(Long headerid);
 }

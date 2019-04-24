@@ -23,6 +23,7 @@ import com.magustek.szjh.plan.utils.WearsType;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.KeyValueBean;
+import com.magustek.szjh.utils.constant.PlanheaderCons;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -134,6 +135,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     public PlanHeader delete(PlanHeader header) {
         Assert.isTrue(!ClassUtils.isEmpty(header.getId()), "计划ID不得为空");
         PlanHeader one = planHeaderDAO.findOne(header.getId());
+
+        Assert.isTrue(!one.getStonr().equals("20") && !one.getStonr().equals("90"),
+                "正在审批中或审批完成的计划不能删除");
         //级联删除
         planItemService.deleteByHeaderId(header.getId());
         planHeaderDAO.delete(header.getId());
@@ -166,31 +170,31 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
         Page<PlanHeader> page ;
         //查询正在审批中的计划
-        if(vo.getPowerModel().equals("3")){
+        if(vo.getStonr() != null){
             String name = ContextUtils.getUserName();
             String orgcode = ContextUtils.getCompany().getOrgcode();
-            String wflsh = vo.getRptyp()+"01";
             List<IEPlanReleaseSet> iePlanReleaseSetList = iePlanReleaseSetDAO
-                    .findAllBySpnamAndBukrsAndWflsh(ContextUtils.getUserName(), ContextUtils.getCompany().getOrgcode(), vo.getRptyp()+"01");
-
+                    .findAllBySpnamAndBukrsAndWflsh(ContextUtils.getUserName(),ContextUtils.getCompany().getOrgcode(),getRptyp(vo));
             List<String> bbstas = iePlanReleaseSetList.stream().map(IEPlanReleaseSet::getBbsta).collect(Collectors.toList());
-            page = planHeaderDAO
-                    .findAllByBukrsAndOrgvalAndRptypAndStonrAndBstaInOrderByIdDesc(ContextUtils.getCompany().getOrgcode(),
-                            ContextUtils.getCompany().getOrgcode(),
-                            vo.getRptyp(),
-                            "20",
-                            bbstas,
-                            pageable);
+            page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypAndStonrAndBstaInOrderByIdDesc(
+                    ContextUtils.getCompany().getOrgcode(),
+                    ContextUtils.getCompany().getOrgcode(),
+                    vo.getRptyp(),
+                    vo.getStonr(),
+                    bbstas,
+                    pageable);
         } else{
             switch (vo.getRporg()) {
                 case IEPlanDimensionSet.DM_Company:
-                    page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(),
+                    page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(
+                            ContextUtils.getCompany().getOrgcode(),
                             ContextUtils.getCompany().getOrgcode(),
                             vo.getRptyp(),
                             pageable);
                     break;
                 case IEPlanDimensionSet.DM_Department:
-                    page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(ContextUtils.getCompany().getOrgcode(),
+                    page = planHeaderDAO.findAllByBukrsAndOrgvalAndRptypOrderByIdDesc(
+                            ContextUtils.getCompany().getOrgcode(),
                             ContextUtils.getCompany().getDeptcode(),
                             vo.getRptyp(),
                             pageable);
@@ -252,28 +256,28 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             }
             Map<String, WearsType> htsnoMap = new HashMap<>();
             rollPlanList.forEach(rollPlan ->
-                weekMap.forEach((week, dateList)->{
-                    //如果滚动计划日期在本周内，则累计滚动计划金额
-                    if(isInDuration(rollPlan.getDtval(), dateList, week, weekMap.size(), firstMonth, lastMonth)){
-                        WearsType wears = new WearsType();
-                        htsnoMap.put(week,wears);
-                        IEPlanBusinessHeadSet headSet = headMapByHdnum.get(rollPlan.getHdnum()).get(0);
-                        switch (headSet.getZtype()){
-                            case "01":
-                                wears.setBudget(wears.getBudget().add(rollPlan.getWears()));
-                                break;
-                            case "02":
-                                wears.setProgress(wears.getProgress().add(rollPlan.getWears()));
-                                break;
-                            case "03":
-                                wears.setSettlement(wears.getSettlement().add(rollPlan.getWears()));
-                                break;
-                            case "04":
-                                wears.setWarranty(wears.getWarranty().add(rollPlan.getWears()));
-                                break;
+                    weekMap.forEach((week, dateList)->{
+                        //如果滚动计划日期在本周内，则累计滚动计划金额
+                        if(isInDuration(rollPlan.getDtval(), dateList, week, weekMap.size(), firstMonth, lastMonth)){
+                            WearsType wears = new WearsType();
+                            htsnoMap.put(week,wears);
+                            IEPlanBusinessHeadSet headSet = headMapByHdnum.get(rollPlan.getHdnum()).get(0);
+                            switch (headSet.getZtype()){
+                                case "01":
+                                    wears.setBudget(wears.getBudget().add(rollPlan.getWears()));
+                                    break;
+                                case "02":
+                                    wears.setProgress(wears.getProgress().add(rollPlan.getWears()));
+                                    break;
+                                case "03":
+                                    wears.setSettlement(wears.getSettlement().add(rollPlan.getWears()));
+                                    break;
+                                case "04":
+                                    wears.setWarranty(wears.getWarranty().add(rollPlan.getWears()));
+                                    break;
+                            }
                         }
-                    }
-                })
+                    })
             );
             //组装款项明细
             if(!ClassUtils.isEmpty(htsnoMap)){
@@ -352,7 +356,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             //待统计抬头列表
             List<RollPlanHeadDataArchive> headList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndDmvalAndZbart(zbart, dmart + ":" + k, planHeadId);
             if(ClassUtils.isEmpty(headList)){
-               return;
+                return;
             }
             //根据抬头ID列表，以及项目编号列表获取相关环节列表
             List<RollPlanItemDataArchive> itemList = rollPlanArchiveService.getItemDataByHeadIdAndImnum(
@@ -584,12 +588,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             vo.setBsta("");
             vo.setCurponum("");
             nextApprover = iePlanReleaseSetDAO.findByBukrsAndHjbgn(ContextUtils.getCompany().getOrgcode(),"X");
-            String str = nextApprover.getHjtxt();
-            String[] strs = str.split(",");
-            vo.setNtdpnam(strs[0]);
-            vo.setNtponum(strs[1]);
-            vo.setNtusnam(strs[2]);
-            vo.setNtuname(nextApprover.getSpnam());
+            nextApprover.dealWithHjtxt(nextApprover,vo);
         }
         if(planHeader.getStonr().equals("20")){
             String bbsta = planHeader.getBsta();
@@ -599,19 +598,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             String[] msgs = msg.split(",");
             vo.setBsta(planHeader.getBsta());
             vo.setCurponum(msgs[1]);
-            if(nextApprover != null){
-                String str = nextApprover.getHjtxt();
-                String[] strs = str.split(",");
-                vo.setNtdpnam(strs[0]);
-                vo.setNtponum(strs[1]);
-                vo.setNtusnam(strs[2]);
-                vo.setNtuname(nextApprover.getSpnam());
-            }else{
-                vo.setNtdpnam("");
-                vo.setNtponum("");
-                vo.setNtusnam("");
-                vo.setNtuname("");
-            }
+            nextApprover.dealWithHjtxt(nextApprover,vo);
         }
         return vo;
     }
@@ -625,14 +612,16 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         PlanHeader planHeader = planHeaderDAO.findById(vo.getId());
         IEPlanReleaseSet iePlanReleaseSetBgn = iePlanReleaseSetDAO.findByBukrsAndHjbgn(planHeader.getBukrs(),"X");
         IEPlanReleaseSet iePlanReleaseSetEnd = iePlanReleaseSetDAO.findByBukrsAndHjend(planHeader.getBukrs(),"X");
-        approvalLog.setHeaderid(planHeader.getId());
+        approvalLog.setHeaderId(planHeader.getId());
         approvalLog.setApinfo(vo.getApinfo());
         approvalLog.setBukrs(planHeader.getBukrs());
         approvalLog.setButxt(ContextUtils.getCompany().getOrgName());
-        if(mode.equals("1")){ //提交
+        if(mode.equals(PlanheaderCons.SUBMIT)){ //提交
             if(planHeader.getStonr().equals("10")){
                 planHeader.setStonr("20");
                 planHeader.setBsta(iePlanReleaseSetBgn.getBbsta());
+                String[] strs = iePlanReleaseSetBgn.getHjtxt().split(",");
+                planHeader.setSpname(strs[2]);
                 // 记录审批日志
                 OrganizationSet curApproval = getCurApprover();
                 approvalLog.setHjtxt(curApproval.getDpnam()+","+curApproval.getPonam()+","+curApproval.getUsnam());
@@ -645,7 +634,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 approvalLog.setSbname(ContextUtils.getUserName());
                 log.info("审批提交，审批日志记录成功");
             }
-        }else if(mode.equals("2")){  //审批同意
+        }else if(mode.equals(PlanheaderCons.APPROVAL)){  //审批同意
             String bbsta = planHeader.getBsta();
             IEPlanReleaseSet iePlanReleaseSet = iePlanReleaseSetDAO.findByBukrsAndBbsta(planHeader.getBukrs(),bbsta);
             IEPlanReleaseSet curApproval =  getCurApproval(planHeader);
@@ -657,6 +646,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             if(planHeader.getStonr().equals("20")){
                 //非最后环节
                 if( !planHeader.getBsta().equals(iePlanReleaseSetEnd.getBbsta()) ){
+                    IEPlanReleaseSet nextApprover = getNextApprover(planHeader);
+                    String[] strs = nextApprover.getHjtxt().split(",");
+                    planHeader.setSpname(strs[2]);
                     //是否为第一环节
                     if(planHeader.getBsta().equals(iePlanReleaseSetBgn.getBbsta())){
                         planHeader.setBsta(iePlanReleaseSet.getEbsta());
@@ -673,7 +665,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 //最后环节
                 else {
                     planHeader.setStonr("90");
+                    planHeader.setSpname("");
                     //设置审批日志
+
                     approvalLog.setEbsta("");
                     approvalLog.setHjbgn("");
                     approvalLog.setHjend("X");
@@ -692,6 +686,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             approvalLog.setSbname("");
             approvalLog.setSpnam(ContextUtils.getUserName());
 
+            planHeader.setSpname("");
             planHeader.setStonr("10");
             planHeader.setBsta("J01");
             vo.setNthjtxt("");
@@ -703,12 +698,19 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         return vo;
     }
 
+    private  String getRptyp(PlanHeaderVO vo) {
+        if(vo.getRptyp().equals("MR")){
+            return "MR01";
+        }
+        return vo.getRptyp();
+    }
+
     //从组织架构中获取当前审批人信息
     private OrganizationSet getCurApprover() throws Exception {
         return organizationSetService.getApprover(ContextUtils.getCompany().getOrgcode(),ContextUtils.getUserName());
     }
 
-    //从审批流中获取当前审批人信息
+    //从审批配置表中获取当前审批人信息
     private IEPlanReleaseSet getCurApproval(PlanHeader planHeader) throws Exception{
         String bbsta = planHeader.getBsta();
         IEPlanReleaseSet iePlanReleaseSet;
@@ -720,7 +722,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         return iePlanReleaseSet;
     }
 
-    //从审批流中获取下一个审批人信息
+    //从审批配置表中获取下一个审批人信息
     private IEPlanReleaseSet getNextApprover(PlanHeader planHeader) throws Exception {
         String bbsta = planHeader.getBsta();
         IEPlanReleaseSet iePlanReleaseSet;

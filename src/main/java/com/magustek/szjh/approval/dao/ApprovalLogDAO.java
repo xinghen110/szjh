@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface ApprovalLogDAO extends CrudRepository<ApprovalLog, Long> {
     ApprovalLog save(ApprovalLog approvalLog);
-    List<ApprovalLog> findAllByHeaderidOrderByIdAsc(Long headerid);
+    List<ApprovalLog> findAllByHeaderIdOrderByIdAsc(Long headerId);
 }
