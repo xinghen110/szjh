@@ -4,8 +4,10 @@ import com.google.common.base.Strings;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.configset.bean.IEPlanBusinessItemSet;
+import com.magustek.szjh.configset.bean.IEPlanCalculationSet;
 import com.magustek.szjh.configset.bean.OrganizationSet;
 import com.magustek.szjh.configset.service.IEPlanBusinessItemSetService;
+import com.magustek.szjh.configset.service.IEPlanCalculationSetService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.plan.bean.vo.RollPlanHeadDataArchiveVO;
 import com.magustek.szjh.plan.service.RollPlanArchiveService;
@@ -27,15 +29,17 @@ public class StatisticalReportCache {
     private RollPlanArchiveService rollPlanArchiveService;
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
     private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
+    private IEPlanCalculationSetService iePlanCalculationSetService;
 
-    public StatisticalReportCache(OrganizationSetService organizationSetService, RollPlanArchiveService rollPlanArchiveService, IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService) {
+    public StatisticalReportCache(OrganizationSetService organizationSetService, RollPlanArchiveService rollPlanArchiveService, IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanCalculationSetService iePlanCalculationSetService) {
         this.organizationSetService = organizationSetService;
         this.rollPlanArchiveService = rollPlanArchiveService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
         this.iePlanBusinessItemSetService = iePlanBusinessItemSetService;
+        this.iePlanCalculationSetService = iePlanCalculationSetService;
     }
 
-    @Cacheable(value = "ExecuteData")
+    //@Cacheable(value = "ExecuteData")
     public List<Map<String, String>> getExecuteData(Long id, String version){
 
         Map<String, List<OrganizationSet>> dmartMap = organizationSetService.getOrgMapByDmart("D110");
@@ -61,6 +65,8 @@ public class StatisticalReportCache {
                 .stream()
                 .filter(i -> !Strings.isNullOrEmpty(i.getCaart()))
                 .collect(Collectors.toList());
+        //业务计算指标列表
+        Map<String, String> calcMap = getCalcMap();
         // key-imnum, value-caart
         Map<String, String> caartMap = new HashMap<>();
         caartList.forEach(c->
@@ -116,13 +122,13 @@ public class StatisticalReportCache {
 
                     map.put(RollPlanHeadDataArchiveVO.PLDAT, ClassUtils.StringToLocalDate(item.getDtval()).toString()); //计划日期
                     //实际发生日期
-                    if(ClassUtils.isEmpty(htnumSdartMap.get(item.getSdart()))){
+                    if(ClassUtils.isEmpty(htnumSdartMap.get(calcMap.get(map.get("caart"))))){
                         map.put(RollPlanHeadDataArchiveVO.CPDAT, "");
                         //是否延期
                         map.put(RollPlanHeadDataArchiveVO.DLFLG,"true");
                     }else{
                         Optional<String> cpdat= htnumSdartMap
-                                .get(item.getSdart())
+                                .get(calcMap.get(map.get("caart")))
                                 .stream()
                                 .map(IEPlanSelectValueSet::getSdval)
                                 .max(Comparator.naturalOrder());
@@ -152,5 +158,18 @@ public class StatisticalReportCache {
             return "";
         }
         return list.get(0).getSdval();
+    }
+
+    private Map<String, String> getCalcMap(){
+        Map<String, List<IEPlanCalculationSet>> map = iePlanCalculationSetService
+                .getAll()
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanCalculationSet::getCaart));
+        Map<String, String> sdartMap = new HashMap<>();
+        map.forEach((k, v)->{
+            String sdart = v.get(0).getCalcu().split("-")[0];
+            sdartMap.put(k, sdart);
+        });
+        return sdartMap;
     }
 }
