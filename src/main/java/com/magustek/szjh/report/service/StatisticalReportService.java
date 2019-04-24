@@ -27,7 +27,7 @@ public interface StatisticalReportService {
      * @return  分页数据
      * @throws Exception    无
      */
-    Page<Map<String, String>> getPendingItemListByDate(DateVO dateVO) throws Exception;
+    List<Map<String, String>> getPendingItemListByDate(DateVO dateVO) throws Exception;
 
     /**
      * 根据计划id-id，对比数据版本（日期）-version，能力值类型-caart，获取【计划履行报表】

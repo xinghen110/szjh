@@ -14,6 +14,7 @@ import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.constant.IEPlanSelectDataConstant;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         return list;
     }
 
+    //@Cacheable(value = "SelectValueSet")
     @Override
     public List<IEPlanSelectValueSet> getAllByVersion(String version) {
         return iePlanSelectValueSetDAO.findAllByVersion(version);

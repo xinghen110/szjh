@@ -1,11 +1,11 @@
 package com.magustek.szjh.configset.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.magustek.szjh.config.RedisConfig;
 import com.magustek.szjh.configset.bean.ConfigDataSourceSet;
 import com.magustek.szjh.configset.dao.ConfigDataSourceSetDAO;
 import com.magustek.szjh.configset.service.ConfigDataSourceSetService;
 import com.magustek.szjh.utils.OdataUtils;
+import com.magustek.szjh.utils.constant.RedisKeys;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -34,7 +34,7 @@ public class ConfigDataSourceSetServiceImpl implements ConfigDataSourceSetServic
     @Override
     public List<ConfigDataSourceSet> fetchData() throws Exception {
         //清空缓存
-        redisTemplate.opsForValue().set(RedisConfig.ConfigDataSourceSet, null);
+        redisTemplate.opsForValue().set(RedisKeys.ConfigDataSourceSet, null);
         String result = httpUtils.getResultByUrl(OdataUtils.ConfigDataSource+"?", null, HttpMethod.GET);
         List<ConfigDataSourceSet> list = OdataUtils.getListWithEntity(result, ConfigDataSourceSet.class);
         configDataSourceSetDAO.deleteAll();
@@ -54,7 +54,7 @@ public class ConfigDataSourceSetServiceImpl implements ConfigDataSourceSetServic
     @SuppressWarnings("unchecked")
     @Override
     public String getDescByQcgrpAndQcode(String qcgrp, String qcode) {
-        Object object = redisTemplate.opsForValue().get(RedisConfig.ConfigDataSourceSet);
+        Object object = redisTemplate.opsForValue().get(RedisKeys.ConfigDataSourceSet);
         Map<String, String> map;
         if(object == null){
             Iterator<ConfigDataSourceSet> all = configDataSourceSetDAO.findAll().iterator();
@@ -71,7 +71,7 @@ public class ConfigDataSourceSetServiceImpl implements ConfigDataSourceSetServic
             ConfigDataSourceSet next = all.next();
             map.put(next.getQcgrp()+"-"+next.getQcode(), next.getCotxt());
         }
-        redisTemplate.opsForValue().set(RedisConfig.ConfigDataSourceSet, map);
+        redisTemplate.opsForValue().set(RedisKeys.ConfigDataSourceSet, map);
         return map;
     }
 }

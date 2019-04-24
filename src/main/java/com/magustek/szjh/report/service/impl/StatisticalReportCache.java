@@ -12,7 +12,6 @@ import com.magustek.szjh.plan.service.RollPlanArchiveService;
 import com.magustek.szjh.utils.ClassUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.redis.core.TimeToLive;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -28,9 +27,6 @@ public class StatisticalReportCache {
     private RollPlanArchiveService rollPlanArchiveService;
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
     private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
-
-    @TimeToLive
-    private Long ttl = 60L;
 
     public StatisticalReportCache(OrganizationSetService organizationSetService, RollPlanArchiveService rollPlanArchiveService, IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService) {
         this.organizationSetService = organizationSetService;
@@ -52,8 +48,11 @@ public class StatisticalReportCache {
                 .filter(vo->!Strings.isNullOrEmpty(vo.getHtnum()))  //过滤掉合同管理编号为空的计划
                 .collect(Collectors.toList());
         //获取待对比取数指标数据
-        Map<String, List<IEPlanSelectValueSet>> htsnoMap = iePlanSelectValueSetService
-                .getAllByVersion(version)
+        List<IEPlanSelectValueSet> selectValueList = iePlanSelectValueSetService.getAllByVersion(version);
+        Map<String, List<IEPlanSelectValueSet>> htnumMap = selectValueList
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtnum));
+        Map<String, List<IEPlanSelectValueSet>> htsnoMap = selectValueList
                 .stream()
                 .collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtsno));
         //历史能力值列表
@@ -82,14 +81,18 @@ public class StatisticalReportCache {
                 if(Strings.isNullOrEmpty(caartMap.get(item.getImnum()))){
                     return;
                 }
-                Map<String, List<IEPlanSelectValueSet>> sdartMap;
+                Map<String, List<IEPlanSelectValueSet>> htnumSdartMap;
+                Map<String, List<IEPlanSelectValueSet>> htsnoSdartMap;
                 //容错设计
-                if(ClassUtils.isEmpty(htsnoMap.get(head.getHtsno()))){
+                if(ClassUtils.isEmpty(htnumMap.get(head.getHtnum()))){
                     return;
                 }
 
                 try {
-                    sdartMap = htsnoMap.get(head.getHtsno()).stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
+                    //log.warn("sdartMap :{}",htnumMap.get(head.getHtnum()).size());
+                    htnumSdartMap = htnumMap.get(head.getHtnum()).stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
+                    htsnoSdartMap = htsnoMap.get(head.getHtsno()).stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
+                    //log.warn("sdartMap size:{}",sdartMap.size());
                     Map<String, String> map = new HashMap<>();
 
                     map.put("htsno", head.getHtsno());
@@ -106,19 +109,19 @@ public class StatisticalReportCache {
 
                     map.put("id", item.getId().toString());
                     map.put("caart", caartMap.get(item.getImnum()));
-                    map.put("G118", sdartMap.get("G118").get(0).getSdval());    //合同编号
-                    map.put("G100", sdartMap.get("G100").get(0).getSdval());    //合同名称
-                    map.put("G205", sdartMap.get("G205").get(0).getSdval());    //合同相对方
-                    map.put("G203", sdartMap.get("G203").get(0).getSdval());    //合同承办人
+                    map.put("G118", getSdval(htsnoSdartMap,"G118"));    //合同编号
+                    map.put("G100", getSdval(htsnoSdartMap,"G100"));    //合同名称
+                    map.put("G205", getSdval(htsnoSdartMap,"G205"));    //合同相对方
+                    map.put("G203", getSdval(htsnoSdartMap,"G203"));    //合同承办人
 
                     map.put(RollPlanHeadDataArchiveVO.PLDAT, ClassUtils.StringToLocalDate(item.getDtval()).toString()); //计划日期
                     //实际发生日期
-                    if(ClassUtils.isEmpty(sdartMap.get(item.getSdart()))){
+                    if(ClassUtils.isEmpty(htnumSdartMap.get(item.getSdart()))){
                         map.put(RollPlanHeadDataArchiveVO.CPDAT, "");
                         //是否延期
                         map.put(RollPlanHeadDataArchiveVO.DLFLG,"true");
                     }else{
-                        Optional<String> cpdat= sdartMap
+                        Optional<String> cpdat= htnumSdartMap
                                 .get(item.getSdart())
                                 .stream()
                                 .map(IEPlanSelectValueSet::getSdval)
@@ -142,5 +145,12 @@ public class StatisticalReportCache {
             })
         );
         return list;
+    }
+    private String getSdval(Map<String, List<IEPlanSelectValueSet>> sdartMap, String sdart){
+        List<IEPlanSelectValueSet> list = sdartMap.get(sdart);
+        if(ClassUtils.isEmpty(list)){
+            return "";
+        }
+        return list.get(0).getSdval();
     }
 }

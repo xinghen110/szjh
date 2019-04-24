@@ -1,37 +1,52 @@
 package com.magustek.szjh.task;
 
 import com.magustek.szjh.basedataset.controller.BasedataSetController;
-import com.magustek.szjh.config.InitConfigData;
+import com.magustek.szjh.utils.SpringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
-public class InitConfigDataTask {
+public class InitConfigDataTask implements DisposableBean {
 
     @Value("${schedule.executeFetchBaseData}")
     public String executeFetchBaseData;
-    private InitConfigData initConfigData;
     private BasedataSetController basedataSetController;
+    private RedisTemplate<String, String> redisTemplate;
 
 
-    public InitConfigDataTask(InitConfigData initConfigData, BasedataSetController basedataSetController) {
-        this.initConfigData = initConfigData;
+    public InitConfigDataTask(BasedataSetController basedataSetController, RedisTemplate<String, String> redisTemplate) {
         this.basedataSetController = basedataSetController;
+        this.redisTemplate = redisTemplate;
     }
 
-    //@Scheduled(cron = "0 0 */1 * * ?")
-    /*public void executeInitConfig(){
+    @Scheduled(cron = "10 * * * * ?")
+    public void executeInitConfig(){
+        Boolean flag = redisTemplate.opsForValue().setIfAbsent("executeInitConfig", "X");
+        if(flag){
+            redisTemplate.expire("executeInitConfig", 1, TimeUnit.HOURS);
+        }else{
+            return;
+        }
         try {
-            initConfigData.init();
+            for(int i=0;i<10;i++){
+                log.warn("schedule {}",i);
+                Thread.sleep(3000);
+            }
         } catch (Exception e) {
             log.error(e.getMessage());
             e.printStackTrace();
         }
+        redisTemplate.delete("executeInitConfig");
         System.gc();
-    }*/
+    }
 
     //@Scheduled(cron = "0 0 3 * * ?")
     @Scheduled(cron = "#{initConfigDataTask.executeFetchBaseData}")
@@ -49,5 +64,14 @@ public class InitConfigDataTask {
             }
             System.gc();
         }
+    }
+
+    @Override
+    public void destroy() {
+        //关闭线程或线程池
+        log.warn("关闭线程池");
+        ThreadPoolTaskScheduler scheduler = (ThreadPoolTaskScheduler) SpringUtils.getBean("scheduler");
+        scheduler.shutdown();
+        log.warn("线程池已关闭");
     }
 }

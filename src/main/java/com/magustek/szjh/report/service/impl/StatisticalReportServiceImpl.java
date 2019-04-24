@@ -114,7 +114,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     }
 
     @Override
-    public Page<Map<String, String>> getPendingItemListByDate(DateVO dateVO){
+    public List<Map<String, String>> getPendingItemListByDate(DateVO dateVO){
         //获取待使用取数指标集合
         String outputTax = "statisticalReport/getPendingItemListByDate";
         Map<String, List<IEPlanScreenItemSet>> sdvarMap = iePlanScreenService
@@ -133,9 +133,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                 .stream()
                 .collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtsno));
         //将所有数据打散组装map
-        List<Map<String, String>> maps = ClassUtils.coverBeanToMapWithSdvarMap(itemVOList, selectValueMap, sdvarMap);
-
-        return ClassUtils.constructPage(dateVO, maps);
+        return ClassUtils.coverBeanToMapWithSdvarMap(itemVOList, selectValueMap, sdvarMap);
     }
 
     @Override

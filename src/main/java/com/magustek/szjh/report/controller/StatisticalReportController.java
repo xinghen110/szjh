@@ -49,10 +49,11 @@ public class StatisticalReportController {
     @ApiOperation(value="根据version获取【履约待办工作】数据", notes = "参数：version")
     @RequestMapping("/getPendingItemListByDate")
     public String getPendingItemListByDate(@RequestBody DateVO dateVO) throws Exception{
-        Page<Map<String, String>> detail = statisticalReportService.getPendingItemListByDate(dateVO);
+        List<Map<String, String>> detailList = statisticalReportService.getPendingItemListByDate(dateVO);
+        Page<Map<String, String>> page = ClassUtils.constructPage(dateVO, detailList);
         String userName = ContextUtils.getUserName();
-        log.warn("{}根据version获取【履约待办工作】数据：{}", userName, JSON.toJSONString(detail));
-        return resp.setStateCode(BaseResponse.SUCCESS).setData(detail).setMsg("成功！").toJson();
+        log.warn("{}根据version获取【履约待办工作】数据：{}", userName, JSON.toJSONString(page));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(page).setMsg("成功！").toJson();
     }
 
     @ApiOperation(value="根据计划id-id，对比数据版本（日期）-version，能力值类型-caart，获取【计划履行报表】", notes = "参数：id、version")
@@ -60,8 +61,9 @@ public class StatisticalReportController {
     public String getExecutionByPlan(@RequestBody ReportVO reportVO) throws Exception{
         List<Map<String, String>> list = statisticalReportService.getExecutionByPlan(reportVO.getId(), reportVO.getVersion(), reportVO.getCaart());
         String userName = ContextUtils.getUserName();
-        log.warn("{}根据计划id-id，对比数据版本（日期）-version，能力值类型-caart，获取【计划履行报表】：{}", userName, JSON.toJSONString(list));
-        return resp.setStateCode(BaseResponse.SUCCESS).setData(list).setMsg("成功！").toJson();
+        Page page = reportVO.getPageImpl(list);
+        log.warn("{}根据计划id-id，对比数据版本（日期）-version，能力值类型-caart，获取【计划履行报表】：{}", userName, JSON.toJSONString(page));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(page).setMsg("成功！").toJson();
     }
 
     @ApiOperation(value="根据计划id-id，对比数据版本（日期）-version，部门编码-dpnum，能力值类型-caart，获取【计划履行报表】", notes = "参数：id、version")

@@ -1,10 +1,10 @@
 package com.magustek.szjh.configset.service.impl;
 
-import com.magustek.szjh.config.RedisConfig;
 import com.magustek.szjh.configset.bean.IEPlanOperationSet;
 import com.magustek.szjh.configset.dao.IEPlanOperationSetDAO;
 import com.magustek.szjh.configset.service.IEPlanOperationSetService;
 import com.magustek.szjh.utils.OdataUtils;
+import com.magustek.szjh.utils.constant.RedisKeys;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +67,7 @@ public class IEPlanOperationSetServiceImpl implements IEPlanOperationSetService 
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, String> getZbnamMap(){
-        Object object = redisTemplate.opsForValue().get(RedisConfig.ZB_MAP);
+        Object object = redisTemplate.opsForValue().get(RedisKeys.ZB_MAP);
         Map<String, String> map;
         if(object == null){
             Iterator<IEPlanOperationSet> all = iePlanOperationSetDAO.findAll().iterator();
@@ -76,7 +76,7 @@ public class IEPlanOperationSetServiceImpl implements IEPlanOperationSetService 
                 IEPlanOperationSet next = all.next();
                 map.put(next.getZbart(), next.getZbnam());
             }
-            redisTemplate.opsForValue().set(RedisConfig.ZB_MAP, map);
+            redisTemplate.opsForValue().set(RedisKeys.ZB_MAP, map);
         }else{
             map = (Map<String, String>)object;
         }
@@ -85,6 +85,6 @@ public class IEPlanOperationSetServiceImpl implements IEPlanOperationSetService 
     }
 
     private void flushZbnamMapCache(){
-        redisTemplate.delete(RedisConfig.ZB_MAP);
+        redisTemplate.delete(RedisKeys.ZB_MAP);
     }
 }

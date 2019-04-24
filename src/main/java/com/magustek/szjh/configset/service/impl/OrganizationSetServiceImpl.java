@@ -2,7 +2,6 @@ package com.magustek.szjh.configset.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
-import com.magustek.szjh.config.RedisConfig;
 import com.magustek.szjh.configset.bean.IEPlanDimensionSet;
 import com.magustek.szjh.configset.bean.OrganizationSet;
 import com.magustek.szjh.configset.dao.OrganizationSetDAO;
@@ -12,6 +11,7 @@ import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.KeyValueBean;
 import com.magustek.szjh.utils.OdataUtils;
+import com.magustek.szjh.utils.constant.RedisKeys;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -126,7 +126,7 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
     @SuppressWarnings("unchecked")
     @Override
     public Map<String, String> orgKeyValue() {
-        Map<String, String> object = (Map<String, String>)redisTemplate.opsForValue().get(RedisConfig.ORG_MAP);
+        Map<String, String> object = (Map<String, String>)redisTemplate.opsForValue().get(RedisKeys.ORG_MAP);
         Map<String, String> map;
         if(ClassUtils.isEmpty(object)){
             List<OrganizationSet> bukrs = organizationSetDAO.findDistinctBukrsByOrderByCsort();
@@ -138,7 +138,7 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
             dpnum.forEach(o-> map.put(o.getDpnum(), o.getDpnam()));
             ponum.forEach(o-> map.put(o.getPonum(), o.getPonam()));
             uname.forEach(o-> map.put(o.getUname(), o.getUsnam()));
-            redisTemplate.opsForValue().set(RedisConfig.ORG_MAP, map);
+            redisTemplate.opsForValue().set(RedisKeys.ORG_MAP, map);
         }else{
             map = object;
         }

@@ -13,6 +13,7 @@ import com.magustek.szjh.configset.service.IEPlanOperationSetService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.PlanItem;
+import com.magustek.szjh.plan.bean.PlanLayout;
 import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.vo.PlanItemVO;
 import com.magustek.szjh.plan.dao.PlanHeaderDAO;
@@ -57,19 +58,22 @@ public class PlanItemServiceImpl implements PlanItemService {
         this.iePlanDimenValueSetService = iePlanDimenValueSetService;
     }
 
-    //根据ID更新指标值
+    //根据ID更新指标值（注：所有行项目必须为同一张报表）
     @Override
     public PlanItem[] save(PlanItem[] items) throws Exception{
+        //获取报表单位
         for(int i=0;i<items.length;i++) {
             PlanItem item = items[i];
             Long id = item.getId();
             PlanItem planItem = planItemDAO.findOne(id);
+            PlanHeader header = planHeaderDAO.findOne(planItem.getHeaderId());
+            BigDecimal zbval;
             try{
-                new BigDecimal(item.getZbval());
+                zbval = new BigDecimal(ClassUtils.handlePunit(item.getZbval(), header.getUnit(), true));
             }catch (Exception e){
                 throw new Exception("数据格式错误："+item.getZbval());
             }
-            planItem.setZbval(item.getZbval());
+            planItem.setZbval(zbval.toString());
             items[i] = planItemDAO.save(planItem);
         }
         return items;

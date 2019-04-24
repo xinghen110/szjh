@@ -1,5 +1,6 @@
 package com.magustek.szjh.config;
 
+import com.magustek.szjh.utils.constant.RedisKeys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
@@ -18,9 +19,7 @@ import java.util.Map;
 @Slf4j
 @Configuration
 public class RedisConfig  extends CachingConfigurerSupport {
-    public static final String ORG_MAP = "org_map";
-    public static final String ZB_MAP = "zb_map";
-    public static final String ConfigDataSourceSet = "ConfigDataSourceSet";
+
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
@@ -57,9 +56,7 @@ public class RedisConfig  extends CachingConfigurerSupport {
         redisCacheManager.setLoadRemoteCachesOnStartup(true);
         redisCacheManager.setUsePrefix(true);
         //配置缓存的过期时间
-        Map<String, Long> expires =new HashMap<>();
-        expires.put("ExecuteData",120L);
-        redisCacheManager.setExpires(expires);
+        redisCacheManager.setExpires(RedisKeys.getKeys());
 
         return redisCacheManager;
     }

@@ -291,17 +291,29 @@ public class ClassUtils {
         return map;
     }
 
-    //处理价格单位问题
+    //处理价格单位问题（flag-true：显示值转存储值；false：存储值转显示值）
     public static String handlePunit(String price, String qcode){
+        return handlePunit(price, qcode, false);
+    }
+    //处理价格单位问题（flag-true：显示值转存储值；false：存储值转显示值）
+    public static String handlePunit(String price, String qcode, boolean flag){
         try{
             BigDecimal value = new BigDecimal(price);
             switch (qcode){
                 case "UN01": //元
                     return value.setScale(2,BigDecimal.ROUND_HALF_DOWN).toString();
                 case "UN02": //万元
-                    return value.divide(new BigDecimal(10000),2,BigDecimal.ROUND_HALF_DOWN).toString();
+                    if(flag){
+                        return value.multiply(new BigDecimal(10000)).toString();
+                    }else{
+                        return value.divide(new BigDecimal(10000),2,BigDecimal.ROUND_HALF_DOWN).toString();
+                    }
                 case "UN03": //亿元
-                    return value.divide(new BigDecimal(10000*10000),2,BigDecimal.ROUND_HALF_DOWN).toString();
+                    if(flag){
+                        return value.multiply(new BigDecimal(10000*10000)).toString();
+                    }else{
+                        return value.divide(new BigDecimal(10000*10000),2,BigDecimal.ROUND_HALF_DOWN).toString();
+                    }
                 default:
                     return price;
             }
