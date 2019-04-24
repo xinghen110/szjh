@@ -27,7 +27,7 @@ public class InitConfigDataTask implements DisposableBean {
         this.redisTemplate = redisTemplate;
     }
 
-    @Scheduled(cron = "10 * * * * ?")
+    //@Scheduled(cron = "10 * * * * ?")
     public void executeInitConfig(){
         Boolean flag = redisTemplate.opsForValue().setIfAbsent("executeInitConfig", "X");
         if(flag){
