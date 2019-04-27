@@ -1,6 +1,7 @@
 package com.magustek.szjh.utils;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -9,12 +10,17 @@ import java.util.Map;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class KeyValueBean {
     private String key;
     private String value;
     private String opera = "M";
     private String calc = "";
 
+    public KeyValueBean(String key, String value){
+        this.key = key;
+        this.value = value;
+    }
     public KeyValueBean put(String key, String value){
         this.key = key;
         this.value = value;

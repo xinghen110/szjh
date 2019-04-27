@@ -80,4 +80,15 @@ public class StatisticalReportController {
         log.warn("{}根据计划id-id，对比数据版本（日期）-version，部门编码-dpnum，能力值类型-caart，获取【计划履行报表】：{}", userName, JSON.toJSONString(page));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(page).setMsg("成功！").toJson();
     }
+
+    @ApiOperation(value="根据年度计划id-id，指标值-zbart，获取年度计划完成率", notes = "参数：id、zbart")
+    @RequestMapping("/compareMRAndAR")
+    public String compareMRAndAR(@RequestBody ReportVO reportVO) throws Exception{
+        List<Map<String, String>> list = statisticalReportService.compareMRAndAR(reportVO.getId(), reportVO.getZbart());
+        list = reportVO.filter(list);
+        Page page = reportVO.getPageImpl(list);
+        String userName = ContextUtils.getUserName();
+        log.warn("{}根据年度计划id-id，指标值-zbart，获取年度计划完成率：{}", userName, JSON.toJSONString(page));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(page).setMsg("成功！").toJson();
+    }
 }

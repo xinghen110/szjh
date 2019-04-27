@@ -1,6 +1,8 @@
 package com.magustek.szjh.configset.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.magustek.szjh.configset.bean.IEPlanDimensionSet;
 import com.magustek.szjh.configset.bean.OrganizationSet;
@@ -125,22 +127,23 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Map<String, String> orgKeyValue() {
-        Map<String, String> object = (Map<String, String>)redisTemplate.opsForValue().get(RedisKeys.ORG_MAP);
-        Map<String, String> map;
-        if(ClassUtils.isEmpty(object)){
+    public Map<String, KeyValueBean> orgKeyValue() {
+        String s = JSON.toJSONString(redisTemplate.opsForValue().get(RedisKeys.ORG_MAP));
+//        String object = (String)redisTemplate.opsForValue().get(RedisKeys.ORG_MAP);
+        Map<String, KeyValueBean> map;
+        if(Strings.isNullOrEmpty(s)){
             List<OrganizationSet> bukrs = organizationSetDAO.findDistinctBukrsByOrderByCsort();
             List<OrganizationSet> dpnum = organizationSetDAO.findDistinctDpnumByOrderByDsort();
             List<OrganizationSet> ponum = organizationSetDAO.findDistinctPonumByOrderByDsort();
             List<OrganizationSet> uname = organizationSetDAO.findDistinctUnameByOrderByDsort();
             map = new HashMap<>(bukrs.size()+dpnum.size()+ponum.size()+uname.size());
-            bukrs.forEach(o-> map.put(o.getBukrs(), o.getButxt()));
-            dpnum.forEach(o-> map.put(o.getDpnum(), o.getDpnam()));
-            ponum.forEach(o-> map.put(o.getPonum(), o.getPonam()));
-            uname.forEach(o-> map.put(o.getUname(), o.getUsnam()));
+            bukrs.forEach(o-> map.put(o.getBukrs(), new KeyValueBean(o.getButxt(), o.getCsort())));
+            dpnum.forEach(o-> map.put(o.getDpnum(), new KeyValueBean(o.getDpnam(), o.getDsort())));
+            ponum.forEach(o-> map.put(o.getPonum(), new KeyValueBean(o.getPonam(), o.getDsort())));
+            uname.forEach(o-> map.put(o.getUname(), new KeyValueBean(o.getUsnam(), o.getDsort())));
             redisTemplate.opsForValue().set(RedisKeys.ORG_MAP, map);
         }else{
-            map = object;
+            map = JSON.parseObject(s, new TypeReference<Map<String, KeyValueBean>>(){});
         }
 
         return map;

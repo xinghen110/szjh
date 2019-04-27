@@ -15,7 +15,7 @@ import java.util.Map;
 public interface PlanHeaderService {
     PlanHeader save(PlanHeader header) throws Exception;
     PlanHeader delete(PlanHeader header);
-    PlanHeader getById(PlanHeader header);
+    PlanHeader getById(Long id);
     Page<Map<String, String>> getListByBukrs(PlanHeaderVO vo, Pageable pageable) throws Exception;
     //获取布局信息
     IEPlanReportHeadVO getLayoutByHeaderId(Long headerId);
@@ -36,4 +36,6 @@ public interface PlanHeaderService {
 
     //获取审批界面
     PlanHeader getApprovalPage(PlanHeaderVO vo) throws Exception;
+
+    List<PlanHeader> getByJhvalContains(String jhval);
 }

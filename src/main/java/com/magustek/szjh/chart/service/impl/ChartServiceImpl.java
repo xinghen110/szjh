@@ -6,6 +6,7 @@ import com.magustek.szjh.chart.bean.vo.DmCalcVO;
 import com.magustek.szjh.chart.service.ChartService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.KeyValueBean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -38,7 +39,7 @@ public class ChartServiceImpl implements ChartService {
         }
 
         //获取组织机构列表（用来获取组织机构名称）
-        Map<String, String> orgMap = organizationSetService.orgKeyValue();
+        Map<String, KeyValueBean> orgMap = organizationSetService.orgKeyValue();
         Map<String, Map<String, List<Map<String, String>>>> dmCalcMap = new TreeMap<>();
         //获取数据，根据历史能力值分组
         Map<String, List<DmCalcStatistics>> caartMap = dmCalcStatisticsService.
@@ -54,7 +55,7 @@ public class ChartServiceImpl implements ChartService {
                 List<Map<String, String>> list = new ArrayList<>();
                 v.forEach(chart->{
                     Map<String, String> map = ClassUtils.coverToMapJson(chart, null, null, false);
-                    map.put("dmtxt",orgMap.get(map.get("dmval")));
+                    map.put("dmtxt",orgMap.get(map.get("dmval")).getKey());
                     list.add(map);
                 });
                 versionMap.put(k, list);

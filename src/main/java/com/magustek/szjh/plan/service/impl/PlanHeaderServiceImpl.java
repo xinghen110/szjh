@@ -152,9 +152,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     }
 
     @Override
-    public PlanHeader getById(PlanHeader header){
-        Assert.isTrue(!ClassUtils.isEmpty(header.getId()), "计划ID不得为空");
-        header = planHeaderDAO.findOne(header.getId());
+    public PlanHeader getById(Long id){
+        Assert.notNull(id, "计划ID不得为空");
+        PlanHeader header = planHeaderDAO.findOne(id);
 
         PlanHeaderVO vo = coverToVO(header);
 
@@ -230,7 +230,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         planHeader.setId(planHeadId);
         Map<String, List<IEPlanBusinessHeadSet>> headMapByHdnum;
         try {
-            planHeader = this.getById(planHeader);
+            planHeader = this.getById(planHeader.getId());
             headMapByHdnum = iePlanBusinessHeadSetService
                     .getAllByBukrsAndRptyp(ContextUtils.getCompany().getOrgcode(), "MR")
                     .stream()
@@ -601,6 +601,11 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             nextApprover.dealWithHjtxt(nextApprover,vo);
         }
         return vo;
+    }
+
+    @Override
+    public List<PlanHeader> getByJhvalContains(String jhval) {
+        return planHeaderDAO.findAllByJhvalContains(jhval);
     }
 
     //审批流程（审批提交、同意、驳回）

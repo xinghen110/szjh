@@ -1,7 +1,5 @@
 package com.magustek.szjh.utils.groovy;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.KeyValueBean;
 import groovy.lang.Binding;
@@ -13,14 +11,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class GroovyShellExample {
     public static void main(String[] args) {
-        String a = "";
         try {
             System.out.println(ClassUtils.dfYMD.parse("20180116"));
         } catch (ParseException e) {
@@ -28,7 +23,7 @@ public class GroovyShellExample {
             e.printStackTrace();
         }
 
-        h();
+        i();
     }
 
     public static void a(){
@@ -64,7 +59,7 @@ public class GroovyShellExample {
     public static void c(){
         Binding binding = new Binding();
         try {
-            ArrayList<String> g121 = Lists.newArrayList("10.1","20.2","30.3");
+            //ArrayList<String> g121 = Lists.newArrayList("10.1","20.2","30.3");
             binding.setVariable("G201", "01");
             binding.setVariable("G411", "4600.00");
             GroovyShell shell = new GroovyShell(binding);
@@ -90,8 +85,7 @@ public class GroovyShellExample {
     public static void e(){
         KeyValueBean bean = new KeyValueBean();
         bean.put("ke123y", "value", "opera");
-        Object o = (Object) bean;
-        PropertyDescriptor key = BeanUtils.getPropertyDescriptor(o.getClass(), "key");
+        PropertyDescriptor key = BeanUtils.getPropertyDescriptor(bean.getClass(), "key");
         try {
             System.out.println(key.getReadMethod().invoke(bean));
         } catch (IllegalAccessException | InvocationTargetException e) {
@@ -113,6 +107,17 @@ public class GroovyShellExample {
 
     private static void h(){
         System.out.println("2019-01-11".compareTo("")>0);
+    }
+
+    private static void i(){
+        BigDecimal d = new BigDecimal(0.61D);
+        Double a = 0.68;
+        double b =  0.1261D;
+        double e =  0.128D;
+        double f =  b*e;
+        System.out.println(d);
+        System.out.println(d.setScale(4, BigDecimal.ROUND_HALF_DOWN).toString());
+        System.out.println(f);
     }
 
 }

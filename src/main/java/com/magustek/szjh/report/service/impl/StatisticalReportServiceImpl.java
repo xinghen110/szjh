@@ -5,15 +5,19 @@ import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.configset.bean.IEPlanScreenItemSet;
 import com.magustek.szjh.configset.service.IEPlanScreenService;
+import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.plan.bean.PlanHeader;
+import com.magustek.szjh.plan.bean.PlanItem;
 import com.magustek.szjh.plan.bean.vo.RollPlanHeadDataArchiveVO;
 import com.magustek.szjh.plan.bean.vo.RollPlanItemDataArchiveVO;
 import com.magustek.szjh.plan.service.PlanHeaderService;
+import com.magustek.szjh.plan.service.PlanItemService;
 import com.magustek.szjh.plan.service.RollPlanArchiveService;
 import com.magustek.szjh.report.bean.vo.ReportVO;
 import com.magustek.szjh.report.bean.vo.DateVO;
 import com.magustek.szjh.report.service.StatisticalReportService;
 import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.KeyValueBean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -33,15 +37,19 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     private IEPlanScreenService iePlanScreenService;
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
     private PlanHeaderService planHeaderService;
+    private PlanItemService planItemService;
     private RollPlanArchiveService rollPlanArchiveService;
     private StatisticalReportCache statisticalReportCache;
+    private OrganizationSetService organizationSetService;
 
-    public StatisticalReportServiceImpl(IEPlanScreenService iePlanScreenService, IEPlanSelectValueSetService iePlanSelectValueSetService, PlanHeaderService planHeaderService, RollPlanArchiveService rollPlanArchiveService, StatisticalReportCache statisticalReportCache) {
+    public StatisticalReportServiceImpl(IEPlanScreenService iePlanScreenService, IEPlanSelectValueSetService iePlanSelectValueSetService, PlanHeaderService planHeaderService, PlanItemService planItemService, RollPlanArchiveService rollPlanArchiveService, StatisticalReportCache statisticalReportCache, OrganizationSetService organizationSetService) {
         this.iePlanScreenService = iePlanScreenService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
         this.planHeaderService = planHeaderService;
+        this.planItemService = planItemService;
         this.rollPlanArchiveService = rollPlanArchiveService;
         this.statisticalReportCache = statisticalReportCache;
+        this.organizationSetService = organizationSetService;
     }
 
     //@Cacheable(value = "getOutputTaxDetailByVersion")
@@ -212,6 +220,77 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     public List<Map<String, String>> getExecutionByPlanAndDpnum(Long id, String version, String dpnum, String caart) {
         List<Map<String, String>> list = statisticalReportCache.getExecuteData(id, version);
         return list.stream().filter(m -> caart.equals(m.get("caart")) && dpnum.equals(m.get("dpnum"))).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Map<String, String>> compareMRAndAR(Long arId, String zbart) throws Exception{
+        PlanHeader ar = planHeaderService.getById(arId);
+        List<PlanItem> arItems = planItemService.getListByHeaderId(arId, "ZB", zbart);
+        List<Map<String, String>> list = new ArrayList<>();
+        Map<String, KeyValueBean> orgMap = organizationSetService.orgKeyValue();
+
+        //计划期间
+        String jhval = ar.getJhval();
+        //获取月计划列表（每个月取ckdate最新的一版月计划）
+        Map<String, Map<String,List<PlanItem>>> mrMap = new HashMap<>();
+        planHeaderService
+                .getByJhvalContains(jhval)
+                .stream()
+                .filter(i->"MR".equals(i.getRptyp()))
+                .collect(Collectors.groupingBy(PlanHeader::getJhval))
+                .forEach((ztval,v)-> {
+                    PlanHeader header = v.stream().max(Comparator.comparing(PlanHeader::getJhval)).orElse(null);
+                    if(header != null){
+                        try {
+                            mrMap.put(ztval, planItemService
+                                    .getListByHeaderIdAndZtvalContains(header.getId(), zbart, ztval)
+                                    .stream()
+                                    .collect(Collectors.groupingBy(PlanItem::getDmval)));
+                        } catch (Exception e) {
+                            log.error(e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
+                });
+        //根据组织机构代码分组
+        arItems.stream().collect(Collectors.groupingBy(PlanItem::getDmval)).forEach((dmval, arItem)->{
+            Map<String, String> map = new LinkedHashMap<>();
+
+            map.put("dmval",dmval);
+            map.put("dmtxt",orgMap.get(dmval).getKey());
+            map.put("dmsor",orgMap.get(dmval).getValue());
+            arItem.forEach(item->{
+                String ztval = item.getZtval();
+                if("T800".equals(ztval)){
+                    return;
+                }
+                String month = item.getZtval().split("-")[1];
+                map.put("ar_zbval_"+month, item.getZbval());
+                //如果没有对应的月度计划指标值，则继续
+                if(ClassUtils.isEmpty(mrMap.get(ztval)) || ClassUtils.isEmpty(mrMap.get(ztval).get(dmval))){
+                    return;
+                }
+
+                PlanItem mrItem = mrMap.get(ztval).get(dmval).get(0);
+                map.put("mr_zbval_"+month, mrItem.getZbval());
+                //年计划完成率
+                BigDecimal arVal = new BigDecimal(item.getZbval());
+                BigDecimal mrVal = new BigDecimal(mrItem.getZbval());
+                if(arVal.compareTo(BigDecimal.ZERO)==0){
+                    map.put("rate_"+month, "--");
+                }else{
+                    map.put("rate_"+month, mrVal
+                            .divide(arVal, 2, BigDecimal.ROUND_HALF_DOWN)
+                            .multiply(new BigDecimal(100))
+                            .setScale(2, BigDecimal.ROUND_HALF_DOWN)
+                            .toString()+"%");
+                }
+            });
+            list.add(map);
+        });
+
+        list.sort(Comparator.comparing(m->m.get("dmsor")));
+        return list;
     }
 
 

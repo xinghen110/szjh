@@ -47,7 +47,7 @@ public class PlanItemController {
     @ApiOperation(value="根据headerId获取计划明细", notes = "参数：headerId、zaxis、zvalue")
     @RequestMapping("/getItemByHeaderId")
     public String getItemByHeaderId(@RequestBody PlanItemVO vo) throws Exception {
-        List<PlanItem> list = planItemService.getListByHeaderId(vo);
+        List<PlanItem> list = planItemService.getListByHeaderId(vo.getHeaderId(), vo.getZaxis(), vo.getZvalue());
         List<Map<String, String>> maps = planItemService.coverListToMap(list);
         String userName = ContextUtils.getUserName();
         log.warn("{}根据headerId获取计划明细：{}", userName, JSON.toJSONString(maps));

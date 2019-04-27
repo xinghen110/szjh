@@ -48,4 +48,12 @@ public interface StatisticalReportService {
      * @throws Exception    无
      */
     List<Map<String, String>> getExecutionByPlanAndDpnum(Long id, String version, String dpnum, String caart) throws Exception;
+
+    /**
+     * 年度、月度计划对比
+     * @param arId 年度计划id
+     * @param zbart 对比指标
+     * @return 年度、月度计划对比
+     */
+    List<Map<String, String>> compareMRAndAR(Long arId, String zbart) throws Exception;
 }

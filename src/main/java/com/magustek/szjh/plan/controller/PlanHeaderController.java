@@ -61,7 +61,7 @@ public class PlanHeaderController {
     @ApiOperation(value="根据id获取计划", notes = "参数：id")
     @RequestMapping("/getPlanHeaderById")
     public String getPlanHeaderById(@RequestBody PlanHeader header) {
-        header = planHeaderService.getById(header);
+        header = planHeaderService.getById(header.getId());
         String userName = ContextUtils.getUserName();
         log.warn("{}根据id获取计划：{}", userName, JSON.toJSONString(header));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(header).setMsg("成功！").toJson();

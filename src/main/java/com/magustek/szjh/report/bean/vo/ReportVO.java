@@ -21,6 +21,7 @@ public class ReportVO extends BasePage {
     private Long id;
     private String caart;
     private String dpnum;
+    private String zbart;
 
 
     public String getVersion() {

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SecurityFilter extends GenericFilterBean{
     private List<AntPathRequestMatcher> resourceList;
-    private List<String> superUser= Arrays.asList("cg_yangsy","yangjiawei","liuhaiyan","biwuke","nib","yingml","panzhiqiang");
+    private List<String> superUser= Arrays.asList("yangjiawei");
     //初始化匿名访问资源列表
     SecurityFilter(){
         resourceList = new ArrayList<>(AllowResource.resource.length);

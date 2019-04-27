@@ -18,4 +18,5 @@ public interface PlanHeaderDAO extends CrudRepository<PlanHeader, Long> {
 
     Page<PlanHeader> findAllByBukrsAndOrgvalAndRptypAndStonrAndBstaInOrderByIdDesc(String bukrs, String orgval, String rptyp, String stonr, List<String> list, Pageable pageable);
     PlanHeader findById(Long id);
+    List<PlanHeader> findAllByJhvalContains(String jhval);
 }

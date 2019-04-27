@@ -14,7 +14,8 @@ import java.util.Map;
 public interface PlanItemService {
     PlanItem[] save(PlanItem[] items) throws Exception;
     List<PlanItem> save(List<PlanItem> list);
-    List<PlanItem> getListByHeaderId(PlanItemVO vo) throws Exception;
+    List<PlanItem> getListByHeaderId(Long headerId, String zaxis, String zvalue) throws Exception;
+    List<PlanItem> getListByHeaderIdAndZtvalContains(Long headerId, String zvalue, String ztval);
     List<PlanItem> getComparedListByHeaderId(PlanItemVO vo) throws Exception;
     List<PlanItem> delete(List<PlanItem> list);
     void deleteByHeaderId(Long headerId);

@@ -13,7 +13,6 @@ import com.magustek.szjh.configset.service.IEPlanOperationSetService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.PlanItem;
-import com.magustek.szjh.plan.bean.PlanLayout;
 import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.vo.PlanItemVO;
 import com.magustek.szjh.plan.dao.PlanHeaderDAO;
@@ -85,19 +84,17 @@ public class PlanItemServiceImpl implements PlanItemService {
     }
 
     @Override
-    public List<PlanItem> getListByHeaderId(PlanItemVO vo) throws Exception{
-        String zaxis = vo.getZaxis();
-        String zvalue = vo.getZvalue();
+    public List<PlanItem> getListByHeaderId(Long headerId, String zaxis, String zvalue) throws Exception{
         List<PlanItem> list;
         switch (zaxis){
             case PlanConstant.AXIS_TIM:
-                list = planItemDAO.findAllByHeaderIdAndZtval(vo.getHeaderId(), zvalue);
+                list = planItemDAO.findAllByHeaderIdAndZtval(headerId, zvalue);
                 break;
             case PlanConstant.AXIS_ORG:
-                list = planItemDAO.findAllByHeaderIdAndDmval(vo.getHeaderId(), zvalue);
+                list = planItemDAO.findAllByHeaderIdAndDmval(headerId, zvalue);
                 break;
             case PlanConstant.AXIS_ZB:
-                list = planItemDAO.findAllByHeaderIdAndZbart(vo.getHeaderId(), zvalue);
+                list = planItemDAO.findAllByHeaderIdAndZbart(headerId, zvalue);
                 break;
             default:
                 throw new Exception("Y轴类型错误！");
@@ -106,11 +103,16 @@ public class PlanItemServiceImpl implements PlanItemService {
     }
 
     @Override
+    public List<PlanItem> getListByHeaderIdAndZtvalContains(Long headerId, String zvalue, String ztval) {
+        return planItemDAO.findAllByHeaderIdAndZbartAndZtvalContains(headerId, zvalue, ztval);
+    }
+
+    @Override
     public List<PlanItem> getComparedListByHeaderId(PlanItemVO vo) throws Exception {
         //获取计划抬头
         PlanHeader planHeader = planHeaderDAO.findOne(vo.getHeaderId());
         //获取计划值
-        List<PlanItem> itemList = getListByHeaderId(vo);
+        List<PlanItem> itemList = getListByHeaderId(vo.getHeaderId(), vo.getZaxis(), vo.getZvalue());
         //获取计算值
         Map<String, List<RollPlanHeadData>> rollPlanMap = rollPlanDataService
                 .getRollPlanHeadDataByVersionAndDtvalIsNotNullAndDtvalIsNotAndZbart(planHeader.getCkdate(), vo.getZvalue())
@@ -486,7 +488,7 @@ public class PlanItemServiceImpl implements PlanItemService {
         List<Map<String, String>> resultList = new ArrayList<>(group.size());
         //List<PlanItem> pList;
 
-        Map<String, String> orgKeyValue = organizationSetService.orgKeyValue();
+        Map<String, KeyValueBean> orgKeyValue = organizationSetService.orgKeyValue();
         Map<String, String> zbnamMap = iePlanOperationSetService.getZbnamMap();
         //按行处理数据
         //for (Map.Entry<String, List<PlanItem>> i : group.entrySet()) {
@@ -502,8 +504,8 @@ public class PlanItemServiceImpl implements PlanItemService {
                         break;
                     case PlanConstant.AXIS_ORG:
                         //如果是组织，需要转换成中文描述
-                        map.put(orgKeyValue.get(p.getDmval()), p.getZbval());
-                        map.put(orgKeyValue.get(p.getDmval()) + "_id", p.getId().toString());
+                        map.put(orgKeyValue.get(p.getDmval()).getKey(), p.getZbval());
+                        map.put(orgKeyValue.get(p.getDmval()).getKey() + "_id", p.getId().toString());
                         break;
                     case PlanConstant.AXIS_ZB:
                         //如果是指标，需要转换成中文描述
@@ -519,7 +521,7 @@ public class PlanItemServiceImpl implements PlanItemService {
                     map.put("y_name", key);
                     break;
                 case PlanConstant.AXIS_ORG:
-                    map.put("y_name", orgKeyValue.get(key));
+                    map.put("y_name", orgKeyValue.get(key).getKey());
                     break;
                 case PlanConstant.AXIS_ZB:
                     map.put("y_name", zbnamMap.get(key));
