@@ -210,7 +210,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         for(PlanHeader header : content){
             PlanHeaderVO pvo = coverToVO(header);
             pvo.setZbList(planItemService.getZbList(pvo.getId(), header.getRptyp()));
-            voList.add(ClassUtils.coverToMapJson(pvo,"zbList", pvo.getUnit(), true));
+            voList.add(ClassUtils.coverToMapJson(pvo,"zbList", pvo.getUnit(), true, 3));
         }
         page.getContent();
         return new PageImpl<>(voList, pageable, page.getTotalElements());

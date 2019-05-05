@@ -54,7 +54,7 @@ public class ChartServiceImpl implements ChartService {
             dmMap.forEach((k,v)->{
                 List<Map<String, String>> list = new ArrayList<>();
                 v.forEach(chart->{
-                    Map<String, String> map = ClassUtils.coverToMapJson(chart, null, null, false);
+                    Map<String, String> map = ClassUtils.coverToMapJson(chart, null, null, false, 0);
                     map.put("dmtxt",orgMap.get(map.get("dmval")).getKey());
                     list.add(map);
                 });

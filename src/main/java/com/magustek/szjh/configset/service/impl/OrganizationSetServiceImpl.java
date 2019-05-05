@@ -131,7 +131,7 @@ public class OrganizationSetServiceImpl implements OrganizationSetService {
         String s = JSON.toJSONString(redisTemplate.opsForValue().get(RedisKeys.ORG_MAP));
 //        String object = (String)redisTemplate.opsForValue().get(RedisKeys.ORG_MAP);
         Map<String, KeyValueBean> map;
-        if(Strings.isNullOrEmpty(s)){
+        if(Strings.isNullOrEmpty(s) || s.equals("null")){
             List<OrganizationSet> bukrs = organizationSetDAO.findDistinctBukrsByOrderByCsort();
             List<OrganizationSet> dpnum = organizationSetDAO.findDistinctDpnumByOrderByDsort();
             List<OrganizationSet> ponum = organizationSetDAO.findDistinctPonumByOrderByDsort();

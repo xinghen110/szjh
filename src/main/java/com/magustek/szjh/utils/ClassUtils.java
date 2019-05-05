@@ -251,15 +251,19 @@ public class ClassUtils {
     /**
      * 将对象转换为map json格式，处理其中keyValueBean。
      * @param superClass    是否包含父类字段
+     * @param depth         包含父类字段时，上追几层父类
      */
     @SuppressWarnings("unchecked")
-    public static Map<String, String> coverToMapJson(Object o, String keyValueBeanName, String qcode, boolean superClass) {
+    public static Map<String, String> coverToMapJson(Object o, String keyValueBeanName, String qcode, boolean superClass, int depth) {
         ArrayList<Field> fList = new ArrayList<>();
         //递归遍历获取所有父类的字段
         Class clazz = o.getClass();
         if(superClass){
             for(; clazz != Object.class ; clazz = clazz.getSuperclass()) {
                 fList.addAll(Arrays.asList(clazz.getDeclaredFields()));
+                if(--depth < 0){
+                    break;
+                }
             }
         }else{
             fList.addAll(Arrays.asList(clazz.getDeclaredFields()));
