@@ -18,6 +18,7 @@ import com.magustek.szjh.plan.service.RollPlanArchiveService;
 import com.magustek.szjh.utils.ClassUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -201,6 +202,7 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
         return RollPlanItemDataArchiveVO.cover(rollPlanItemDataArchiveDAO.findAllByPlanHeadIdAndCtdtpAndDtvalBetween(id, start, end),businessItemMap);
     }
 
+    @Cacheable(value = "RollPlanHeadDataArchiveVOList")
     @Override
     public List<RollPlanHeadDataArchiveVO> getListByPlanHeaderId(Long id) {
         return RollPlanHeadDataArchiveVO.cover(rollPlanHeadDataArchiveDAO.findHeadWithItemByPlanHeadId(id));

@@ -73,7 +73,7 @@ public class PlanHeaderController {
         if(vo.getPowerModel().equals(ModelCons.APPROVAL)){
             vo.setStonr("20");
         }
-        Page<Map<String, String>> listByBukrs = planHeaderService.getListByBukrs(vo, vo.getPageRequest());
+        Page<Map<String, String>> listByBukrs = planHeaderService.getListByBukrs(vo, vo.initPageRequest());
         String userName = ContextUtils.getUserName();
         log.warn("{}根据公司获取计划列表：{}", userName, JSON.toJSONString(listByBukrs));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(listByBukrs).setMsg("成功！").toJson();
@@ -90,7 +90,7 @@ public class PlanHeaderController {
     @ApiOperation(value="根据参数获取合同信息列表，参数：zbart-指标值、dmval-维度值、dtval-时间（yyyy-MM）、id-月度计划id。")
     @RequestMapping("/getHtsnoList")
     public String getHtsnoList(@RequestBody PlanHeaderVO vo) throws Exception {
-        List<Map<String, String>> htsnoList = planHeaderService.getHtsnoList(vo.getZbart(), vo.getDmval(), vo.getDtval(), vo.getId(), vo.getPageRequest());
+        List<Map<String, String>> htsnoList = planHeaderService.getHtsnoList(vo.getZbart(), vo.getDmval(), vo.getDtval(), vo.getId(), vo.initPageRequest());
         log.warn("根据参数获取合同信息列表：{}", JSON.toJSONString(htsnoList));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(htsnoList).setMsg("成功！").toJson();
     }

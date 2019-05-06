@@ -22,7 +22,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-//@Cacheable(value = "StatisticalReportCache")
 @Component
 public class StatisticalReportCache {
     private OrganizationSetService organizationSetService;

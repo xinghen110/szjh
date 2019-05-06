@@ -76,7 +76,7 @@ public class HolidayController {
     @RequestMapping("/list")
     public String listBusiness(@RequestBody Holiday holiday){
         try {
-            Page<Holiday> list = holidayService.listByYear(holiday.getYear(), holiday.getPageRequest());
+            Page<Holiday> list = holidayService.listByYear(holiday.getYear(), holiday.initPageRequest());
             return resp.setStateCode(BaseResponse.SUCCESS).setData(list).toJson();
         }catch (Exception e){
             return resp.setStateCode(BaseResponse.ERROR).setMsg(e.getMessage()).toJson();

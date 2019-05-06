@@ -11,7 +11,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -61,7 +60,7 @@ public class StatisticalReportController {
     public String getExecutionByPlan(@RequestBody ReportVO reportVO) throws Exception{
         List<Map<String, String>> list = statisticalReportService.getExecutionByPlan(reportVO.getId(), reportVO.getVersion(), reportVO.getCaart());
         String userName = ContextUtils.getUserName();
-        Page page = reportVO.getPageImpl(list);
+        Page page = reportVO.initPageImpl(list);
         log.warn("{}根据计划id-id，对比数据版本（日期）-version，能力值类型-caart，获取【计划履行报表】：{}", userName, JSON.toJSONString(page));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(page).setMsg("成功！").toJson();
     }
@@ -75,7 +74,7 @@ public class StatisticalReportController {
                 reportVO.getDpnum(),
                 reportVO.getCaart());
         list = reportVO.filter(list);
-        Page page = reportVO.getPageImpl(list);
+        Page page = reportVO.initPageImpl(list);
         String userName = ContextUtils.getUserName();
         log.warn("{}根据计划id-id，对比数据版本（日期）-version，部门编码-dpnum，能力值类型-caart，获取【计划履行报表】：{}", userName, JSON.toJSONString(page));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(page).setMsg("成功！").toJson();
@@ -86,7 +85,7 @@ public class StatisticalReportController {
     public String compareMRAndAR(@RequestBody ReportVO reportVO) throws Exception{
         List<Map<String, String>> list = statisticalReportService.compareMRAndAR(reportVO.getId(), reportVO.getZbart());
         list = reportVO.filter(list);
-        Page page = reportVO.getPageImpl(list);
+        Page page = reportVO.initPageImpl(list);
         String userName = ContextUtils.getUserName();
         log.warn("{}根据年度计划id-id，指标值-zbart，获取年度计划完成率：{}", userName, JSON.toJSONString(page));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(page).setMsg("成功！").toJson();

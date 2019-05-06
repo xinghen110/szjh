@@ -23,7 +23,7 @@ public class GroovyShellExample {
             e.printStackTrace();
         }
 
-        i();
+        j();
     }
 
     public static void a(){
@@ -118,6 +118,15 @@ public class GroovyShellExample {
         System.out.println(d);
         System.out.println(d.setScale(4, BigDecimal.ROUND_HALF_DOWN).toString());
         System.out.println(f);
+    }
+
+    private static void j(){
+        Calendar start = Calendar.getInstance();
+        start.setTimeInMillis(1556841600L*1000);
+        Calendar end = Calendar.getInstance();
+        end.setTimeInMillis(1556870400L*1000);
+        System.out.println("s:"+start.getTime().toString());
+        System.out.println("e:"+end.getTime().toString());
     }
 
 }

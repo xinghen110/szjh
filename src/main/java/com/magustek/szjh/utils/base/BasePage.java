@@ -2,6 +2,7 @@ package com.magustek.szjh.utils.base;
 
 import com.google.common.base.Strings;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -13,11 +14,12 @@ import java.util.List;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class BasePage extends BaseFilter{
     @Transient protected String page;
     @Transient protected String size;
 
-    public Pageable getPageRequest(){
+    public Pageable initPageRequest(){
         if(Strings.isNullOrEmpty(page)){
             page = "0";
         }
@@ -27,8 +29,8 @@ public class BasePage extends BaseFilter{
         return new PageRequest(StringToInt(page),StringToInt(size));
     }
 
-    public Page getPageImpl(List list){
-        Pageable req = this.getPageRequest();
+    public Page initPageImpl(List list){
+        Pageable req = this.initPageRequest();
         return new PageImpl(list.subList(req.getOffset(),req.getOffset()+req.getPageSize()>list.size()?list.size():req.getOffset()+req.getPageSize()), req, list.size());
     }
 

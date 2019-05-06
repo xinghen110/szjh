@@ -9,11 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.DateFormat;
@@ -406,9 +404,9 @@ public class ClassUtils {
     }
 
     public static Page<Map<String, String>> constructPage(BasePage page, List<Map<String, String>> list){
-        int start = page.getPageRequest().getOffset();
-        int pageSize = page.getPageRequest().getPageSize();
+        int start = page.initPageRequest().getOffset();
+        int pageSize = page.initPageRequest().getPageSize();
         int end = start+pageSize > list.size()? list.size() : start+pageSize;
-        return new PageImpl<>(list.subList(start, end), page.getPageRequest(), list.size());
+        return new PageImpl<>(list.subList(start, end), page.initPageRequest(), list.size());
     }
 }

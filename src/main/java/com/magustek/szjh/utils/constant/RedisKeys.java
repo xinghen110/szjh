@@ -10,6 +10,7 @@ public class RedisKeys {
     public static final String ConfigDataSourceSet = "ConfigDataSourceSet";
     public static final String ExecuteData = "ExecuteData";
     public static final String SelectValueSet = "SelectValueSet";
+    public static final String RollPlanHeadDataArchiveVOList = "RollPlanHeadDataArchiveVOList";
 
     public static Map<String, Long> getKeys(){
         Map<String, Long> map = new HashMap<>();
@@ -18,6 +19,7 @@ public class RedisKeys {
         map.put(ConfigDataSourceSet, -1L);
         map.put(ExecuteData, 60*60*2L);
         map.put(SelectValueSet, 60*60*2L);
+        map.put(RollPlanHeadDataArchiveVOList, 60*60*2L);
         return map;
     }
 }

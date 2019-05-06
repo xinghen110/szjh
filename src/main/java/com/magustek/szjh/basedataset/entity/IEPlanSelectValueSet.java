@@ -2,6 +2,7 @@ package com.magustek.szjh.basedataset.entity;
 
 import com.magustek.szjh.utils.base.BaseEntity;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Column;
@@ -20,6 +21,7 @@ import javax.persistence.Table;
 @Entity
 @Table(indexes = {@Index(columnList = "version"),
                   @Index(columnList = "htsno,version")})
+@NoArgsConstructor
 public class IEPlanSelectValueSet extends BaseEntity {
     @Column(nullable = false, length = 14) private String htsno;//合同流水号
     @Column(nullable = false, length = 20) private String htnum;//合同管理编号

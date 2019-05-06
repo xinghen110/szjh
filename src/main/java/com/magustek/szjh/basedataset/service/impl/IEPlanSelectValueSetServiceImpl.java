@@ -48,7 +48,7 @@ public class IEPlanSelectValueSetServiceImpl implements IEPlanSelectValueSetServ
         return list;
     }
 
-    //@Cacheable(value = "SelectValueSet")
+    @Cacheable(value = "SelectValueSet")
     @Override
     public List<IEPlanSelectValueSet> getAllByVersion(String version) {
         return iePlanSelectValueSetDAO.findAllByVersion(version);
