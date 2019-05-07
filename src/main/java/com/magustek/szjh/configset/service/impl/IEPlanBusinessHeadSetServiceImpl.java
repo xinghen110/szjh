@@ -6,6 +6,7 @@ import com.magustek.szjh.configset.bean.vo.IEPlanBusinessHeadSetVO;
 import com.magustek.szjh.configset.dao.IEPlanBusinessHeadSetDAO;
 import com.magustek.szjh.configset.service.ConfigDataSourceSetService;
 import com.magustek.szjh.configset.service.IEPlanBusinessHeadSetService;
+import com.magustek.szjh.configset.service.IEPlanSelectDataSetService;
 import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -15,12 +16,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 @Slf4j
 @Service("IEPlanBusinessHeadSetService")
 public class IEPlanBusinessHeadSetServiceImpl implements IEPlanBusinessHeadSetService {
-    private final HttpUtils httpUtils;
-    private final IEPlanBusinessHeadSetDAO iePlanBusinessHeadSetDAO;
-    private final ConfigDataSourceSetService dataSourceSetService;
+    private HttpUtils httpUtils;
+    private IEPlanBusinessHeadSetDAO iePlanBusinessHeadSetDAO;
+    private ConfigDataSourceSetService dataSourceSetService;
 
     public IEPlanBusinessHeadSetServiceImpl(HttpUtils httpUtils, IEPlanBusinessHeadSetDAO iePlanBusinessHeadSetDAO, ConfigDataSourceSetService dataSourceSetService) {
         this.httpUtils = httpUtils;

@@ -145,10 +145,6 @@ public class CalculateResultServiceImpl implements CalculateResultService {
                 System.out.println("debug point");
             }
 
-
-
-
-
             List<IEPlanSelectValueSet> value = entry.getValue();
             //非空判断
             if(ClassUtils.isEmpty(value)){

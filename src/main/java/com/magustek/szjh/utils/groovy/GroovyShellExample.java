@@ -1,5 +1,6 @@
 package com.magustek.szjh.utils.groovy;
 
+import com.google.common.collect.Lists;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.KeyValueBean;
 import groovy.lang.Binding;
@@ -23,7 +24,7 @@ public class GroovyShellExample {
             e.printStackTrace();
         }
 
-        j();
+        c();
     }
 
     public static void a(){
@@ -59,11 +60,12 @@ public class GroovyShellExample {
     public static void c(){
         Binding binding = new Binding();
         try {
-            //ArrayList<String> g121 = Lists.newArrayList("10.1","20.2","30.3");
-            binding.setVariable("G201", "01");
-            binding.setVariable("G411", "4600.00");
+            BigDecimal g131 = new BigDecimal("0.00");
+
+            binding.setVariable("G131", g131);
+            binding.setVariable("G201", "03");
             GroovyShell shell = new GroovyShell(binding);
-            Object value = shell.evaluate("(G201=='01'||G201=='04' ) && G411.toBigDecimal().compareTo(BigDecimal.ZERO) >0");
+            Object value = shell.evaluate("G201!='01' && G131.toBigDecimal().compareTo(BigDecimal.ZERO) >0");
 
             System.err.println(value);
         } catch (Exception e) {

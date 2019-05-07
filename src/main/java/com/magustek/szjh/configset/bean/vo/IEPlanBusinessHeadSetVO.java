@@ -2,20 +2,24 @@ package com.magustek.szjh.configset.bean.vo;
 
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.configset.bean.IEPlanBusinessHeadSet;
+import com.magustek.szjh.configset.bean.IEPlanSelectDataSet;
 import com.magustek.szjh.configset.service.ConfigDataSourceSetService;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.groovy.GroovyBean;
 import com.magustek.szjh.utils.groovy.GroovyUtils;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
 @Setter
 @Component
+@Slf4j
 public class IEPlanBusinessHeadSetVO extends IEPlanBusinessHeadSet {
 
     private String butxt;//业务状态（01-未支付、02-已支付）
@@ -24,11 +28,10 @@ public class IEPlanBusinessHeadSetVO extends IEPlanBusinessHeadSet {
     private final String buSource = "SFST";
     private final String zSource = "SFKU";
 
-    //private List<IEPlanBusinessHeadLineVO> headLineVOList;
     private List<IEPlanBusinessItemSetVO> itemVOList;
 
-
     private ConfigDataSourceSetService dataSourceSetService;
+
 
     public IEPlanBusinessHeadSetVO(ConfigDataSourceSetService dataSourceSetService) {
         this.dataSourceSetService = dataSourceSetService;
@@ -47,7 +50,7 @@ public class IEPlanBusinessHeadSetVO extends IEPlanBusinessHeadSet {
     }
 
     //根据取数进行计算，判断是否显示
-    public boolean calc(List<IEPlanSelectValueSet> valueList){
+    public boolean calc(List<IEPlanSelectValueSet> valueList, Map<String, IEPlanSelectDataSet> selectDataSetMap){
         //获取变量列表
         Set<String> vars = new HashSet<>(Arrays.asList(super.getVariv().split(",")));
         if(ClassUtils.isEmpty(vars)){
@@ -60,9 +63,33 @@ public class IEPlanBusinessHeadSetVO extends IEPlanBusinessHeadSet {
                 List<String> sdvalList = v.stream().map(IEPlanSelectValueSet::getSdval).collect(Collectors.toList());
                 if(!ClassUtils.isEmpty(sdvalList)){
                     if(sdvalList.size()>1){
-                        binding.put(k, sdvalList);
+                        try{
+                            //根据指标类型进行参数设置
+                            if("number".equals(selectDataSetMap.get(k).getVtype())){
+                                List<BigDecimal> decimalList = new ArrayList<>();
+                                for(String sdval : sdvalList){
+                                    BigDecimal bigDecimal = new BigDecimal(sdval);
+                                    decimalList.add(bigDecimal);
+                                }
+                                binding.put(k, decimalList);
+                            }else{
+                                binding.put(k, sdvalList);
+                            }
+                        }catch (NumberFormatException e){
+                            log.error(e.toString());
+                        }
                     }else{
-                        binding.put(k, v.get(0).getSdval());
+                        String sdval = v.get(0).getSdval();
+                        try{
+                            if("number".equals(selectDataSetMap.get(k).getVtype())){
+                                BigDecimal bigDecimal = new BigDecimal(sdval);
+                                binding.put(k, bigDecimal);
+                            }else{
+                                binding.put(k, sdval);
+                            }
+                        }catch (NumberFormatException e){
+                            log.error(e.toString());
+                        }
                     }
                 }
             }

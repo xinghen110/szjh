@@ -37,7 +37,7 @@ public class GroovyUtils {
                 try{
                     bean.setResult(script.run());
                 }catch (Exception e){
-                    log.warn(e.getMessage());
+                    log.error(e.getMessage()+ JSONObject.toJSONString(getBinding(bean.getBinding()))+"@"+bean.getCommand());
                 }
             }
         });
@@ -56,11 +56,11 @@ public class GroovyUtils {
             script.setBinding(getBinding(bean.getBinding()));
             try {
                 return script.run();
-            } catch (NumberFormatException e) {
-                log.error(e.getMessage()+ JSONObject.toJSONString(getBinding(bean.getBinding()))+"@"+bean.getCommand());
-                return null;
+//            } catch (NumberFormatException e) {
+//                log.error(e.getMessage() + JSONObject.toJSONString(getBinding(bean.getBinding()))+"@"+bean.getCommand());
+//                return null;
             } catch (Exception e) {
-                log.warn(e.getMessage());
+                log.error(e.getMessage() + JSONObject.toJSONString(getBinding(bean.getBinding()))+"@"+bean.getCommand());
                 return null;
             }
         }

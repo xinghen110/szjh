@@ -1,6 +1,5 @@
 package com.magustek.szjh.basedataset.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
 import com.magustek.szjh.Holiday.service.HolidayService;
 import com.magustek.szjh.basedataset.dao.RollPlanHeadDataDAO;
@@ -16,10 +15,7 @@ import com.magustek.szjh.basedataset.service.DmCalcStatisticsService;
 import com.magustek.szjh.basedataset.service.IEPlanDimenValueSetService;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.basedataset.service.RollPlanDataService;
-import com.magustek.szjh.configset.bean.IEPlanBusinessHeadSet;
-import com.magustek.szjh.configset.bean.IEPlanBusinessItemSet;
-import com.magustek.szjh.configset.bean.IEPlanReportHeadSet;
-import com.magustek.szjh.configset.bean.IEPlanReportItemSet;
+import com.magustek.szjh.configset.bean.*;
 import com.magustek.szjh.configset.bean.vo.IEPlanBusinessHeadSetVO;
 import com.magustek.szjh.configset.bean.vo.IEPlanBusinessItemSetVO;
 import com.magustek.szjh.configset.service.*;
@@ -52,6 +48,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private IEPlanReportHeadSetService iePlanReportHeadSetService;
     private IEPlanReportItemSetService iePlanReportItemSetService;
     private IEPlanSelectValueSetService iePlanSelectValueSetService;
+    private IEPlanSelectDataSetService iePlanSelectDataSetService;
     private IEPlanDimenValueSetService iePlanDimenValueSetService;
     private DmCalcStatisticsService dmCalcStatisticsService;
     private HolidayService holidayService;
@@ -67,7 +64,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     private LocalDate today;//计划日期
 
 
-    public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataDAO rollPlanItemDataDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanDimenValueSetService iePlanDimenValueSetService, DmCalcStatisticsService dmCalcStatisticsService, HolidayService holidayService, ConfigDataSourceSetService configDataSourceSetService) {
+    public RollPlanDataServiceImpl(RollPlanHeadDataDAO rollPlanHeadDataDAO, RollPlanHeadDataArchiveDAO rollPlanHeadDataArchiveDAO, RollPlanItemDataDAO rollPlanItemDataDAO, RollPlanItemDataArchiveDAO rollPlanItemDataArchiveDAO, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, IEPlanReportHeadSetService iePlanReportHeadSetService, IEPlanReportItemSetService iePlanReportItemSetService, IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanSelectDataSetService iePlanSelectDataSetService, IEPlanDimenValueSetService iePlanDimenValueSetService, DmCalcStatisticsService dmCalcStatisticsService, HolidayService holidayService, ConfigDataSourceSetService configDataSourceSetService) {
         this.rollPlanHeadDataDAO = rollPlanHeadDataDAO;
         this.rollPlanHeadDataArchiveDAO = rollPlanHeadDataArchiveDAO;
         this.rollPlanItemDataDAO = rollPlanItemDataDAO;
@@ -77,6 +74,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         this.iePlanReportHeadSetService = iePlanReportHeadSetService;
         this.iePlanReportItemSetService = iePlanReportItemSetService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
+        this.iePlanSelectDataSetService = iePlanSelectDataSetService;
         this.iePlanDimenValueSetService = iePlanDimenValueSetService;
         this.dmCalcStatisticsService = dmCalcStatisticsService;
         this.holidayService = holidayService;
@@ -158,6 +156,8 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         List<RollPlanItemData> rollPlanItemDataList = new ArrayList<>();
 
 
+        //获取取数指标元数据
+        Map<String, IEPlanSelectDataSet> selectDataSetMap = iePlanSelectDataSetService.getMappedList();
         /* 基础数据（根据htsno分组）：
                 【业务取数指标】表中选取【PFLAG】="X" and sdart in 【取数指标集合】的【合同数据】数据 */
         List<IEPlanSelectValueSet> basicValueList = iePlanSelectValueSetService
@@ -173,12 +173,9 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         Map<String, List<IEPlanBusinessHeadSetVO>> htsnoHeadList = new HashMap<>(valueListByHtsno.size());
         valueListByHtsno.forEach((htsno, valueList)->{
             List<IEPlanBusinessHeadSetVO> headList = new ArrayList<>();
-            //TODO debug only
-            if("60101700021446".equals(htsno)){
-                System.out.println("debug point");
-            }
+
             headSetList.forEach(h->{
-                if(h.calc(valueList)){
+                if(h.calc(valueList, selectDataSetMap)){
                     h.setItemVOList(businessItemMap.get(h.getHdnum()));
                     headList.add(h);
                 }
@@ -190,10 +187,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
 
         /* 计算滚动计划明细单 */
         htsnoHeadList.forEach((htsno, headSetList)->{
-            //TODO debug only
-            if("60101700021446".equals(htsno)){
-                System.out.println("debug point");
-            }
+
             List<RollPlanDataHelper> rollPlanDataHelperList = new ArrayList<>();//同一个合同的计划列表
             Map<String, List<IEPlanSelectValueSet>> sdartValueMap = valueListByHtsno
                     .get(htsno)
@@ -209,10 +203,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 Map<String, List<IEPlanBusinessItemSetVO>> groupBySdtyp = itemVOList
                         .stream()
                         .collect(Collectors.groupingBy(IEPlanBusinessItemSetVO::getSdtyp));
-                //TODO debug only
-                if("60101800000250".equals(htsno)){
-                    System.out.println("debug point");
-                }
+
                 //处理类型为【G】的指标
                 GetPlanData(groupBySdtyp,
                         htsno,
@@ -302,8 +293,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     int i = 0;
 
                     while(true){
-                        //TODO debug only
-                        //log.warn("endless loop htsno:{},  localHelperList.size():{}", htsno, localHelperList.size());
+
                         //取待处理计划（因为列表一直在增加，只能使用程序判断循环。）
                         if(i < localHelperList.size()){
                             helper = localHelperList.get(i);
@@ -376,18 +366,10 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 });
                 //删除第一个计划（由【G】创建的）
                 if(!ClassUtils.isEmpty(localHelperList) && localHelperList.size()>1){
-                    //TODO debug only
-                    if("60101700021446".equals(htsno)){
-                        log.error("debug point: 0-{}", JSON.toJSONString(localHelperList));
-                        //log.error("debug point: 1-{}", JSON.toJSONString(localHelperList.get(1)));
-                    }
+
                     localHelperList.remove(0);
                 }
-                //TODO debug only
-                if("60101800000250".equals(htsno)){
-                    log.error("debug point: 0-{}", JSON.toJSONString(localHelperList));
-                    //log.error("debug point: 1-{}", JSON.toJSONString(localHelperList.get(1)));
-                }
+
                 //删除计划金额为0的计划
                 localHelperList.removeIf(help->
                    help.getHeadData().getWears().compareTo(BigDecimal.ZERO) == 0
