@@ -37,7 +37,7 @@ public interface StatisticalReportService {
      * @return 计划履行报表
      * @throws Exception    无
      */
-    List<Map<String, String>> getExecutionByPlan(Long id, String version, String caart) throws Exception;
+    List<Map<String, String>> getExecutionByPlan(Long id, String version, List<String> caart) throws Exception;
     /**
      * 根据计划id-id，对比数据版本（日期）-version，部门编码-dpnum，能力值类型-caart，获取【计划履行报表】
      * @param id 计划id

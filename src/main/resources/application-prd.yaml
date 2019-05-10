@@ -3,7 +3,7 @@ server:
   tomcat.uri-encoding: UTF-8
   context-path: /
   server-header: text/plain;charset=UTF-8
-  session.timeout: 900 #session timeout in seconds
+  session.timeout: 3600 #session timeout in seconds
 spring:
   messages.encoding: UTF-8
   http:

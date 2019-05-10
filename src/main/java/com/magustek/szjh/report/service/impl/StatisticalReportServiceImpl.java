@@ -3,7 +3,9 @@ package com.magustek.szjh.report.service.impl;
 import com.google.common.base.Strings;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
+import com.magustek.szjh.configset.bean.IEPlanCalculationSet;
 import com.magustek.szjh.configset.bean.IEPlanScreenItemSet;
+import com.magustek.szjh.configset.service.IEPlanCalculationSetService;
 import com.magustek.szjh.configset.service.IEPlanScreenService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.plan.bean.PlanHeader;
@@ -41,8 +43,9 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     private RollPlanArchiveService rollPlanArchiveService;
     private StatisticalReportCache statisticalReportCache;
     private OrganizationSetService organizationSetService;
+    private IEPlanCalculationSetService iePlanCalculationSetService;
 
-    public StatisticalReportServiceImpl(IEPlanScreenService iePlanScreenService, IEPlanSelectValueSetService iePlanSelectValueSetService, PlanHeaderService planHeaderService, PlanItemService planItemService, RollPlanArchiveService rollPlanArchiveService, StatisticalReportCache statisticalReportCache, OrganizationSetService organizationSetService) {
+    public StatisticalReportServiceImpl(IEPlanScreenService iePlanScreenService, IEPlanSelectValueSetService iePlanSelectValueSetService, PlanHeaderService planHeaderService, PlanItemService planItemService, RollPlanArchiveService rollPlanArchiveService, StatisticalReportCache statisticalReportCache, OrganizationSetService organizationSetService, IEPlanCalculationSetService iePlanCalculationSetService) {
         this.iePlanScreenService = iePlanScreenService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
         this.planHeaderService = planHeaderService;
@@ -50,6 +53,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         this.rollPlanArchiveService = rollPlanArchiveService;
         this.statisticalReportCache = statisticalReportCache;
         this.organizationSetService = organizationSetService;
+        this.iePlanCalculationSetService = iePlanCalculationSetService;
     }
 
     //@Cacheable(value = "getOutputTaxDetailByVersion")
@@ -145,13 +149,17 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     }
 
     @Override
-    public List<Map<String, String>> getExecutionByPlan(Long id, String version, String caart) {
+    public List<Map<String, String>> getExecutionByPlan(Long id, String version, List<String> caartList) {
+        Map<String, List<IEPlanCalculationSet>> caartMap = iePlanCalculationSetService
+                .getAll()
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanCalculationSet::getCaart));
         List<Map<String, String>> list = statisticalReportCache.getExecuteData(id, version);
         List<Map<String, String>> statisticsList = new ArrayList<>();
         //根据历史能力值进行筛选
         list = list
                 .stream()
-                .filter(m->caart.equals(m.get("caart")))
+                .filter(m->caartList.contains(m.get("caart")))
                 .collect(Collectors.toList());
         //根据部门分组
         Map<String, List<Map<String, String>>> dpnumMap = list
@@ -163,55 +171,60 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
             if(ClassUtils.isEmpty(v)){
                 return;
             }
-            Map<String, String> map = new HashMap<>();
-            statisticsList.add(map);
-            map.put("dpnum", k);
-            map.put("dpnam", v.get(0).get("dpnam"));
-            //完成
-            List<Map<String, String>> completedList = v
-                    .stream()
-                    .filter(m -> !Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.CPDAT)))
-                    .collect(Collectors.toList());
-            map.put("completedRate", BigDecimal.valueOf(completedList.size())
-                    .multiply(BigDecimal.valueOf(100))
-                    .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
-                    .toString()+"%");
-            map.put("completedContractNumber", completedList.stream().map(m->m.get("htsno")).count()+"");
-            map.put("completedWears", completedList
-                    .stream()
-                    .map(m-> new BigDecimal(m.get("wears")))
-                    .reduce(BigDecimal.ZERO,BigDecimal::add)
-                    .toString());
-            //未完成
-            List<Map<String, String>> uncompletedList = v
-                    .stream()
-                    .filter(m -> Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.CPDAT)))
-                    .collect(Collectors.toList());
-            map.put("uncompletedRate", BigDecimal.valueOf(uncompletedList.size())
-                    .multiply(BigDecimal.valueOf(100))
-                    .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
-                    .toString()+"%");
-            map.put("uncompletedContractNumber", uncompletedList.stream().map(m->m.get("htsno")).count()+"");
-            map.put("uncompletedWears", uncompletedList
-                    .stream()
-                    .map(m-> new BigDecimal(m.get("wears")))
-                    .reduce(BigDecimal.ZERO,BigDecimal::add)
-                    .toString());
-            //延期
-            List<Map<String, String>> delayList = v
-                    .stream()
-                    .filter(m -> Boolean.valueOf(m.get(RollPlanHeadDataArchiveVO.DLFLG)))
-                    .collect(Collectors.toList());
-            map.put("delayRate", BigDecimal.valueOf(delayList.size())
-                    .multiply(BigDecimal.valueOf(100))
-                    .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
-                    .toString()+"%");
-            map.put("delayContractNumber", delayList.stream().map(m->m.get("htsno")).count()+"");
-            map.put("delayWears", delayList
-                    .stream()
-                    .map(m-> new BigDecimal(m.get("wears")))
-                    .reduce(BigDecimal.ZERO,BigDecimal::add)
-                    .toString());
+            Map<String, List<Map<String, String>>> caartGroup = v.stream().collect(Collectors.groupingBy(m -> m.get("caart")));
+            caartGroup.forEach((caart, vList)->{
+                Map<String, String> map = new HashMap<>();
+                statisticsList.add(map);
+                map.put("dpnum", k);
+                map.put("dpnam", v.get(0).get("dpnam"));
+                map.put("caart", caart);
+                map.put("canam", caartMap.get(caart).get(0).getCanam());
+                //完成
+                List<Map<String, String>> completedList = v
+                        .stream()
+                        .filter(m -> !Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.CPDAT)))
+                        .collect(Collectors.toList());
+                map.put("completedRate", BigDecimal.valueOf(completedList.size())
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
+                        .toString());
+                map.put("completedContractNumber", completedList.stream().map(m->m.get("htsno")).count()+"");
+                map.put("completedWears", completedList
+                        .stream()
+                        .map(m-> new BigDecimal(m.get("wears")))
+                        .reduce(BigDecimal.ZERO,BigDecimal::add)
+                        .toString());
+                //未完成
+                List<Map<String, String>> uncompletedList = v
+                        .stream()
+                        .filter(m -> Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.CPDAT)))
+                        .collect(Collectors.toList());
+                map.put("uncompletedRate", BigDecimal.valueOf(uncompletedList.size())
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
+                        .toString());
+                map.put("uncompletedContractNumber", uncompletedList.stream().map(m->m.get("htsno")).count()+"");
+                map.put("uncompletedWears", uncompletedList
+                        .stream()
+                        .map(m-> new BigDecimal(m.get("wears")))
+                        .reduce(BigDecimal.ZERO,BigDecimal::add)
+                        .toString());
+                //延期
+                List<Map<String, String>> delayList = v
+                        .stream()
+                        .filter(m -> Boolean.valueOf(m.get(RollPlanHeadDataArchiveVO.DLFLG)))
+                        .collect(Collectors.toList());
+                map.put("delayRate", BigDecimal.valueOf(delayList.size())
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
+                        .toString());
+                map.put("delayContractNumber", delayList.stream().map(m->m.get("htsno")).count()+"");
+                map.put("delayWears", delayList
+                        .stream()
+                        .map(m-> new BigDecimal(m.get("wears")))
+                        .reduce(BigDecimal.ZERO,BigDecimal::add)
+                        .toString());
+            });
         });
         return statisticsList;
     }
@@ -283,7 +296,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                             .divide(arVal, 2, BigDecimal.ROUND_HALF_DOWN)
                             .multiply(new BigDecimal(100))
                             .setScale(2, BigDecimal.ROUND_HALF_DOWN)
-                            .toString()+"%");
+                            .toString());
                 }
             });
             list.add(map);

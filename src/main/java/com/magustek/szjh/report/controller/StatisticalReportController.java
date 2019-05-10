@@ -1,6 +1,8 @@
 package com.magustek.szjh.report.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.magustek.szjh.configset.bean.IEPlanCalculationSet;
+import com.magustek.szjh.configset.service.IEPlanCalculationSetService;
 import com.magustek.szjh.report.bean.vo.ReportVO;
 import com.magustek.szjh.report.bean.vo.DateVO;
 import com.magustek.szjh.report.service.StatisticalReportService;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 统计报表
@@ -30,9 +33,11 @@ import java.util.Map;
 public class StatisticalReportController {
     private BaseResponse resp;
     private StatisticalReportService statisticalReportService;
+    private IEPlanCalculationSetService iePlanCalculationSetService;
 
-    public StatisticalReportController(StatisticalReportService statisticalReportService) {
+    public StatisticalReportController(StatisticalReportService statisticalReportService, IEPlanCalculationSetService iePlanCalculationSetService) {
         this.statisticalReportService = statisticalReportService;
+        this.iePlanCalculationSetService = iePlanCalculationSetService;
         resp = new BaseResponse();
     }
 
@@ -58,7 +63,15 @@ public class StatisticalReportController {
     @ApiOperation(value="根据计划id-id，对比数据版本（日期）-version，能力值类型-caart，获取【计划履行报表】", notes = "参数：id、version")
     @RequestMapping("/getExecutionByPlan")
     public String getExecutionByPlan(@RequestBody ReportVO reportVO) throws Exception{
-        List<Map<String, String>> list = statisticalReportService.getExecutionByPlan(reportVO.getId(), reportVO.getVersion(), reportVO.getCaart());
+        //如果【历史能力值类型】为空，则返回所有的能力值类型
+        if(ClassUtils.isEmpty(reportVO.getCaartList())){
+            reportVO.setCaartList(iePlanCalculationSetService
+                    .getAll()
+                    .stream()
+                    .map(IEPlanCalculationSet::getCaart)
+                    .collect(Collectors.toList()));
+        }
+        List<Map<String, String>> list = statisticalReportService.getExecutionByPlan(reportVO.getId(), reportVO.getVersion(), reportVO.getCaartList());
         String userName = ContextUtils.getUserName();
         Page page = reportVO.initPageImpl(list);
         log.warn("{}根据计划id-id，对比数据版本（日期）-version，能力值类型-caart，获取【计划履行报表】：{}", userName, JSON.toJSONString(page));

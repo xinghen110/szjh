@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 报表bean
@@ -20,6 +21,7 @@ public class ReportVO extends BasePage {
     private String version;
     private Long id;
     private String caart;
+    private List<String> caartList;
     private String dpnum;
     private String zbart;
 
