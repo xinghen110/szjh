@@ -13,6 +13,7 @@ public class RollPlanHeaderVO extends RollPlanHeadDataArchive {
     private String busta;//业务状态（01-未支付、02-已支付）
     private String butxt;//业务状态描述
     private String ztype;//款项（01-预付款、02-进度款）
+    private String zptxt;//款项
     private List<RollPlanItemVO> itemVOS;
     private ConfigDataSourceSetService config;
 
@@ -23,10 +24,10 @@ public class RollPlanHeaderVO extends RollPlanHeadDataArchive {
         }
     }
 
-    public String getZtype(){
+    public void setZtype(String ztype){
+        this.ztype = ztype;
         if(config!=null){
-            return config.getDescByQcgrpAndQcode("SFKU", ztype);
+            zptxt = config.getDescByQcgrpAndQcode("SFKU", ztype);
         }
-        return "";
     }
 }

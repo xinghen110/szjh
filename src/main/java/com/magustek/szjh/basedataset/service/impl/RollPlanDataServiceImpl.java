@@ -409,11 +409,11 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
         List<RollPlanHeaderVO> headerVOList = new ArrayList<>(headerList.size());
         headerList.forEach(header->{
             RollPlanHeaderVO headerVO = new RollPlanHeaderVO();
+            headerVO.setConfig(configDataSourceSetService);
             BeanUtils.copyProperties(header, headerVO);
 
             headerVO.setBusta(headerMap.get(header.getHdnum()).get(0).getBusta());
             headerVO.setZtype(headerMap.get(header.getHdnum()).get(0).getZtype());
-            headerVO.setConfig(configDataSourceSetService);
 
             //装配itemVO
             List<RollPlanItemDataArchive> list = rollPlanItemDataArchiveDAO.findAllByHeadId(header.getRollId());
@@ -442,10 +442,12 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
             mapList.add(map);
             map.put("id",vo.getId().toString());
             map.put("busta",vo.getBusta());
+            map.put("butxt",vo.getButxt());
             map.put("hdnum",vo.getHdnum());
             map.put("htsno",vo.getHtsno());
             map.put("version",vo.getVersion());
             map.put("ztype",vo.getZtype());
+            map.put("zptxt",vo.getZptxt());
             map.put("stval",vo.getStval());
             map.put("wears", wears == null?"":vo.getWears().toString());
             vo.getItemVOS().forEach(item->{
