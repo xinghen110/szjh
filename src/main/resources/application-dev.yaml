@@ -5,7 +5,7 @@ server:
   tomcat.uri-encoding: UTF-8
   context-path: /
   server-header: text/plain;charset=UTF-8
-  session.timeout: 900 #session timeout in seconds
+  session.timeout: 7200 #session timeout in seconds
 
 spring:
   messages.encoding: UTF-8
@@ -66,6 +66,10 @@ spring:
     hibernate.use-new-id-generator-mappings: true
     properties.hibernate.dialect: org.hibernate.dialect.MySQL5Dialect
     open-in-view: true
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 1000
   session.store-type: redis
   redis:
     database: 12
@@ -83,13 +87,25 @@ spring:
       min-idle: 0
 
 #esb/odata
+#zconnection:
+#  type: odata
+#  odataIp: http://10.154.96.65
+#  odataPort: 8000
+#  odataUser: cg_fangwei
+#  odataPasswd: siemens
+#  odataClient: 103
+#  esbIp: http://10.154.97.1:8010/
+#schedule:
+#  executeFetchBaseData: 0 0/10 * * * ?
+
+#esb/odata
 zconnection:
   type: odata
-  odataIp: http://10.154.96.65
+  odataIp: http://10.154.2.41
   odataPort: 8000
-  odataUser: cg_fangwei
-  odataPasswd: siemens
-  odataClient: 103
+  odataUser: zn_odata_p
+  odataPasswd: zn_odata_p
+  odataClient: 300
   esbIp: http://10.154.97.1:8010/
 schedule:
-  executeFetchBaseData: 0 0/10 * * * ?
+  executeFetchBaseData: 0 0 3 * * ?

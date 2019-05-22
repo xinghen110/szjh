@@ -4,7 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-@ApiModel(value = "PlanHeader-计划配置明细")
+@ApiModel(value = "IEPlanReportItemVO-计划配置明细")
 @Data
 public class IEPlanReportItemVO {
     @ApiModelProperty(value = "公司代码")

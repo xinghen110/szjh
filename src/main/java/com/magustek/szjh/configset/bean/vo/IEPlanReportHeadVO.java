@@ -9,7 +9,7 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiModel(value = "PlanHeader-计划抬头配置")
+@ApiModel(value = "IEPlanReportHeadVO-计划抬头配置")
 @Data
 public class IEPlanReportHeadVO {
     @ApiModelProperty(value = "公司代码")

@@ -176,17 +176,17 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                 Map<String, String> map = new HashMap<>();
                 statisticsList.add(map);
                 map.put("dpnum", k);
-                map.put("dpnam", v.get(0).get("dpnam"));
+                map.put("dpnam", vList.get(0).get("dpnam"));
                 map.put("caart", caart);
                 map.put("canam", caartMap.get(caart).get(0).getCanam());
                 //完成
-                List<Map<String, String>> completedList = v
+                List<Map<String, String>> completedList = vList
                         .stream()
                         .filter(m -> !Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.CPDAT)))
                         .collect(Collectors.toList());
                 map.put("completedRate", BigDecimal.valueOf(completedList.size())
                         .multiply(BigDecimal.valueOf(100))
-                        .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
+                        .divide(BigDecimal.valueOf(vList.size()),2,BigDecimal.ROUND_HALF_DOWN)
                         .toString());
                 map.put("completedContractNumber", completedList.stream().map(m->m.get("htsno")).count()+"");
                 map.put("completedWears", completedList
@@ -195,13 +195,13 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                         .reduce(BigDecimal.ZERO,BigDecimal::add)
                         .toString());
                 //未完成
-                List<Map<String, String>> uncompletedList = v
+                List<Map<String, String>> uncompletedList = vList
                         .stream()
                         .filter(m -> Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.CPDAT)))
                         .collect(Collectors.toList());
                 map.put("uncompletedRate", BigDecimal.valueOf(uncompletedList.size())
                         .multiply(BigDecimal.valueOf(100))
-                        .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
+                        .divide(BigDecimal.valueOf(vList.size()),2,BigDecimal.ROUND_HALF_DOWN)
                         .toString());
                 map.put("uncompletedContractNumber", uncompletedList.stream().map(m->m.get("htsno")).count()+"");
                 map.put("uncompletedWears", uncompletedList
@@ -210,13 +210,13 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                         .reduce(BigDecimal.ZERO,BigDecimal::add)
                         .toString());
                 //延期
-                List<Map<String, String>> delayList = v
+                List<Map<String, String>> delayList = vList
                         .stream()
                         .filter(m -> Boolean.valueOf(m.get(RollPlanHeadDataArchiveVO.DLFLG)))
                         .collect(Collectors.toList());
                 map.put("delayRate", BigDecimal.valueOf(delayList.size())
                         .multiply(BigDecimal.valueOf(100))
-                        .divide(BigDecimal.valueOf(v.size()),2,BigDecimal.ROUND_HALF_DOWN)
+                        .divide(BigDecimal.valueOf(vList.size()),2,BigDecimal.ROUND_HALF_DOWN)
                         .toString());
                 map.put("delayContractNumber", delayList.stream().map(m->m.get("htsno")).count()+"");
                 map.put("delayWears", delayList
