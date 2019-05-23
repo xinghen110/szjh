@@ -363,7 +363,7 @@ public class PlanItemServiceImpl implements PlanItemService {
         rollPlanArchiveService.copyData(planHeader);
         //获取滚动计划列表，并根据经营指标值分组
         Map<String, List<RollPlanHeadDataArchive>> headMapByZbart = rollPlanArchiveService
-                .getHeadDataArchiveList(planHeader)
+                .getHeadDataArchiveList(planHeader.getId())
                 .stream()
                 .filter(i-> i.getZbart() != null) //容错
                 .collect(Collectors.groupingBy(RollPlanHeadDataArchive::getZbart));

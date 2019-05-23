@@ -21,6 +21,7 @@ public interface RollPlanHeadDataArchiveDAO extends CrudRepository<RollPlanHeadD
 
     List<RollPlanHeadDataArchive> findAllByPlanHeadIdAndDmvalContainsAndZbart(Long planHeadId, String dmval, String zbart);
 
+    @SuppressWarnings("SqlResolve")
     @Query(value = "select head.id as head_id, " + //0
             "head.bukrs as head_bukrs, " +  //1
             "head.htsno as head_htsno, " +  //2

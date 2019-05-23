@@ -24,7 +24,7 @@ public class RollPlanItemDataArchive extends BaseEntity {
     @Column private Long headId;                      //抬头id
     @ApiModelProperty(value = "项目编号")
     @Column(length = 10)   private String imnum;      //项目编号
-    @ApiModelProperty(value = "日期")
+    @ApiModelProperty(value = "计划日期")
     @Column(length = 10)   private String dtval;      //日期
     @ApiModelProperty(value = "合同条款")
     @Column(length = 1000) private String stval;      //合同条款

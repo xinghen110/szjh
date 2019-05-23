@@ -5,19 +5,12 @@ import com.magustek.szjh.plan.bean.RollPlanHeadDataArchive;
 import com.magustek.szjh.plan.bean.RollPlanItemDataArchive;
 import com.magustek.szjh.plan.bean.vo.RollPlanHeadDataArchiveVO;
 import com.magustek.szjh.plan.bean.vo.RollPlanItemDataArchiveVO;
-import com.magustek.szjh.utils.KeyValueBean;
-
-import javax.swing.text.StyledEditorKit;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public interface RollPlanArchiveService {
     void copyData(PlanHeader header) throws Exception;
     void deleteData(PlanHeader header);
-    List<RollPlanHeadDataArchive> getHeadDataArchiveList(PlanHeader header);
-    List<RollPlanItemDataArchive> getItemDataArchiveList(PlanHeader header);
-    Map<RollPlanHeadDataArchive,List<RollPlanItemDataArchive>> getRollPlanListByPlanIdAndHtsno(Long id, String htsno);
+    List<RollPlanHeadDataArchive> getHeadDataArchiveList(Long PlanHeadId);
 
     List<RollPlanHeadDataArchive> getHeadData(String zbart, String dmval, String dtval, Long planHeadId, boolean firstMonth, boolean lastMonth);
 
@@ -37,8 +30,8 @@ public interface RollPlanArchiveService {
 
     /**
      * 根据计划ID获取所有滚动计划head及其Item
-     * @param id    计划ID
+     * @param PlanHeadId    计划ID
      * @return      相关Item列表
      */
-    List<RollPlanHeadDataArchiveVO> getListByPlanHeaderId(Long id);
+    List<RollPlanHeadDataArchiveVO> getListByPlanHeaderId(Long PlanHeadId);
 }

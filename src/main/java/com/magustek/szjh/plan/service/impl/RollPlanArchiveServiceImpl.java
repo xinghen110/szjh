@@ -133,25 +133,8 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     }
 
     @Override
-    public List<RollPlanHeadDataArchive> getHeadDataArchiveList(PlanHeader header) {
-        return rollPlanHeadDataArchiveDAO.findAllByPlanHeadId(header.getId());
-    }
-
-    @Override
-    public List<RollPlanItemDataArchive> getItemDataArchiveList(PlanHeader header) {
-        return rollPlanItemDataArchiveDAO.findAllByPlanHeadId(header.getId());
-    }
-
-    @Override
-    public Map<RollPlanHeadDataArchive, List<RollPlanItemDataArchive>> getRollPlanListByPlanIdAndHtsno(Long id, String htsno) {
-        List<RollPlanHeadDataArchive> headList = rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndHtsno(id, htsno);
-        Map<RollPlanHeadDataArchive, List<RollPlanItemDataArchive>> map = new HashMap<>(headList.size());
-
-        headList.forEach(head->{
-            List<RollPlanItemDataArchive> itemList = rollPlanItemDataArchiveDAO.findAllByHeadId(head.getRollId());
-            map.put(head, itemList);
-        });
-        return map;
+    public List<RollPlanHeadDataArchive> getHeadDataArchiveList(Long PlanHeadId) {
+        return rollPlanHeadDataArchiveDAO.findAllByPlanHeadId(PlanHeadId);
     }
 
     @Override

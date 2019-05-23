@@ -38,4 +38,10 @@ public interface PlanHeaderService {
     PlanHeader getApprovalPage(PlanHeaderVO vo) throws Exception;
 
     List<PlanHeader> getByJhvalContains(String jhval);
+
+    /**
+     * 根据月度计划ID，下达计划并回传CM系统
+     * @param id 月度计划id
+     */
+    boolean issuePlan(Long id);
 }

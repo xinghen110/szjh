@@ -14,6 +14,8 @@ import com.magustek.szjh.configset.dao.IEPlanReleaseSetDAO;
 import com.magustek.szjh.configset.service.*;
 import com.magustek.szjh.plan.bean.*;
 import com.magustek.szjh.plan.bean.vo.PlanHeaderVO;
+import com.magustek.szjh.plan.bean.vo.RollPlanHeadDataArchiveVO;
+import com.magustek.szjh.plan.bean.vo.RollPlanItemDataArchiveVO;
 import com.magustek.szjh.plan.dao.PlanHeaderDAO;
 import com.magustek.szjh.plan.dao.PlanLayoutDAO;
 import com.magustek.szjh.plan.service.PlanHeaderService;
@@ -23,12 +25,15 @@ import com.magustek.szjh.plan.utils.WearsType;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.KeyValueBean;
+import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.constant.PlanheaderCons;
+import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -58,6 +63,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     private DmCalcStatisticsService dmCalcStatisticsService;
     private final IEPlanReleaseSetDAO iePlanReleaseSetDAO;
     private ApprovalLogDAO approvalLogDAO;
+    private final HttpUtils httpUtils;
 
     public PlanHeaderServiceImpl(PlanHeaderDAO planHeaderDAO,
                                  PlanItemService planItemService,
@@ -66,7 +72,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                                  IEPlanReportHeadSetService iePlanReportHeadSetService,
                                  PlanLayoutDAO planLayoutDAO,
                                  RollPlanArchiveService rollPlanArchiveService,
-                                 IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, DmCalcStatisticsService dmCalcStatisticsService, IEPlanReleaseSetDAO iePlanReleaseSetDAO, ApprovalLogDAO approvalLogDAO) {
+                                 IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, DmCalcStatisticsService dmCalcStatisticsService, IEPlanReleaseSetDAO iePlanReleaseSetDAO, ApprovalLogDAO approvalLogDAO, HttpUtils httpUtils) {
         this.planHeaderDAO = planHeaderDAO;
         this.planItemService = planItemService;
         this.organizationSetService = organizationSetService;
@@ -80,6 +86,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         this.dmCalcStatisticsService = dmCalcStatisticsService;
         this.iePlanReleaseSetDAO = iePlanReleaseSetDAO;
         this.approvalLogDAO = approvalLogDAO;
+        this.httpUtils = httpUtils;
     }
 
     @Override
@@ -607,6 +614,47 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     public List<PlanHeader> getByJhvalContains(String jhval) {
         return planHeaderDAO.findAllByJhvalContains(jhval);
     }
+
+    @Override
+    public boolean issuePlan(Long id) {
+        PlanHeader plan = getById(id);
+        Assert.notNull(plan,"计划id:"+id+"，不存在！");
+        Assert.isTrue("MR".equals(plan.getRptyp()), "计划id:"+id+"，不是月度计划！");
+        Assert.isTrue("90".equals(plan.getStonr()), "计划id:"+id+"，计划状态错误！");
+        //获取月度计划相关的所有滚动计划
+        List<RollPlanHeadDataArchiveVO> rollPlanHeadDataArchiveList = rollPlanArchiveService.getListByPlanHeaderId(id);
+        //滚动计划-行项目列表
+        Map<String, List<IEPlanBusinessItemSet>> imnumMap = iePlanBusinessItemSetService.getMap();
+        //滚动计划抬头列表
+        List<RollPlanHeadDataArchive> headDataArchiveList = new ArrayList<>();
+        //滚动计划
+        List<RollPlanItemDataArchive> itemDataArchiveList = new ArrayList<>();
+        rollPlanHeadDataArchiveList.forEach(archiveVO->{
+            //该计划的行项目列表
+            List<RollPlanItemDataArchiveVO> itemList = archiveVO.getItemList();
+            //是否有行项目标记
+            boolean exist = false;
+            //遍历行项目，过滤需要回传的行项目
+            for (RollPlanItemDataArchiveVO item : itemList) {
+                //计划日期为空，不回传
+                if (Strings.isNullOrEmpty(item.getDtval())) {
+                    //TODO 回传【rflag】为【X】的行项目，以及计划类型为【C】的行项目
+                    if (IEPlanBusinessItemSet.CALC.equals(item.getCtdtp())
+                        || "X".equals(imnumMap.get(item.getImtxt()).get(0).getRflag())) {
+                        itemDataArchiveList.add(item);
+                        exist = true;
+                    }
+                }
+            }
+            if(exist){
+                headDataArchiveList.add(archiveVO);
+            }
+        });
+        //TODO 调用odata接口，回传月度计划、滚动计划抬头、滚动计划行项目数据
+        String result = httpUtils.getResultByUrl(OdataUtils.IEPlanReleaseSet+"?", null, HttpMethod.POST);
+        return false;
+    }
+
 
     //审批流程（审批提交、同意、驳回）
     @Transactional

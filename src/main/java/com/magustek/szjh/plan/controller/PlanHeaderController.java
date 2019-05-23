@@ -136,4 +136,11 @@ public class PlanHeaderController {
         PlanHeader planHeader = planHeaderService.approvalProcess(vo);
         return resp.setStateCode(BaseResponse.SUCCESS).setData(planHeader).setMsg("成功！").toJson();
     }
+
+    @ApiOperation(value="月度计划下达", notes = "参数：id")
+    @RequestMapping("/issuePlan")
+    public String issuePlan(@RequestBody PlanHeaderVO vo) {
+        boolean success = planHeaderService.issuePlan(vo.getId());
+        return resp.setStateCode(success?BaseResponse.SUCCESS:BaseResponse.ERROR).setMsg("成功！").toJson();
+    }
 }

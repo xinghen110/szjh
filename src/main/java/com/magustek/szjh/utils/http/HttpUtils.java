@@ -31,17 +31,17 @@ public class HttpUtils {
         this.config = config;
         this.restTemplate = restTemplate;
     }
-
+    //单条记录
     public Map<String, Object> getMapByUrl(String url, Object params, HttpMethod method) throws Exception{
         String data = getStringByUrl(url, params, method);
         return getMap(data);
     }
-
+    //多条记录
     public List<Map<String,Object>> getListByUrl(String url, Object params, HttpMethod method) throws Exception{
         String data = getStringByUrl(url, params, method);
         return getList(data);
     }
-
+    //JSON
     public String getResultByUrl(String url, Object params, HttpMethod method){
         try {
             return getStringByUrl(url, params, method);
@@ -188,6 +188,7 @@ public class HttpUtils {
         }
         return response.getBody();
     }
+    //单条记录
     @SuppressWarnings("unchecked")
     private Map<String, Object> getMap(String data) {
         if (!data.isEmpty()) {
@@ -198,6 +199,7 @@ public class HttpUtils {
             return null;
         }
     }
+    //多条记录
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> getList(String data){
         if (!data.isEmpty()) {
