@@ -63,6 +63,17 @@ public class ClassUtils {
     }
 
     /**
+     * 日期转换，将【yyyy-MM-dd】转换为【yyyyMMdd】
+     *
+     * */
+    public static String coverDateTo8Chars(String s){
+        if(Strings.isNullOrEmpty(s)){
+            return "";
+        }
+        return s.replaceAll("-","");
+    }
+
+    /**
      * 判断列表是否为空
      *
      * @param o    待判断的列表

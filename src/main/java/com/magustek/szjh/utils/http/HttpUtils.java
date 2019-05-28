@@ -184,6 +184,7 @@ public class HttpUtils {
         HttpStatus statusCode = response.getStatusCode();
         log.info("响应状态：" + statusCode.value());
         if(!statusCode.is2xxSuccessful()){
+            log.error("---------调用httpClient出错：" + response.getBody());
             throw new Exception("---------调用httpClient出错返回状态值" + statusCode.value());
         }
         return response.getBody();
