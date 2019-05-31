@@ -40,9 +40,8 @@ public class StatisticalReportCache {
 
     @Cacheable(value = "ExecuteData")
     public List<Map<String, String>> getExecuteData(Long id, String version){
-
         PlanHeader planHeader = planHeaderService.getById(id);
-        String jhval = planHeader.getJhval();   //计划月份
+        String jhval = planHeader.getJhval();
         Map<String, List<OrganizationSet>> dmartMap = organizationSetService.getOrgMapByDmart("D110");
         List<Map<String, String>> list = new ArrayList<>();
         //获取计划数据
@@ -150,12 +149,12 @@ public class StatisticalReportCache {
                                 - LocalDate.parse(map.get(RollPlanHeadDataArchiveVO.PLDAT)).toEpochDay();
                         map.put(RollPlanHeadDataArchiveVO.DELAY, String.valueOf(delay));
                     }
-
                     //计划日期要在计划的月份内
                     if(!Strings.isNullOrEmpty(map.get(RollPlanHeadDataArchiveVO.PLDAT))
-                        && map.get(RollPlanHeadDataArchiveVO.PLDAT).startsWith(jhval)){
-                        list.add(map);
+                            && map.get(RollPlanHeadDataArchiveVO.PLDAT).startsWith(jhval)){
+                        map.put(RollPlanHeadDataArchiveVO.OUTER,"true");
                     }
+                    list.add(map);
                 } catch (Exception e) {
                     log.error(e.getMessage());
                     e.printStackTrace();

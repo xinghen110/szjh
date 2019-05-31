@@ -32,6 +32,7 @@ public class RollPlanHeadDataArchiveVO extends RollPlanHeadDataArchive {
     public static final String CPDAT = "cpdat"; //完成日期
     public static final String DELAY = "delay"; //延期天数
     public static final String DLFLG = "dlflg"; //是否延期
+    public static final String OUTER = "outer"; //是否计划外
 
     transient private List<RollPlanItemDataArchiveVO> itemList;
 

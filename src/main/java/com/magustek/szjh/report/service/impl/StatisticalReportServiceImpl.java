@@ -224,6 +224,21 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                         .map(m-> new BigDecimal(m.get("wears")))
                         .reduce(BigDecimal.ZERO,BigDecimal::add)
                         .toString());
+                //计划外
+                List<Map<String, String>> outerList = vList
+                        .stream()
+                        .filter(m -> Boolean.valueOf(m.get(RollPlanHeadDataArchiveVO.OUTER)))
+                        .collect(Collectors.toList());
+                map.put("outerRate", BigDecimal.valueOf(outerList.size())
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(vList.size()),2,BigDecimal.ROUND_HALF_DOWN)
+                        .toString());
+                map.put("outerContractNumber", outerList.stream().map(m->m.get("htsno")).count()+"");
+                map.put("outerWears", outerList
+                        .stream()
+                        .map(m-> new BigDecimal(m.get("wears")))
+                        .reduce(BigDecimal.ZERO,BigDecimal::add)
+                        .toString());
             });
         });
         return statisticsList;
