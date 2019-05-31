@@ -13,6 +13,7 @@ import com.magustek.szjh.plan.service.PlanHeaderService;
 import com.magustek.szjh.plan.service.RollPlanArchiveService;
 import com.magustek.szjh.utils.ClassUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -37,10 +38,11 @@ public class StatisticalReportCache {
         this.planHeaderService = planHeaderService;
     }
 
-    //@Cacheable(value = "ExecuteData")
+    @Cacheable(value = "ExecuteData")
     public List<Map<String, String>> getExecuteData(Long id, String version){
 
         PlanHeader planHeader = planHeaderService.getById(id);
+        String jhval = planHeader.getJhval();   //计划月份
         Map<String, List<OrganizationSet>> dmartMap = organizationSetService.getOrgMapByDmart("D110");
         List<Map<String, String>> list = new ArrayList<>();
         //获取计划数据
@@ -123,11 +125,15 @@ public class StatisticalReportCache {
 
                     map.put(RollPlanHeadDataArchiveVO.PLDAT, ClassUtils.StringToLocalDate(item.getDtval()).toString()); //计划日期
                     //实际发生日期
-                    String actual = htsnoSdartMap.get(sdartMap.get(map.get("imnum")))
-                            .stream()
-                            .map(IEPlanSelectValueSet::getSdval)
-                            .max(Comparator.naturalOrder())
-                            .orElse("0");
+                    List<IEPlanSelectValueSet> sdartList = htsnoSdartMap.get(sdartMap.get(map.get("imnum")));
+                    String actual = "0";
+                    if(!ClassUtils.isEmpty(sdartList)){
+                        actual = sdartList
+                                .stream()
+                                .map(IEPlanSelectValueSet::getSdval)
+                                .max(Comparator.naturalOrder())
+                                .orElse("0");
+                    }
                     //如果该指标有计划日期以后的值，则认为已完成
                     if(Integer.parseInt(actual) < Integer.parseInt(planHeader.getCkdate().replaceAll("-",""))){
                         map.put(RollPlanHeadDataArchiveVO.CPDAT, "");
@@ -145,7 +151,11 @@ public class StatisticalReportCache {
                         map.put(RollPlanHeadDataArchiveVO.DELAY, String.valueOf(delay));
                     }
 
-                    list.add(map);
+                    //计划日期要在计划的月份内
+                    if(!Strings.isNullOrEmpty(map.get(RollPlanHeadDataArchiveVO.PLDAT))
+                        && map.get(RollPlanHeadDataArchiveVO.PLDAT).startsWith(jhval)){
+                        list.add(map);
+                    }
                 } catch (Exception e) {
                     log.error(e.getMessage());
                     e.printStackTrace();
