@@ -227,12 +227,8 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                 //计划外
                 List<Map<String, String>> outerList = vList
                         .stream()
-                        .filter(m -> Boolean.valueOf(m.get(RollPlanHeadDataArchiveVO.OUTER)))
+                        .filter(m -> !Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.OUTER)))
                         .collect(Collectors.toList());
-                map.put("outerRate", BigDecimal.valueOf(outerList.size())
-                        .multiply(BigDecimal.valueOf(100))
-                        .divide(BigDecimal.valueOf(vList.size()),2,BigDecimal.ROUND_HALF_DOWN)
-                        .toString());
                 map.put("outerContractNumber", outerList.stream().map(m->m.get("htsno")).count()+"");
                 map.put("outerWears", outerList
                         .stream()

@@ -149,10 +149,10 @@ public class StatisticalReportCache {
                                 - LocalDate.parse(map.get(RollPlanHeadDataArchiveVO.PLDAT)).toEpochDay();
                         map.put(RollPlanHeadDataArchiveVO.DELAY, String.valueOf(delay));
                     }
-                    //计划日期要在计划的月份内
-                    if(!Strings.isNullOrEmpty(map.get(RollPlanHeadDataArchiveVO.PLDAT))
-                            && map.get(RollPlanHeadDataArchiveVO.PLDAT).startsWith(jhval)){
-                        map.put(RollPlanHeadDataArchiveVO.OUTER,"true");
+                    //计划外（非当月计划）已完成支付的合同
+                    if(!Strings.isNullOrEmpty(map.get(RollPlanHeadDataArchiveVO.CPDAT))
+                            && !map.get(RollPlanHeadDataArchiveVO.CPDAT).startsWith(jhval)){
+                        map.put(RollPlanHeadDataArchiveVO.OUTER,"√");
                     }
                     list.add(map);
                 } catch (Exception e) {
