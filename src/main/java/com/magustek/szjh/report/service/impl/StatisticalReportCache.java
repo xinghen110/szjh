@@ -12,6 +12,7 @@ import com.magustek.szjh.plan.bean.vo.RollPlanHeadDataArchiveVO;
 import com.magustek.szjh.plan.service.PlanHeaderService;
 import com.magustek.szjh.plan.service.RollPlanArchiveService;
 import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.constant.PlanheaderCons;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
@@ -112,7 +113,7 @@ public class StatisticalReportCache {
                         map.put("dpnam", dmartMap.get(map.get("dpnum")).get(0).getDpnam());             //部门名称
                     }
 
-                    map.put(RollPlanHeadDataArchiveVO.WEARS,head.getWears().toString());
+                    map.put(PlanheaderCons.WEARS,head.getWears().toString());
 
                     map.put("id", item.getId().toString());
                     map.put("caart", caartMap.get(item.getImnum()));
@@ -122,7 +123,7 @@ public class StatisticalReportCache {
                     map.put("G205", getSdval(htsnoSdartMap,"G205"));    //合同相对方
                     map.put("G203", getSdval(htsnoSdartMap,"G203"));    //合同承办人
 
-                    map.put(RollPlanHeadDataArchiveVO.PLDAT, ClassUtils.StringToLocalDate(item.getDtval()).toString()); //计划日期
+                    map.put(PlanheaderCons.PLDAT, ClassUtils.StringToLocalDate(item.getDtval()).toString()); //计划日期
                     //实际发生日期
                     List<IEPlanSelectValueSet> sdartList = htsnoSdartMap.get(sdartMap.get(map.get("imnum")));
                     String actual = "0";
@@ -135,24 +136,24 @@ public class StatisticalReportCache {
                     }
                     //如果该指标有计划日期以后的值，则认为已完成
                     if(Integer.parseInt(actual) < Integer.parseInt(planHeader.getCkdate().replaceAll("-",""))){
-                        map.put(RollPlanHeadDataArchiveVO.CPDAT, "");
+                        map.put(PlanheaderCons.CPDAT, "");
                         //是否延期
-                        map.put(RollPlanHeadDataArchiveVO.DLFLG,"true");
+                        map.put(PlanheaderCons.DLFLG,"true");
                     }else{
-                        map.put(RollPlanHeadDataArchiveVO.CPDAT, ClassUtils.StringToLocalDate(actual).toString());
+                        map.put(PlanheaderCons.CPDAT, ClassUtils.StringToLocalDate(actual).toString());
 
                         //是否延期
-                        map.put(RollPlanHeadDataArchiveVO.DLFLG,
-                                String.valueOf(map.get(RollPlanHeadDataArchiveVO.CPDAT).compareTo(map.get(RollPlanHeadDataArchiveVO.PLDAT)) > 0));
+                        map.put(PlanheaderCons.DLFLG,
+                                String.valueOf(map.get(PlanheaderCons.CPDAT).compareTo(map.get(PlanheaderCons.PLDAT)) > 0));
                         //到目前为止延期天数
-                        long delay = LocalDate.parse(map.get(RollPlanHeadDataArchiveVO.CPDAT)).toEpochDay()
-                                - LocalDate.parse(map.get(RollPlanHeadDataArchiveVO.PLDAT)).toEpochDay();
-                        map.put(RollPlanHeadDataArchiveVO.DELAY, String.valueOf(delay));
+                        long delay = LocalDate.parse(map.get(PlanheaderCons.CPDAT)).toEpochDay()
+                                - LocalDate.parse(map.get(PlanheaderCons.PLDAT)).toEpochDay();
+                        map.put(PlanheaderCons.DELAY, String.valueOf(delay));
                     }
                     //计划外（非当月计划）已完成支付的合同
-                    if(!Strings.isNullOrEmpty(map.get(RollPlanHeadDataArchiveVO.CPDAT))
-                            && !map.get(RollPlanHeadDataArchiveVO.CPDAT).startsWith(jhval)){
-                        map.put(RollPlanHeadDataArchiveVO.OUTER,"√");
+                    if(!Strings.isNullOrEmpty(map.get(PlanheaderCons.CPDAT))
+                            && !map.get(PlanheaderCons.CPDAT).startsWith(jhval)){
+                        map.put(PlanheaderCons.OUTER,"√");
                     }
                     list.add(map);
                 } catch (Exception e) {

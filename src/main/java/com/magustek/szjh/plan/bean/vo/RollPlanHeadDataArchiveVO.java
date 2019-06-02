@@ -26,14 +26,6 @@ public class RollPlanHeadDataArchiveVO extends RollPlanHeadDataArchive {
     private String dmart;   //维度指标
     private Integer caval;   //历史能力值
 
-    public static final List<String> TEMP= Arrays.asList("G118","G100","G205","G203");
-    public static final String WEARS = "wears"; //计划涉及金额
-    public static final String PLDAT = "pldat"; //计划日期
-    public static final String CPDAT = "cpdat"; //完成日期
-    public static final String DELAY = "delay"; //延期天数
-    public static final String DLFLG = "dlflg"; //是否延期
-    public static final String OUTER = "outer"; //是否计划外
-
     transient private List<RollPlanItemDataArchiveVO> itemList;
 
     public static List<RollPlanHeadDataArchiveVO> cover(List<Object[]> objectList){

@@ -141,6 +141,10 @@ public class PlanHeaderController {
     @RequestMapping("/issuePlan")
     public String issuePlan(@RequestBody PlanHeaderVO vo) {
         boolean success = planHeaderService.issuePlan(vo.getId());
-        return resp.setStateCode(success?BaseResponse.SUCCESS:BaseResponse.ERROR).setMsg("成功！").toJson();
+        if(success){
+            return resp.setStateCode(BaseResponse.SUCCESS).setMsg("下达成功！").toJson();
+        }else{
+            return resp.setStateCode(BaseResponse.ERROR).setMsg("下达失败！").toJson();
+        }
     }
 }

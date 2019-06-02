@@ -622,7 +622,11 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         Assert.isTrue("MR".equals(plan.getRptyp()), "计划id:"+id+"，不是月度计划！");
         Assert.isTrue("90".equals(plan.getStonr()), "计划id:"+id+"，计划状态错误！");
         //获取月度计划相关的所有滚动计划
-        List<RollPlanHeadDataArchiveVO> rollPlanHeadDataArchiveList = rollPlanArchiveService.getListByPlanHeaderId(id);
+        List<RollPlanHeadDataArchiveVO> rollPlanHeadDataArchiveList = rollPlanArchiveService
+                .getListByPlanHeaderId(id)
+                .stream()
+                .filter(i->!Strings.isNullOrEmpty(i.getDtval()))
+                .collect(Collectors.toList());
         //滚动计划-行项目列表
         Map<String, List<IEPlanBusinessItemSet>> imnumMap = iePlanBusinessItemSetService.getMap();
         //滚动计划抬头列表
@@ -637,10 +641,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             //遍历行项目，过滤需要回传的行项目
             for (RollPlanItemDataArchiveVO item : itemList) {
                 //计划日期为空，不回传
-                if (Strings.isNullOrEmpty(item.getDtval())) {
+                if (!Strings.isNullOrEmpty(item.getDtval())) {
                     // 回传【rflag】为【X】的行项目，以及计划类型为【C】的行项目
                     if (IEPlanBusinessItemSet.CALC.equals(item.getCtdtp())
-                        || "X".equals(imnumMap.get(item.getImtxt()).get(0).getRflag())) {
+                        || "X".equals(imnumMap.get(item.getImnum()).get(0).getRflag())) {
                         itemDataArchiveList.add(item);
                         exist = true;
                     }
@@ -650,45 +654,96 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 headDataArchiveList.add(archiveVO);
             }
         });
-        //TODO 调用odata接口，回传月度计划、滚动计划抬头、滚动计划行项目数据
-        Map<String, Object> virtualHeadMap = new LinkedHashMap<>(3);
+        // 调用odata接口，回传月度计划、滚动计划抬头、滚动计划行项目数据
+        Map<String, Object> virtualHeadMap = new LinkedHashMap<>(5);
+        virtualHeadMap.put("hedid", plan.getId().toString());
+        virtualHeadMap.put("notes", plan.getJhtxt());
         //月度计划
-        Map<String, String> planHead = ClassUtils.coverToMapJson(plan, null, null, true, 3);
+        Map<String, String> planHead = new LinkedHashMap<>();//ClassUtils.coverToMapJson(plan, null, null, true, 3);
         planHead.put("hedid", plan.getId().toString());
         planHead.put("plaid", plan.getId().toString());
-        planHead.put("crdate", ClassUtils.dfYMD.format(plan.getCreateDate()));
-        planHead.put("crtime", ClassUtils.dfHMS.format(plan.getCreateDate()));
-        planHead.put("chdate", ClassUtils.dfYMD.format(plan.getUpdateDate()));
-        planHead.put("chtime", ClassUtils.dfHMS.format(plan.getUpdateDate()));
-        planHead.put("ckdate", ClassUtils.coverDateTo8Chars(plan.getCkdate()));
-        virtualHeadMap.put("ieplanmonthheadset", planHead);
+        planHead.put("jhval", plan.getJhval());
+        planHead.put("jhtxt", plan.getJhtxt());
+        planHead.put("bukrs", plan.getBukrs());
+        planHead.put("status", plan.getStatus());
+        planHead.put("bstau", plan.getBsta());
+        planHead.put("modve", plan.getModve());
+        planHead.put("ckdate", ClassUtils.coverDateToOdataDate(plan.getCkdate()));
+        planHead.put("rptyp", plan.getRptyp());
+        planHead.put("rporg", plan.getRporg());
+        planHead.put("orgval", plan.getOrgval());
+        planHead.put("nflag", plan.getNflag());
+        planHead.put("stonr", plan.getStonr());
+        planHead.put("unit", plan.getUnit());
+        planHead.put("waers", plan.getWaers());
+        planHead.put("crname", plan.getCreator());
+        planHead.put("crdate", ClassUtils.coverDateToOdataDate(plan.getCreateDate()));
+        //planHead.put("crtime", plan.get);
+        planHead.put("chname", plan.getUpdater());
+        planHead.put("chdate", ClassUtils.coverDateToOdataDate(plan.getUpdateDate()));
+        //planHead.put("chtime", plan.get);
+
+        virtualHeadMap.put("ieplanmonthheadset", Collections.singletonList(planHead));
         //滚动计划抬头
         List<Map<String, String>> headDateMapList = new ArrayList<>(headDataArchiveList.size());
         headDataArchiveList.forEach(h->{
-            Map<String, String> headMap = ClassUtils.coverToMapJson(h, null, null, true, 3);
+            Map<String, String> headMap = new LinkedHashMap<>();//ClassUtils.coverToMapJson(h, null, null, true, 3);
             headMap.put("hedid", plan.getId().toString());
             headMap.put("plaid", plan.getId().toString());
             headMap.put("rhdid", h.getId().toString());
             headMap.put("rheid", h.getRollId().toString());
             headMap.put("wears", h.getWears().toString());
+            headMap.put("bukrs", h.getBukrs());
+            String dtval = ClassUtils.coverDateToOdataDate(ClassUtils.StringToLocalDateString(h.getDtval()));
+            headMap.put("dtval", dtval);
+            headMap.put("hdnum", h.getHdnum());
+            headMap.put("htnum", h.getHtnum());
+            headMap.put("htsno", h.getHtsno());
+            headMap.put("versn", h.getVersion());
+            headMap.put("zbart", h.getZbart());
             headDateMapList.add(headMap);
         });
         virtualHeadMap.put("ieplanmonthrollheadset",headDateMapList);
         //滚动计划行项目
         List<Map<String, String>> itemDateMapList = new ArrayList<>(itemDataArchiveList.size());
         itemDataArchiveList.forEach(i->{
-            Map<String, String> itemMap = ClassUtils.coverToMapJson(i, null, null, true, 3);
+            String dtval = ClassUtils.coverDateToOdataDate(ClassUtils.StringToLocalDateString(i.getDtval()));
+            if(Strings.isNullOrEmpty(dtval)){
+                return;
+            }
+            Map<String, String> itemMap = new LinkedHashMap<>();//ClassUtils.coverToMapJson(i, null, null, true, 3);
             itemMap.put("hedid", plan.getId().toString());
             itemMap.put("ritid", i.getId().toString());
             itemMap.put("plaid", plan.getId().toString());
             itemMap.put("rheid", i.getHeadId().toString());
+            itemMap.put("caval", i.getCaval().toString());
+            itemMap.put("ctdtp", i.getCtdtp());
+            itemMap.put("dtval", dtval);
+            itemMap.put("imnum", i.getImnum());
+            itemMap.put("odue", i.getOdue());
+            itemMap.put("sdart", i.getSdart());
             itemDateMapList.add(itemMap);
         });
-        virtualHeadMap.put("ieplanmonthrollitemset",headDateMapList);
+        virtualHeadMap.put("ieplanmonthrollitemset",itemDateMapList);
 
-        String result = httpUtils.getResultByUrl(OdataUtils.IEPlanMonthVirtualHeadSet+"?", virtualHeadMap, HttpMethod.POST);
+        String result = httpUtils.getResultByUrl(OdataUtils.IEPlanMonthVirtualHeadSet+"?", JSON.toJSONString(virtualHeadMap), HttpMethod.POST);
 
-        return !Strings.isNullOrEmpty(result);
+        boolean success = !Strings.isNullOrEmpty(result);
+
+        //下达成功，更新计划状态为【已下达】
+        if(success){
+            PlanHeader planHeader = planHeaderDAO.findById(plan.getId());
+            planHeader.setStonr("95");
+            try {
+                save(planHeader);
+                log.warn("更新月度计划状态！");
+            } catch (Exception e) {
+                log.error(e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        return success;
     }
 
 

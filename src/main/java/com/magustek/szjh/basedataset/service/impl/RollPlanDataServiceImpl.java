@@ -322,7 +322,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                                 }
                             }
                         }
-                        BigDecimal subCurr = lastSdcutValue.subtract(sdcut);
+                        BigDecimal subCurr = lastSdcutValue.subtract(sdcut.abs());
 
                         if (subCurr.compareTo(BigDecimal.ZERO) > 0){
                             //金额有差值

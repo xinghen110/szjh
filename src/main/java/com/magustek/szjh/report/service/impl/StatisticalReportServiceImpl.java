@@ -10,7 +10,6 @@ import com.magustek.szjh.configset.service.IEPlanScreenService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.PlanItem;
-import com.magustek.szjh.plan.bean.vo.RollPlanHeadDataArchiveVO;
 import com.magustek.szjh.plan.bean.vo.RollPlanItemDataArchiveVO;
 import com.magustek.szjh.plan.service.PlanHeaderService;
 import com.magustek.szjh.plan.service.PlanItemService;
@@ -20,6 +19,7 @@ import com.magustek.szjh.report.bean.vo.DateVO;
 import com.magustek.szjh.report.service.StatisticalReportService;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.KeyValueBean;
+import com.magustek.szjh.utils.constant.PlanheaderCons;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -182,7 +182,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                 //完成
                 List<Map<String, String>> completedList = vList
                         .stream()
-                        .filter(m -> !Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.CPDAT)))
+                        .filter(m -> !Strings.isNullOrEmpty(m.get(PlanheaderCons.CPDAT)))
                         .collect(Collectors.toList());
                 map.put("completedRate", BigDecimal.valueOf(completedList.size())
                         .multiply(BigDecimal.valueOf(100))
@@ -197,7 +197,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                 //未完成
                 List<Map<String, String>> uncompletedList = vList
                         .stream()
-                        .filter(m -> Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.CPDAT)))
+                        .filter(m -> Strings.isNullOrEmpty(m.get(PlanheaderCons.CPDAT)))
                         .collect(Collectors.toList());
                 map.put("uncompletedRate", BigDecimal.valueOf(uncompletedList.size())
                         .multiply(BigDecimal.valueOf(100))
@@ -212,7 +212,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                 //延期
                 List<Map<String, String>> delayList = vList
                         .stream()
-                        .filter(m -> Boolean.valueOf(m.get(RollPlanHeadDataArchiveVO.DLFLG)))
+                        .filter(m -> Boolean.valueOf(m.get(PlanheaderCons.DLFLG)))
                         .collect(Collectors.toList());
                 map.put("delayRate", BigDecimal.valueOf(delayList.size())
                         .multiply(BigDecimal.valueOf(100))
@@ -227,7 +227,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                 //计划外
                 List<Map<String, String>> outerList = vList
                         .stream()
-                        .filter(m -> !Strings.isNullOrEmpty(m.get(RollPlanHeadDataArchiveVO.OUTER)))
+                        .filter(m -> !Strings.isNullOrEmpty(m.get(PlanheaderCons.OUTER)))
                         .collect(Collectors.toList());
                 map.put("outerContractNumber", outerList.stream().map(m->m.get("htsno")).count()+"");
                 map.put("outerWears", outerList

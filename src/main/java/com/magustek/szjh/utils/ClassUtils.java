@@ -63,14 +63,34 @@ public class ClassUtils {
     }
 
     /**
-     * 日期转换，将【yyyy-MM-dd】转换为【yyyyMMdd】
+     * 日期转换，将【yyyy-MM-dd】转换为【yyyy-MM-ddT00:00:00】
      *
      * */
-    public static String coverDateTo8Chars(String s){
+    public static String coverDateToOdataDate(String s){
         if(Strings.isNullOrEmpty(s)){
             return "";
         }
-        return s.replaceAll("-","");
+        return s+"T00:00:00";
+    }
+    /**
+     * 日期转换，将date转换为【yyyy-MM-ddT00:00:00】
+     *
+     * */
+    public static String coverDateToOdataDate(Date d){
+        if(d==null){
+            return "";
+        }
+        return ClassUtils.dfDate.format(d)+"T00:00:00";
+    }
+    /**
+     * 日期转换，将date转换为【yyyy-MM-ddT00:00:00】
+     *
+     * */
+    public static String coverDateToOdataDate(LocalDate d){
+        if(d==null){
+            return "";
+        }
+        return d.toString()+"T00:00:00";
     }
 
     /**
