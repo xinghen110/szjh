@@ -244,6 +244,9 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     }
 
                 }
+                if("60101800010318".equals(htsno)){
+                    log.warn("debug");
+                }
                 /*将该流水号下所有值按照【对应金额指标】分组求和，
                 第次相减后，如果差额小于等于0，记录上一组最新日期（根据取值指标）；
                 如果大于0，创建一个【滚动计划明细单】。*/
@@ -293,7 +296,6 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     int i = 0;
 
                     while(true){
-
                         //取待处理计划（因为列表一直在增加，只能使用程序判断循环。）
                         if(i < localHelperList.size()){
                             helper = localHelperList.get(i);
@@ -322,7 +324,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                                 }
                             }
                         }
-                        BigDecimal subCurr = lastSdcutValue.subtract(sdcut.abs());
+                        BigDecimal subCurr = lastSdcutValue.abs().subtract(sdcut.abs());
 
                         if (subCurr.compareTo(BigDecimal.ZERO) > 0){
                             //金额有差值
@@ -330,7 +332,11 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                             RollPlanDataHelper newHelper = new RollPlanDataHelper();
                             this.createHelper(newHelper, itemVO, calcList);
                             newHelper.getHeadData().setStval(helper.getHeadData().getStval());
-                            newHelper.getHeadData().setWears(subCurr);
+                            if(lastSdcutValue.compareTo(BigDecimal.ZERO) > 0){
+                                newHelper.getHeadData().setWears(subCurr);
+                            }else{
+                                newHelper.getHeadData().setWears(BigDecimal.ZERO.subtract(subCurr));
+                            }
                             newHelper.getHeadData().setHtsno(htsno);
                             newHelper.getHeadData().setBukrs(head.getBukrs());
                             newHelper.getHeadData().setHdnum(itemVO.getHdnum());
