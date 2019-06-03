@@ -244,9 +244,6 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     }
 
                 }
-                if("60101800010318".equals(htsno)){
-                    log.warn("debug");
-                }
                 /*将该流水号下所有值按照【对应金额指标】分组求和，
                 第次相减后，如果差额小于等于0，记录上一组最新日期（根据取值指标）；
                 如果大于0，创建一个【滚动计划明细单】。*/

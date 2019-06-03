@@ -150,9 +150,11 @@ public class StatisticalReportCache {
                                 - LocalDate.parse(map.get(PlanheaderCons.PLDAT)).toEpochDay();
                         map.put(PlanheaderCons.DELAY, String.valueOf(delay));
                     }
-                    //计划外（非当月计划）已完成支付的合同
+                    //计划外（【计划日期】不在【计划月】，但是付款在【计划月】）已完成支付的合同
                     if(!Strings.isNullOrEmpty(map.get(PlanheaderCons.CPDAT))
-                            && !map.get(PlanheaderCons.CPDAT).startsWith(jhval)){
+                            && !Strings.isNullOrEmpty(map.get(PlanheaderCons.PLDAT))
+                            && !map.get(PlanheaderCons.PLDAT).startsWith(jhval)
+                            && map.get(PlanheaderCons.CPDAT).startsWith(jhval)){
                         map.put(PlanheaderCons.OUTER,"√");
                     }
                     list.add(map);
