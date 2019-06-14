@@ -9,7 +9,6 @@ import com.magustek.szjh.utils.OdataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -157,9 +156,6 @@ public class HttpUtils {
         //设置header
         HttpHeaders headers = new HttpHeaders();
         headers.add(odataTokenHeader, "Fetch");
-        //设置账号密码
-        restTemplate.getInterceptors().add(
-                new BasicAuthorizationInterceptor(config.getOdataUser(), config.getOdataPass()));
         ResponseEntity<String> responseEntity;
         try{
             //执行odata调用

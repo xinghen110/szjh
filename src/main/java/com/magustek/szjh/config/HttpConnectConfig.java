@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
@@ -47,6 +48,9 @@ public class HttpConnectConfig {
         restTemplate.setRequestFactory(factory);
 
         restTemplate.setErrorHandler(new DefaultResponseErrorHandler());
+        //设置账号密码
+        restTemplate.getInterceptors().add(
+                new BasicAuthorizationInterceptor(odataUser, odataPass));
         return restTemplate;
     }
 
