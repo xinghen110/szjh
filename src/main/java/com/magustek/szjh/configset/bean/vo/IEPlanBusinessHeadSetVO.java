@@ -69,6 +69,10 @@ public class IEPlanBusinessHeadSetVO extends IEPlanBusinessHeadSet {
                                 List<BigDecimal> decimalList = new ArrayList<>();
                                 for(String sdval : sdvalList){
                                     BigDecimal bigDecimal = new BigDecimal(sdval);
+                                    //当数字是负数时，处理负号在最后的情况。
+                                    if(sdval.endsWith("-")){
+                                        bigDecimal = bigDecimal.negate();
+                                    }
                                     decimalList.add(bigDecimal);
                                 }
                                 binding.put(k, decimalList);
@@ -83,6 +87,10 @@ public class IEPlanBusinessHeadSetVO extends IEPlanBusinessHeadSet {
                         try{
                             if("number".equals(selectDataSetMap.get(k).getVtype())){
                                 BigDecimal bigDecimal = new BigDecimal(sdval);
+                                //当数字是负数时，处理负号在最后的情况。
+                                if(sdval.endsWith("-")){
+                                    bigDecimal = bigDecimal.negate();
+                                }
                                 binding.put(k, bigDecimal);
                             }else{
                                 binding.put(k, sdval);

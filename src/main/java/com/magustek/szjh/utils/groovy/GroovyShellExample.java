@@ -8,6 +8,7 @@ import groovy.lang.GroovyShell;
 import org.springframework.beans.BeanUtils;
 
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -60,12 +61,19 @@ public class GroovyShellExample {
     public static void c(){
         Binding binding = new Binding();
         try {
-            BigDecimal g131 = new BigDecimal("0.00");
+            List<String> g393 = Arrays.asList("925860.00","456435.21");
+            String g180 = "0.00";
+//            String g393 = "1.00";
+            String g111 = "ICM09";
+            String g210 = "01";
 
-            binding.setVariable("G131", g131);
-            binding.setVariable("G201", "03");
+            binding.setVariable("G201", g210);
+            binding.setVariable("G111", g111);
+            binding.setVariable("G180", g180);
+            binding.setVariable("G393", g393);
             GroovyShell shell = new GroovyShell(binding);
-            Object value = shell.evaluate("G201!='01' && G131.toBigDecimal().compareTo(BigDecimal.ZERO) >0");
+            //Object value = shell.evaluate("G393 instanceof Collection");
+            Object value = shell.evaluate("(G201=='01'||G201=='04' ) && (G393 instanceof Collection ? G393.max():G393).toBigDecimal().compareTo(G180.toBigDecimal())>0 && G111=='ICM09'");
 
             System.err.println(value);
         } catch (Exception e) {
