@@ -63,40 +63,45 @@ public class IEPlanBusinessHeadSetVO extends IEPlanBusinessHeadSet {
                 List<String> sdvalList = v.stream().map(IEPlanSelectValueSet::getSdval).collect(Collectors.toList());
                 if(!ClassUtils.isEmpty(sdvalList)){
                     if(sdvalList.size()>1){
-                        try{
-                            //根据指标类型进行参数设置
-                            if("number".equals(selectDataSetMap.get(k).getVtype())){
-                                List<BigDecimal> decimalList = new ArrayList<>();
-                                for(String sdval : sdvalList){
-                                    BigDecimal bigDecimal = new BigDecimal(sdval);
+                        //根据指标类型进行参数设置
+                        if("number".equals(selectDataSetMap.get(k).getVtype())){
+                            List<BigDecimal> decimalList = new ArrayList<>();
+                            for(String sdval : sdvalList){
+                                try{
+                                    BigDecimal bigDecimal;
                                     //当数字是负数时，处理负号在最后的情况。
                                     if(sdval.endsWith("-")){
-                                        bigDecimal = bigDecimal.negate();
+                                        bigDecimal = new BigDecimal(sdval.substring(0,sdval.length()-1)).negate();
+                                    }else{
+                                        bigDecimal = new BigDecimal(sdval);
                                     }
+
                                     decimalList.add(bigDecimal);
+                                }catch (NumberFormatException e){
+                                    log.error(e.toString()+"@sdval:{}",sdval);
                                 }
-                                binding.put(k, decimalList);
-                            }else{
-                                binding.put(k, sdvalList);
                             }
-                        }catch (NumberFormatException e){
-                            log.error(e.toString());
+                            binding.put(k, decimalList);
+                        }else{
+                            binding.put(k, sdvalList);
                         }
                     }else{
                         String sdval = v.get(0).getSdval();
                         try{
                             if("number".equals(selectDataSetMap.get(k).getVtype())){
-                                BigDecimal bigDecimal = new BigDecimal(sdval);
+                                BigDecimal bigDecimal;
                                 //当数字是负数时，处理负号在最后的情况。
                                 if(sdval.endsWith("-")){
-                                    bigDecimal = bigDecimal.negate();
+                                    bigDecimal = new BigDecimal(sdval.substring(0,sdval.length()-1)).negate();
+                                }else{
+                                    bigDecimal = new BigDecimal(sdval);
                                 }
                                 binding.put(k, bigDecimal);
                             }else{
                                 binding.put(k, sdval);
                             }
                         }catch (NumberFormatException e){
-                            log.error(e.toString());
+                            log.error(e.toString()+"@sdval:{}",sdval);
                         }
                     }
                 }
