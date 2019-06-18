@@ -382,6 +382,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 return;
                 // map.put("caval",0);
             }
+
+            if(statisticsMap.get(k) == null || statisticsMap.get(k).size() < 1){
+                return;
+            }
             map.put("cavalHis", statisticsMap.get(k).get(0).getHisval());
 
             //合同数量
