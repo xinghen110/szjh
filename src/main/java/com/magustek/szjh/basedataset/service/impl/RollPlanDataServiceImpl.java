@@ -268,6 +268,27 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                             }
                         }
                     }
+                    //处理【排除金额】
+                    String exbtr = item.getExbtr();
+                    if(!Strings.isNullOrEmpty(exbtr)){
+                        List<IEPlanSelectValueSet> exbtrList = sdartValueMap.get(item.getExbtr());
+                        if(!ClassUtils.isEmpty(exbtrList)){
+                            for(IEPlanSelectValueSet v : exbtrList){
+                                try {
+                                    //处理ABAP金额为负数时，负号在数字最右面的情况。
+                                    String s = v.getSdval();
+                                    if(s.charAt(s.length()-1) == '-'){
+                                        s = "-"+s.substring(0,s.length()-1);
+                                    }
+                                    //与上面不同的是，这里是减法
+                                    sumCurr = sumCurr.subtract(new BigDecimal(s));
+                                } catch (NumberFormatException e) {
+                                    log.error(e.toString()+"@"+v.getSdval());
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
 
                     //取得最新的日期及其对应的htnum
                     List<IEPlanSelectValueSet> valueList = sdartValueMap.get(item.getSdart());
