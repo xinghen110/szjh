@@ -114,7 +114,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             List<PlanItem> itemList = planItemService.initItemDataByConfig(config, header.getId());
             //如果是月报，需要复制数据到【roll_plan_head_data_archive】、【roll_plan_item_data_archive】表，并且将统计数据存入其中
             if("MR".equals(header.getRptyp())){
-                planItemService.initCalcData(itemList, config, header);
+                //复制数据到【roll_plan_head_data_archive】、【roll_plan_item_data_archive】表
+                rollPlanArchiveService.copyData(header);
+                planItemService.initCalcData(itemList, header);
             }
 
             //计算T800（小计）
@@ -243,7 +245,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     .stream()
                     .collect(Collectors.groupingBy(IEPlanBusinessHeadSet::getHdnum));
         } catch (Exception e) {
-            log.error("无此计划，ID：{}，message：{}",e.getMessage());
+            log.error("无此计划，ID：{}，message：{}",planHeadId,e.getMessage());
             throw new Exception(e.getMessage());
         }
 
@@ -257,10 +259,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         Assert.notNull(weekMap,"星期计算错误！"+dtval);
         //计算周期内合同的金额
         rollPlanMapByHtsno.forEach((htsno, rollPlanList)->{
-            //TODO debug point
-            if ("60101700021446".equals(htsno)){
-                log.debug("debug point!");
-            }
             Map<String, WearsType> htsnoMap = new HashMap<>();
             rollPlanList.forEach(rollPlan ->
                     weekMap.forEach((week, dateList)->{
@@ -403,10 +401,11 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     }
 
     @Override
-    public int updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(Long planHeadId, String caart, String dmart, String dmval, String zbart, Integer caval) {
+    public int updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(Long planHeadId, String caart, String dmart, String dmval, String zbart, Integer caval) throws Exception {
 
         //待统计抬头列表
         List<RollPlanHeadDataArchive> headList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndDmvalAndZbart(zbart, dmart + ":" + dmval, planHeadId);
+        List<PlanItem> planItemList = planItemService.getListByHeaderId(planHeadId);
         if(ClassUtils.isEmpty(headList)){
             return 0;
         }
@@ -473,7 +472,49 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         if(!ClassUtils.isEmpty(changedList)){
             rollPlanArchiveService.saveItemList(changedList);
         }
+        //更新报表明细
+        planItemService.initCalcData(planItemList, getById(planHeadId));
         return changedList.size();
+    }
+
+    @Override
+    public void updateCavalByPlanHeadIdAndZbartAndWears(Long planHeadId, String zbart, BigDecimal wears) throws Exception {
+        //待统计抬头列表
+        List<RollPlanHeadDataArchive> headList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndZbart(planHeadId, zbart);
+        PlanHeader planHeader = getById(planHeadId);
+        String jhval = planHeader.getJhval();//计划期间
+        List<PlanItem> planItemList = planItemService.getListByHeaderId(planHeadId);
+        //统计当前计划金额
+        BigDecimal sum = BigDecimal.ZERO;
+        for(PlanItem item : planItemList){
+            if(item.getZtval().startsWith(jhval) && zbart.equals(item.getZbart())){
+                sum = sum.add(new BigDecimal(item.getZbval()));
+            }
+        }
+        if(ClassUtils.isEmpty(headList)){
+            return;
+        }
+        //计划后延、提前标记，true=后延
+        sum = wears.subtract(sum);
+        if(sum.compareTo(BigDecimal.ZERO)==0){
+            return;
+        }
+        boolean flag = sum.compareTo(BigDecimal.ZERO)>0;
+        //获取【付款支付完成时效】对应imnum号
+        List<IEPlanBusinessItemSet> c210 = iePlanBusinessItemSetService.getAllByCaart("C210");
+        if(c210.isEmpty()){
+            return;
+        }
+        //根据抬头ID列表、imnum号获取item列表
+        List<RollPlanItemDataArchive> itemArchiveList = rollPlanArchiveService.getItemDataByHeadIdAndImnum(
+                headList.stream().map(RollPlanHeadDataArchive::getRollId).collect(Collectors.toList()),
+                Collections.singletonList(c210.get(0).getImnum())
+        );
+        if(ClassUtils.isEmpty(itemArchiveList)){
+            return;
+        }
+        itemArchiveList
+
     }
 
     @Override

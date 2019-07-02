@@ -105,7 +105,7 @@ public class PlanHeaderController {
 
     @ApiOperation(value="根据计划ID-planHeadId、业务计算指标-caart、维度-dmart、经营指标分类-zbart、组织机构代码-dmval、历史能力值-caval，更新账期列表。")
     @RequestMapping("/updateCavalByPlanHeadIdAndCaartAndDmartAndDmval")
-    public String updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(@RequestBody List<RollPlanHeadDataArchiveVO> voList) {
+    public String updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(@RequestBody List<RollPlanHeadDataArchiveVO> voList) throws Exception {
         //Assert.isTrue(!ClassUtils.isEmpty(voList),"参数不正确！");
         int count = 0;
         for(RollPlanHeadDataArchiveVO vo : voList){
@@ -121,6 +121,18 @@ public class PlanHeaderController {
         }
         log.warn("根据计划ID-planHeadId、业务计算指标-caart、维度-dmart、经营指标分类-zbart，更新账期列表：{}", count);
         return resp.setStateCode(BaseResponse.SUCCESS).setData(count).setMsg("成功！").toJson();
+    }
+
+    @ApiOperation(value="根据计划ID-planHeadId、经营指标分类-zbart、目标金额-wears，更新月度计划。")
+    @RequestMapping("/updateCavalByPlanHeadIdAndWears")
+    public String updateCavalByPlanHeadIdAndWears(@RequestBody RollPlanHeadDataArchiveVO vo) {
+        planHeaderService.updateCavalByPlanHeadIdAndZbartAndWears(vo.getPlanHeadId(), vo.getZbart(), vo.getWears());
+        log.warn("用户-{}，根据计划ID-planHeadId-{}、经营指标分类-zbart-{}、目标金额-wears-{}，更新月度计划。",
+                ContextUtils.getUserName(),
+                vo.getPlanHeadId(),
+                vo.getZbart(),
+                vo.getWears());
+        return resp.setStateCode(BaseResponse.SUCCESS).setMsg("成功！").toJson();
     }
 
     @ApiOperation(value="获取审批界面", notes = "参数：id")

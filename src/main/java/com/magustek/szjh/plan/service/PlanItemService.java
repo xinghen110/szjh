@@ -15,6 +15,7 @@ public interface PlanItemService {
     PlanItem[] save(PlanItem[] items) throws Exception;
     List<PlanItem> save(List<PlanItem> list);
     List<PlanItem> getListByHeaderId(Long headerId, String zaxis, String zvalue) throws Exception;
+    List<PlanItem> getListByHeaderId(Long headerId) throws Exception;
     List<PlanItem> getListByHeaderIdAndZtvalContains(Long headerId, String zvalue, String ztval);
     List<PlanItem> getComparedListByHeaderId(PlanItemVO vo) throws Exception;
     List<PlanItem> delete(List<PlanItem> list);
@@ -26,7 +27,7 @@ public interface PlanItemService {
     //初始化明细表数据
     List<PlanItem> initItemDataByConfig(IEPlanReportHeadVO config, Long headerId) throws Exception;
     //初始化统计数据
-    void initCalcData(List<PlanItem> itemList, IEPlanReportHeadVO config, PlanHeader planHeader) throws Exception;
+    void initCalcData(List<PlanItem> itemList, PlanHeader planHeader) throws Exception;
 
     //根据指标分组统计计划的zbval值
     ArrayList<KeyValueBean> getZbList(Long headerId, String rptyp);

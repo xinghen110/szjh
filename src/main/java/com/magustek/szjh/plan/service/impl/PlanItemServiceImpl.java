@@ -10,6 +10,7 @@ import com.magustek.szjh.basedataset.service.RollPlanDataService;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportItemVO;
 import com.magustek.szjh.configset.service.IEPlanOperationSetService;
+import com.magustek.szjh.configset.service.IEPlanReportHeadSetService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.PlanItem;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 public class PlanItemServiceImpl implements PlanItemService {
     private PlanItemDAO planItemDAO;
     private PlanLayoutDAO planLayoutDAO;
+    private IEPlanReportHeadSetService iePlanReportHeadSetService;
     private OrganizationSetService organizationSetService;
     private IEPlanOperationSetService iePlanOperationSetService;
     private RollPlanArchiveService rollPlanArchiveService;
@@ -46,9 +48,10 @@ public class PlanItemServiceImpl implements PlanItemService {
     private IEPlanDimenValueSetService iePlanDimenValueSetService;
 
 
-    public PlanItemServiceImpl(PlanItemDAO planItemDAO, PlanLayoutDAO planLayoutDAO, OrganizationSetService organizationSetService, IEPlanOperationSetService iePlanOperationSetService, RollPlanArchiveService rollPlanArchiveService, PlanHeaderDAO planHeaderDAO, RollPlanDataService rollPlanDataService, IEPlanDimenValueSetService iePlanDimenValueSetService) {
+    public PlanItemServiceImpl(PlanItemDAO planItemDAO, PlanLayoutDAO planLayoutDAO, IEPlanReportHeadSetService iePlanReportHeadSetService, OrganizationSetService organizationSetService, IEPlanOperationSetService iePlanOperationSetService, RollPlanArchiveService rollPlanArchiveService, PlanHeaderDAO planHeaderDAO, RollPlanDataService rollPlanDataService, IEPlanDimenValueSetService iePlanDimenValueSetService) {
         this.planItemDAO = planItemDAO;
         this.planLayoutDAO = planLayoutDAO;
+        this.iePlanReportHeadSetService = iePlanReportHeadSetService;
         this.organizationSetService = organizationSetService;
         this.iePlanOperationSetService = iePlanOperationSetService;
         this.rollPlanArchiveService = rollPlanArchiveService;
@@ -100,6 +103,11 @@ public class PlanItemServiceImpl implements PlanItemService {
                 throw new Exception("Y轴类型错误！");
         }
         return list;
+    }
+
+    @Override
+    public List<PlanItem> getListByHeaderId(Long headerId){
+        return planItemDAO.findAllByHeaderId(headerId);
     }
 
     @Override
@@ -356,11 +364,7 @@ public class PlanItemServiceImpl implements PlanItemService {
     }
 
     @Override
-    public void initCalcData(List<PlanItem> itemList,
-                                       IEPlanReportHeadVO config,
-                                       PlanHeader planHeader) throws Exception {
-        //复制数据到【roll_plan_head_data_archive】、【roll_plan_item_data_archive】表
-        rollPlanArchiveService.copyData(planHeader);
+    public void initCalcData(List<PlanItem> itemList, PlanHeader planHeader) throws Exception {
         //获取滚动计划列表，并根据经营指标值分组
         Map<String, List<RollPlanHeadDataArchive>> headMapByZbart = rollPlanArchiveService
                 .getHeadDataArchiveList(planHeader.getId())
@@ -370,6 +374,7 @@ public class PlanItemServiceImpl implements PlanItemService {
         log.warn("滚动计划列表获取完成");
         //将统计数据存入报表项目
         //取出待统计的指标list(操作方式为【S】)
+        IEPlanReportHeadVO config = iePlanReportHeadSetService.getReportConfigByBukrs(planHeader.getBukrs(), planHeader.getRptyp(), planHeader.getRporg(), planHeader.getJhval());
         List<String> zbartList = config
                 .getItemVOS()
                 .stream()

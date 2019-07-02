@@ -20,6 +20,7 @@ public interface RollPlanHeadDataArchiveDAO extends CrudRepository<RollPlanHeadD
     List<RollPlanHeadDataArchive> findAllByPlanHeadIdAndDtvalLessThanEqualAndDmvalContainsAndZbart(Long planHeadId, String dtval, String dmval, String zbart);
 
     List<RollPlanHeadDataArchive> findAllByPlanHeadIdAndDmvalContainsAndZbart(Long planHeadId, String dmval, String zbart);
+    List<RollPlanHeadDataArchive> findAllByPlanHeadIdAndZbart(Long planHeadId, String zbart);
 
     @SuppressWarnings("SqlResolve")
     @Query(value = "select head.id as head_id, " + //0
