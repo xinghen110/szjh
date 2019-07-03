@@ -132,7 +132,7 @@ public class PlanHeaderController {
                 vo.getPlanHeadId(),
                 vo.getZbart(),
                 vo.getWears());
-        return resp.setStateCode(BaseResponse.SUCCESS).setMsg("成功！").toJson();
+        return resp.setStateCode(BaseResponse.SUCCESS).setData("{\"wears\":1.3,\"count\":30}").setMsg("成功！").toJson();
     }
 
     @ApiOperation(value="获取审批界面", notes = "参数：id")
