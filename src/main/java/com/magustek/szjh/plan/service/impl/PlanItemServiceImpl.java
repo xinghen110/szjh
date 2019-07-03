@@ -337,7 +337,6 @@ public class PlanItemServiceImpl implements PlanItemService {
     }
 
     //创建计划抬头的同时初始化明细数据
-    @Override
     public List<PlanItem> initItemDataByConfig(IEPlanReportHeadVO config, Long headerId) throws Exception {
         //配置数据
         String xaxis = config.getXaxis();
@@ -364,7 +363,7 @@ public class PlanItemServiceImpl implements PlanItemService {
     }
 
     @Override
-    public void initCalcData(List<PlanItem> itemList, PlanHeader planHeader) throws Exception {
+    public void initCalcData(List<PlanItem> planItemList, PlanHeader planHeader) throws Exception {
         //获取滚动计划列表，并根据经营指标值分组
         Map<String, List<RollPlanHeadDataArchive>> headMapByZbart = rollPlanArchiveService
                 .getHeadDataArchiveList(planHeader.getId())
@@ -388,7 +387,8 @@ public class PlanItemServiceImpl implements PlanItemService {
         }
 
         //将计划明细根据经营指标分组
-        Map<String, List<PlanItem>> itemMapByZbart = itemList
+        initItemList(planItemList);//初始化数据
+        Map<String, List<PlanItem>> itemMapByZbart = planItemList
                 .stream()
                 .collect(Collectors.groupingBy(PlanItem::getZbart));
         log.warn("将计划明细根据经营指标分组");
@@ -414,6 +414,8 @@ public class PlanItemServiceImpl implements PlanItemService {
                 });
             }
         });
+        //计算T800（小计）
+        calcT800(planItemList);
     }
 
     //根据指标分组统计计划的zbval值
@@ -547,11 +549,11 @@ public class PlanItemServiceImpl implements PlanItemService {
             return;
         }
 
-        log.warn("计划明细计算：历史维度单位——{}，明细时间——{}，滚动计划日期——{}，滚动计划金额——{}",
+        /*log.warn("计划明细计算：历史维度单位——{}，明细时间——{}，滚动计划日期——{}，滚动计划金额——{}",
                 ztime,
                 ztval,
                 head.getDtval(),
-                head.getWears().toString());
+                head.getWears().toString());*/
         long start;
         long end;
         String startTime = "2000-01-01";
@@ -590,10 +592,10 @@ public class PlanItemServiceImpl implements PlanItemService {
             default:
                 return;
         }
-        log.warn("起始时间{}，截止时间{}，计划时间{}",
+        /*log.warn("起始时间{}，截止时间{}，计划时间{}",
                 start,
                 end,
-                headTime);
+                headTime);*/
         //如果计划日期在报表日期范围内，则汇总金额
         if(start <= headTime && headTime <= end){
             BigDecimal zbval = new BigDecimal(item.getZbval());
@@ -662,5 +664,27 @@ public class PlanItemServiceImpl implements PlanItemService {
         LocalDate startTime = LocalDate.parse(period + "-01");
         LocalDate endTime = startTime.with(TemporalAdjusters.lastDayOfMonth());
         return source.compareTo(startTime)>=0 && source.compareTo(endTime)<=0;
+    }
+
+    private void calcT800(List<PlanItem> itemList){
+        // 计算T800（小计）
+        itemList.stream().collect(Collectors.groupingBy(PlanItem::getDmval)).forEach((dmval,dmList)->
+                dmList.stream().collect(Collectors.groupingBy(PlanItem::getZbart)).forEach((zbart, zbartList)->{
+                    BigDecimal count = new BigDecimal(0);
+                    PlanItem T800 = null;
+                    for (PlanItem i : zbartList) {
+                        count = count.add(ClassUtils.coverStringToBigDecimal(i.getZbval()));
+                        if("T800".equals(i.getZtval())){
+                            T800 = i;
+                        }
+                    }
+                    if(T800 != null){
+                        T800.setZbval(count.toString());
+                    }
+                })
+        );
+    }
+    private void initItemList(List<PlanItem> planItemList){
+        planItemList.forEach(item->item.setZbval("0"));
     }
 }

@@ -27,7 +27,6 @@ import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -167,13 +166,13 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     }
 
     @Override
-    public List<RollPlanHeadDataArchive> getHeadDataByPlanHeadIdAndZbart(Long planHeadId, String zbart) {
-        return rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndZbart(planHeadId, zbart);
+    public List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String> imnumList) {
+        return rollPlanItemDataArchiveDAO.findAllByHeadIdInAndImnumIn(headIdList, imnumList);
     }
 
     @Override
-    public List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String> imnumList) {
-        return rollPlanItemDataArchiveDAO.findAllByHeadIdInAndImnumIn(headIdList, imnumList);
+    public List<RollPlanItemDataArchive> getItemDataByPlanHeadId(Long PlanHeadId) {
+        return rollPlanItemDataArchiveDAO.findAllByPlanHeadId(PlanHeadId);
     }
 
     @Transactional
@@ -181,6 +180,12 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     @Modifying
     public void saveItemList(List<RollPlanItemDataArchive> changedList) {
         Iterable<RollPlanItemDataArchive> save = rollPlanItemDataArchiveDAO.save(changedList);
+        save.forEach(s-> log.warn("id:{}, dtval:{}",s.getId(),s.getDtval()));
+    }
+
+    @Override
+    public void saveHeadList(List<RollPlanHeadDataArchive> changedList) {
+        Iterable<RollPlanHeadDataArchive> save = rollPlanHeadDataArchiveDAO.save(changedList);
         save.forEach(s-> log.warn("id:{}, dtval:{}",s.getId(),s.getDtval()));
     }
 

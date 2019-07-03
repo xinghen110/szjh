@@ -21,6 +21,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAmount;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -198,8 +200,6 @@ public class ClassUtils {
         DateTimeFormatter formatter;
         switch (format) {
             case "Y":
-                formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-                break;
             case "M":
                 formatter = DateTimeFormatter.ofPattern("yyyy-MM");
                 break;
@@ -439,5 +439,12 @@ public class ClassUtils {
         int pageSize = page.initPageRequest().getPageSize();
         int end = start+pageSize > list.size()? list.size() : start+pageSize;
         return new PageImpl<>(list.subList(start, end), page.initPageRequest(), list.size());
+    }
+
+    /**
+     * 获取当月最后一天
+     * */
+    public static LocalDate getLastDay(LocalDate date){
+        return date.withDayOfMonth(1).plusMonths(1).minusDays(1);
     }
 }

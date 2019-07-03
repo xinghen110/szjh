@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,7 @@ public class RollPlanItemDataArchiveVO extends RollPlanItemDataArchive implement
         vo.setImtxt(businessItemMap.get(vo.getImnum()).get(0).getImtxt());
         vo.setOdue((String)o[12]);
         vo.setSdart((String)o[13]);
+        vo.setId(((BigInteger)o[14]).longValue());
         return vo;
     }
 

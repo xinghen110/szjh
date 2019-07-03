@@ -13,19 +13,20 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class GroovyShellExample {
     public static void main(String[] args) {
         try {
-            System.out.println(ClassUtils.dfYMD.parse("20180116"));
-        } catch (ParseException e) {
+            System.out.println(ClassUtils.getLastDay(LocalDate.now()));
+        } catch (Exception e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
         }
 
-        c();
+        //c();
     }
 
     public static void a(){

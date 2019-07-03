@@ -119,9 +119,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 planItemService.initCalcData(itemList, header);
             }
 
-            //计算T800（小计）
-            calcT800(itemList);
-
             //保存明细数据
             planItemService.save(itemList);
             //保存布局数据
@@ -405,7 +402,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
         //待统计抬头列表
         List<RollPlanHeadDataArchive> headList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndDmvalAndZbart(zbart, dmart + ":" + dmval, planHeadId);
-        List<PlanItem> planItemList = planItemService.getListByHeaderId(planHeadId);
+
         if(ClassUtils.isEmpty(headList)){
             return 0;
         }
@@ -469,21 +466,28 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 });
             });
         });
+        //更新计划明细
         if(!ClassUtils.isEmpty(changedList)){
             rollPlanArchiveService.saveItemList(changedList);
         }
         //更新报表明细
+        List<PlanItem> planItemList = planItemService.getListByHeaderId(planHeadId);
         planItemService.initCalcData(planItemList, getById(planHeadId));
+        planItemService.save(planItemList);
         return changedList.size();
     }
 
     @Override
     public void updateCavalByPlanHeadIdAndZbartAndWears(Long planHeadId, String zbart, BigDecimal wears) throws Exception {
-        //待统计抬头列表
-        List<RollPlanHeadDataArchive> headList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndZbart(planHeadId, zbart);
+        Map<Long, List<RollPlanItemDataArchive>> itemMap = rollPlanArchiveService
+                .getItemDataByPlanHeadId(planHeadId).stream()
+                .collect(Collectors.groupingBy(RollPlanItemDataArchive::getId));
+        Map<Long, List<RollPlanHeadDataArchive>> headMap = rollPlanArchiveService
+                .getHeadDataArchiveList(planHeadId).stream()
+                .collect(Collectors.groupingBy(RollPlanHeadDataArchive::getRollId));
         PlanHeader planHeader = getById(planHeadId);
-        String jhval = planHeader.getJhval();//计划期间
         List<PlanItem> planItemList = planItemService.getListByHeaderId(planHeadId);
+        String jhval = planHeader.getJhval();//计划期间
         //统计当前计划金额
         BigDecimal sum = BigDecimal.ZERO;
         for(PlanItem item : planItemList){
@@ -491,30 +495,79 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 sum = sum.add(new BigDecimal(item.getZbval()));
             }
         }
-        if(ClassUtils.isEmpty(headList)){
-            return;
-        }
         //计划后延、提前标记，true=后延
-        sum = wears.subtract(sum);
+        sum = sum.subtract(wears);
         if(sum.compareTo(BigDecimal.ZERO)==0){
             return;
         }
         boolean flag = sum.compareTo(BigDecimal.ZERO)>0;
         //获取【付款支付完成时效】对应imnum号
-        List<IEPlanBusinessItemSet> c210 = iePlanBusinessItemSetService.getAllByCaart("C210");
-        if(c210.isEmpty()){
-            return;
+        String c210Imnum = iePlanBusinessItemSetService.getAllByCaart("C210").get(0).getImnum();
+        List<RollPlanItemDataArchive> itemList = new ArrayList<>();
+        List<RollPlanHeadDataArchive> headList = new ArrayList<>();
+        if(flag){
+            //后延
+            LocalDate start = LocalDate.parse(jhval+"-01");
+            LocalDate end = ClassUtils.getLastDay(start);
+            String firstDay = end.plusDays(1).toString().replaceAll("-","");
+            //获取本月计划列表
+            List<RollPlanItemDataArchiveVO> itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
+                    start.toString().replaceAll("-", ""),
+                    end.toString().replaceAll("-", ""));
+            //过滤出时间范围内的行项目，并按照时间倒序
+            itemVOList = itemVOList.stream()
+                    .filter(vo-> c210Imnum.equals(vo.getImnum()))
+                    .sorted(Comparator.comparing(RollPlanItemDataArchiveVO::getDtval).reversed())
+                    .collect(Collectors.toList());
+            //从后往前凑金额，并将计划日期置为下个月的第一天
+            for(RollPlanItemDataArchiveVO vo : itemVOList){
+                if(sum.subtract(vo.getWears()).compareTo(BigDecimal.ZERO)>0){
+                    RollPlanItemDataArchive item = itemMap.get(vo.getId()).get(0);
+                    RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
+                    item.setDtval(firstDay);
+                    head.setDtval(item.getDtval());
+                    itemList.add(item);
+                    headList.add(head);
+                }else{
+                    break;
+                }
+            }
+        }else{
+            //提前
+            LocalDate start = ClassUtils.getLastDay(LocalDate.parse(jhval+"-01")).plusDays(1);
+            LocalDate end = start.plusYears(1);
+            String lastDay = start.minusDays(1).toString().replaceAll("-","");
+            //获取本月后【一年】计划列表
+            List<RollPlanItemDataArchiveVO> itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
+                    start.toString().replaceAll("-", ""),
+                    end.toString().replaceAll("-", ""));
+            //过滤出时间范围内的行项目，并按照时间倒序
+            itemVOList = itemVOList.stream()
+                    .filter(vo-> c210Imnum.equals(vo.getImnum()))
+                    .sorted(Comparator.comparing(RollPlanItemDataArchiveVO::getDtval))
+                    .collect(Collectors.toList());
+            //从后往前凑金额，并将计划日期置为当月的最后一天
+            for(RollPlanItemDataArchiveVO vo : itemVOList){
+                if(sum.add(vo.getWears()).compareTo(BigDecimal.ZERO)<0){
+                    RollPlanItemDataArchive item = itemMap.get(vo.getId()).get(0);
+                    RollPlanHeadDataArchive head = headMap.get(vo.getHeadId()).get(0);
+                    item.setDtval(lastDay);
+                    head.setDtval(item.getDtval());
+                    itemList.add(item);
+                    headList.add(head);
+                }else{
+                    break;
+                }
+            }
         }
-        //根据抬头ID列表、imnum号获取item列表
-        List<RollPlanItemDataArchive> itemArchiveList = rollPlanArchiveService.getItemDataByHeadIdAndImnum(
-                headList.stream().map(RollPlanHeadDataArchive::getRollId).collect(Collectors.toList()),
-                Collections.singletonList(c210.get(0).getImnum())
-        );
-        if(ClassUtils.isEmpty(itemArchiveList)){
-            return;
+        //保存计划明细
+        if(!ClassUtils.isEmpty(itemList)){
+            rollPlanArchiveService.saveItemList(itemList);
+            rollPlanArchiveService.saveHeadList(headList);
         }
-        itemArchiveList
-
+        //重新计算报表明细并保存
+        planItemService.initCalcData(planItemList, getById(planHeadId));
+        planItemService.save(planItemList);
     }
 
     @Override
@@ -609,25 +662,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         } catch (ParseException e) {
             return false;
         }
-    }
-
-    private void calcT800(List<PlanItem> itemList){
-        // 计算T800（小计）
-        itemList.stream().collect(Collectors.groupingBy(PlanItem::getDmval)).forEach((dmval,dmList)->
-                dmList.stream().collect(Collectors.groupingBy(PlanItem::getZbart)).forEach((zbart, zbartList)->{
-                    BigDecimal count = new BigDecimal(0);
-                    PlanItem T800 = null;
-                    for (PlanItem i : zbartList) {
-                        count = count.add(ClassUtils.coverStringToBigDecimal(i.getZbval()));
-                        if("T800".equals(i.getZtval())){
-                            T800 = i;
-                        }
-                    }
-                    if(T800 != null){
-                        T800.setZbval(count.toString());
-                    }
-                })
-        );
     }
 
     //展示审批界面
