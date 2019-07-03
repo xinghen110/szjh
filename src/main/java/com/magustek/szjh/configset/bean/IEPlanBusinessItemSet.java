@@ -33,6 +33,7 @@ public class IEPlanBusinessItemSet extends BaseEntity{
     @Column(length = 1) private String hjbgn;//第一环节
     @Column(length = 1) private String hjend;//最后环节
     @Column(length = 1) private String rflag;//传回CM标识
+    @Column(length = 4) private String exbtr;//排除金额
     @Column(length = 1)  private String msgtype;//消息类型
     @Column(length = 220)private String msgtext;//消息文本
     //@Column(length = 4) private String bukrs;//公司代码
