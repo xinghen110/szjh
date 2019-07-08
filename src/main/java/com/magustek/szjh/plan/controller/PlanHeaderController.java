@@ -123,6 +123,18 @@ public class PlanHeaderController {
         return resp.setStateCode(BaseResponse.SUCCESS).setData(count).setMsg("成功！").toJson();
     }
 
+    @ApiOperation(value="根据计划ID-planHeadId、经营指标分类-zbart，获取计划金额-wears、计划笔数-count、最大可调整金额-totalWears。")
+    @RequestMapping("/getCavalByPlanHeadId")
+    public String getCavalByPlanHeadId(@RequestBody RollPlanHeadDataArchiveVO vo) throws Exception {
+        Map<String, String> map = planHeaderService.getCavalByPlanHeadId(vo.getPlanHeadId(), vo.getZbart());
+        log.warn("用户-{}，根据计划ID-planHeadId-{}、经营指标分类-zbart-{}、目标金额-wears-{}。",
+                ContextUtils.getUserName(),
+                vo.getPlanHeadId(),
+                vo.getZbart(),
+                vo.getWears());
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(map).setMsg("成功！").toJson();
+    }
+
     @ApiOperation(value="根据计划ID-planHeadId、经营指标分类-zbart、目标金额-wears，更新月度计划。")
     @RequestMapping("/updateCavalByPlanHeadIdAndWears")
     public String updateCavalByPlanHeadIdAndWears(@RequestBody RollPlanHeadDataArchiveVO vo) throws Exception {
@@ -132,7 +144,7 @@ public class PlanHeaderController {
                 vo.getPlanHeadId(),
                 vo.getZbart(),
                 vo.getWears());
-        return resp.setStateCode(BaseResponse.SUCCESS).setData("{\"wears\":1.3,\"count\":30}").setMsg("成功！").toJson();
+        return resp.setStateCode(BaseResponse.SUCCESS).setMsg("成功！").toJson();
     }
 
     @ApiOperation(value="获取审批界面", notes = "参数：id")

@@ -27,6 +27,7 @@ public interface PlanHeaderService {
     int updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(Long planHeadId, String caart, String dmart, String dmval, String zbart, Integer caval) throws Exception;
 
     void updateCavalByPlanHeadIdAndZbartAndWears(Long planHeadId, String zbart, BigDecimal wears) throws Exception;
+    Map<String, String> getCavalByPlanHeadId(Long planHeadId, String zbart) throws Exception;
 
     /**
      * 获取系统中ckdate最新的月度计划

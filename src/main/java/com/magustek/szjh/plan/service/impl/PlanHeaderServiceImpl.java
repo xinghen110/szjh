@@ -21,6 +21,7 @@ import com.magustek.szjh.plan.dao.PlanLayoutDAO;
 import com.magustek.szjh.plan.service.PlanHeaderService;
 import com.magustek.szjh.plan.service.PlanItemService;
 import com.magustek.szjh.plan.service.RollPlanArchiveService;
+import com.magustek.szjh.plan.utils.PlanConstant;
 import com.magustek.szjh.plan.utils.WearsType;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
@@ -337,6 +338,8 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     @Override
     public List<Map<String, Object>> getCavalByPlanHeadIdAndCaartAndDmart(Long planHeadId, String caart, String dmart, String zbart) {
         List<Map<String, Object>> list = new ArrayList<>();
+        PlanHeader planHeader = getById(planHeadId);
+        String jhval = planHeader.getJhval().replaceAll("-","");
         //维度列表
         Map<String, List<OrganizationSet>> orgMap = organizationSetService.getOrgMapByDmart(dmart);
         if(orgMap==null){
@@ -383,8 +386,19 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             }
             map.put("cavalHis", statisticsMap.get(k).get(0).getHisval());
 
-            //合同数量
-            List<Long> rollIdList = itemList.stream().map(RollPlanItemDataArchive::getHeadId).collect(Collectors.toList());
+            //计划笔数
+            List<RollPlanHeadDataArchive> rollList = headList.stream()
+                    .filter(h -> zbart.equals(h.getZbart())
+                            && !Strings.isNullOrEmpty(h.getDtval())
+                            && h.getDtval().startsWith(jhval))
+                    .collect(Collectors.toList());
+            BigDecimal wears = rollList.stream().map(RollPlanHeadDataArchive::getWears).reduce(BigDecimal.ZERO, BigDecimal::add);
+            map.put("count", rollList.size());
+            //本月计划金额
+            map.put("wears", wears.doubleValue());
+
+/*             //合同数量
+           List<Long> rollIdList = itemList.stream().map(RollPlanItemDataArchive::getHeadId).collect(Collectors.toList());
             headList = headList.stream().filter(i->rollIdList.contains(i.getRollId())).collect(Collectors.toList());
             long count = headList.stream().map(RollPlanHeadDataArchive::getHtsno).distinct().count();
             map.put("count", count);
@@ -392,6 +406,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             //合同总金额
             BigDecimal wears = headList.stream().map(RollPlanHeadDataArchive::getWears).reduce(BigDecimal.ZERO, BigDecimal::add);
             map.put("wears", wears.doubleValue());
+            */
             list.add(map);
         });
         return list;
@@ -568,6 +583,44 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         //重新计算报表明细并保存
         planItemService.initCalcData(planItemList, getById(planHeadId));
         planItemService.save(planItemList);
+    }
+
+    @Override
+    public Map<String, String> getCavalByPlanHeadId(Long planHeadId, String zbart) throws Exception {
+        //初始化结果集
+        Map<String, String> map = new HashMap<>();
+        map.put("wears","0");//月计划金额
+        map.put("count","0");//月计划涉及的滚动计划抬头笔数
+        map.put("totalWears","0");//计划最大可调整量
+        PlanHeader header = getById(planHeadId);
+        String jhval = header.getJhval();
+        //计划行项目列表
+        List<PlanItem> itemList = planItemService.getListByHeaderId(planHeadId, PlanConstant.AXIS_ZB, zbart);
+        itemList.forEach(item->{
+            //当前月计划金额累计
+            if(item.getZtval().startsWith(jhval)){
+                BigDecimal wears = new BigDecimal(map.get("wears"));
+                wears = wears.add(new BigDecimal(item.getZbval()));
+                map.put("wears", wears.toString());
+            }
+        });
+        String jh = jhval.replaceAll("-", "");
+        //滚动计划列表当期笔数
+        List<RollPlanHeadDataArchive> headList = rollPlanArchiveService.getHeadDataArchiveList(planHeadId);
+        long count = headList.stream()
+                .filter(h ->
+                        zbart.equals(h.getZbart()) && !Strings.isNullOrEmpty(h.getDtval()) && h.getDtval().startsWith(jh))
+                .count();
+        map.put("count", count+"");
+        headList.stream()
+                .filter(h -> zbart.equals(h.getZbart()) && !Strings.isNullOrEmpty(h.getDtval()) && h.getDtval().startsWith(jh))
+                .forEach(h->{
+            //当前滚动计划金额累计
+            BigDecimal totalWears = new BigDecimal(map.get("totalWears"));
+            totalWears = totalWears.add(h.getWears());
+            map.put("totalWears", totalWears.toString());
+        });
+        return map;
     }
 
     @Override
