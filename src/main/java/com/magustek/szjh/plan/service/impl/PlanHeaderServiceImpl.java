@@ -259,28 +259,28 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         rollPlanMapByHtsno.forEach((htsno, rollPlanList)->{
             Map<String, WearsType> htsnoMap = new HashMap<>();
             rollPlanList.forEach(rollPlan ->
-                    weekMap.forEach((week, dateList)->{
-                        //如果滚动计划日期在本周内，则累计滚动计划金额
-                        if(isInDuration(rollPlan.getDtval(), dateList, week, weekMap.size(), firstMonth, lastMonth)){
-                            WearsType wears = new WearsType();
-                            htsnoMap.put(week,wears);
-                            IEPlanBusinessHeadSet headSet = headMapByHdnum.get(rollPlan.getHdnum()).get(0);
-                            switch (headSet.getZtype()){
-                                case "01":
-                                    wears.setBudget(wears.getBudget().add(rollPlan.getWears()));
-                                    break;
-                                case "02":
-                                    wears.setProgress(wears.getProgress().add(rollPlan.getWears()));
-                                    break;
-                                case "03":
-                                    wears.setSettlement(wears.getSettlement().add(rollPlan.getWears()));
-                                    break;
-                                case "04":
-                                    wears.setWarranty(wears.getWarranty().add(rollPlan.getWears()));
-                                    break;
-                            }
+                weekMap.forEach((week, dateList)->{
+                    //如果滚动计划日期在本周内，则累计滚动计划金额
+                    if(isInDuration(rollPlan.getDtval(), dateList, week, weekMap.size(), firstMonth, lastMonth)){
+                        WearsType wears = htsnoMap.containsKey(week)?htsnoMap.get(week):new WearsType();
+                        htsnoMap.put(week,wears);
+                        IEPlanBusinessHeadSet headSet = headMapByHdnum.get(rollPlan.getHdnum()).get(0);
+                        switch (headSet.getZtype()){
+                            case "01":
+                                wears.setBudget(wears.getBudget().add(rollPlan.getWears()));
+                                break;
+                            case "02":
+                                wears.setProgress(wears.getProgress().add(rollPlan.getWears()));
+                                break;
+                            case "03":
+                                wears.setSettlement(wears.getSettlement().add(rollPlan.getWears()));
+                                break;
+                            case "04":
+                                wears.setWarranty(wears.getWarranty().add(rollPlan.getWears()));
+                                break;
                         }
-                    })
+                    }
+                })
             );
             //组装款项明细
             if(!ClassUtils.isEmpty(htsnoMap)){
@@ -290,18 +290,18 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 htsnoMap.forEach((k,v)->{
                     StringBuilder sb = new StringBuilder();
                     BigDecimal amount = new BigDecimal("0.00");
-                    if(v.getBudget().compareTo(BigDecimal.ZERO)>0){
+                    if(v.getBudget().compareTo(BigDecimal.ZERO)!=0){
                         sb.append("预：").append(v.getBudget().toString());
                         amount = amount.add(v.getBudget());
                     }
-                    if(v.getSettlement().add(v.getProgress()).compareTo(BigDecimal.ZERO)>0){
+                    if(v.getSettlement().add(v.getProgress()).compareTo(BigDecimal.ZERO)!=0){
                         if(!Strings.isNullOrEmpty(sb.toString())){
                             sb.append("$");
                         }
                         sb.append("结：").append(v.getSettlement().add(v.getProgress()).toString());
                         amount = amount.add(v.getSettlement()).add(v.getProgress());
                     }
-                    if(v.getWarranty().compareTo(BigDecimal.ZERO)>0){
+                    if(v.getWarranty().compareTo(BigDecimal.ZERO)!=0){
                         if(!Strings.isNullOrEmpty(sb.toString())){
                             sb.append("$");
                         }
