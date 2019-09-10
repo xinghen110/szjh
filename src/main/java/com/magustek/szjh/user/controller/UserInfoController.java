@@ -4,15 +4,24 @@ import com.alibaba.fastjson.JSON;
 import com.magustek.szjh.config.InitConfigData;
 import com.magustek.szjh.user.bean.CompanyModel;
 import com.magustek.szjh.user.bean.UserInfo;
+import com.magustek.szjh.user.service.impl.UserInfoServiceOdataImpl;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.base.BaseResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户信息
@@ -26,9 +35,11 @@ public class UserInfoController {
     private BaseResponse resp;
 
     private InitConfigData initConfigData;
+    private UserInfoServiceOdataImpl userInfoServiceOdata;
 
-    public UserInfoController( InitConfigData initConfigData) {
+    public UserInfoController( InitConfigData initConfigData, UserInfoServiceOdataImpl userInfoServiceOdata) {
         this.initConfigData = initConfigData;
+        this.userInfoServiceOdata = userInfoServiceOdata;
         resp = new BaseResponse();
         log.info("初始化 UserInfoController");
     }
@@ -67,4 +78,44 @@ public class UserInfoController {
 
         return resp.setStateCode(BaseResponse.SUCCESS).setData(user).setMsg("选择公司成功！").toJson();
     }
+
+    /**
+     * 修改密码(用户处于登陆状态)
+     * @param newPassword 新密码
+     * @param oldPassword 旧密码
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value = "/modifyPassword")
+    @ResponseBody
+    public String modifyPassword(HttpServletRequest request
+            , String newPassword, String oldPassword) throws Exception{
+        Authentication currentuser = SecurityContextHolder.getContext().getAuthentication();
+        if(currentuser==null)
+        {
+            // This would indicate bad coding somewhere
+            throw new AccessDeniedException("Can't change password as no Authentication object found in context " +
+                    "for current user.");
+        }
+
+        HttpSession session = request.getSession();
+        UserInfo user =  (UserInfo) session.getAttribute("userInfo");
+        if (user == null) {
+            throw new Exception("未登录异常");
+        }
+
+        //调用ODATA服务修改密码
+        boolean modifyFlag = userInfoServiceOdata.modifyPassword(user.getPhone(), oldPassword, newPassword);
+        if (modifyFlag) {
+            UserDetails newUser = userInfoServiceOdata.loadUserByUsername(user.getUsername());
+            UsernamePasswordAuthenticationToken newAuthentication =
+                    new UsernamePasswordAuthenticationToken(newUser, newUser.getPassword(), newUser.getAuthorities());
+            newAuthentication.setDetails(currentuser.getDetails());
+            SecurityContextHolder.getContext().setAuthentication(newAuthentication);
+            return resp.setStateCode(BaseResponse.SUCCESS).setData(newUser).setMsg("修改密码成功！").toJson();
+        }else {
+            return resp.setStateCode(BaseResponse.ERROR).setMsg("修改密码失败！").toJson();
+        }
+    }
+
 }
