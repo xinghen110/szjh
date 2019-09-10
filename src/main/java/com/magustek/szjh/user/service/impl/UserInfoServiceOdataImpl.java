@@ -100,4 +100,31 @@ public class UserInfoServiceOdataImpl implements UserInfoServiceOdata {
         }
         return new User(userInfo.getLoginname(), userInfo.getPassword().toLowerCase(), new ArrayList<>());
     }
+
+
+    /**
+     * OData服务修改密码
+     * O003	被动修改密码（遗忘等原因）
+     * O004 主动修改密码
+     * @param phone 当前登录用户手机号码
+     * @param newPassword 新密码
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public boolean modifyPassword(String phone, String oldPassword, String newPassword) throws Exception {
+        Map<String, Object> paramsMap = new HashMap<String, Object>();
+        paramsMap.put("Opaswd", oldPassword);
+        paramsMap.put("Npaswd", newPassword);
+        paramsMap.put("Aflag", "O004");
+
+        String url = "ZCM_ODATA_ORG_SRV/UserChangePasswordSet(Phone='"+phone+"')?";
+        try {
+            httpUtils.getResultByUrl(url,paramsMap,HttpMethod.PUT);
+            return true;
+        } catch (Exception e) {
+            log.error("用户修改密码失败，失败原因："+e.getMessage());
+            return false;
+        }
+    }
 }
