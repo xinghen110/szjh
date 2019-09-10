@@ -121,10 +121,10 @@ public class UserInfoServiceOdataImpl implements UserInfoServiceOdata {
         String url = "ZCM_ODATA_ORG_SRV/UserChangePasswordSet(Phone='"+phone+"')?";
         try {
             httpUtils.getResultByUrl(url,paramsMap,HttpMethod.PUT);
-            return true;
         } catch (Exception e) {
             log.error("用户修改密码失败，失败原因："+e.getMessage());
             return false;
         }
+        return true;
     }
 }
