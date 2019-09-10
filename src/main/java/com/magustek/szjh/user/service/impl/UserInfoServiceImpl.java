@@ -48,4 +48,9 @@ public class UserInfoServiceImpl implements UserInfoService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userInfoService.loadUserByUsername(username);
     }
+
+    @Override
+    public boolean modifyPassword(String phone, String oldPassword, String newPassword) throws Exception {
+        return userInfoService.modifyPassword(phone, oldPassword, newPassword);
+    }
 }
