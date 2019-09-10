@@ -259,28 +259,28 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         rollPlanMapByHtsno.forEach((htsno, rollPlanList)->{
             Map<String, WearsType> htsnoMap = new HashMap<>();
             rollPlanList.forEach(rollPlan ->
-                    weekMap.forEach((week, dateList)->{
-                        //如果滚动计划日期在本周内，则累计滚动计划金额
-                        if(isInDuration(rollPlan.getDtval(), dateList, week, weekMap.size(), firstMonth, lastMonth)){
-                            WearsType wears = new WearsType();
-                            htsnoMap.put(week,wears);
-                            IEPlanBusinessHeadSet headSet = headMapByHdnum.get(rollPlan.getHdnum()).get(0);
-                            switch (headSet.getZtype()){
-                                case "01":
-                                    wears.setBudget(wears.getBudget().add(rollPlan.getWears()));
-                                    break;
-                                case "02":
-                                    wears.setProgress(wears.getProgress().add(rollPlan.getWears()));
-                                    break;
-                                case "03":
-                                    wears.setSettlement(wears.getSettlement().add(rollPlan.getWears()));
-                                    break;
-                                case "04":
-                                    wears.setWarranty(wears.getWarranty().add(rollPlan.getWears()));
-                                    break;
-                            }
+                weekMap.forEach((week, dateList)->{
+                    //如果滚动计划日期在本周内，则累计滚动计划金额
+                    if(isInDuration(rollPlan.getDtval(), dateList, week, weekMap.size(), firstMonth, lastMonth)){
+                        WearsType wears = htsnoMap.containsKey(week)?htsnoMap.get(week):new WearsType();
+                        htsnoMap.put(week,wears);
+                        IEPlanBusinessHeadSet headSet = headMapByHdnum.get(rollPlan.getHdnum()).get(0);
+                        switch (headSet.getZtype()){
+                            case "01":
+                                wears.setBudget(wears.getBudget().add(rollPlan.getWears()));
+                                break;
+                            case "02":
+                                wears.setProgress(wears.getProgress().add(rollPlan.getWears()));
+                                break;
+                            case "03":
+                                wears.setSettlement(wears.getSettlement().add(rollPlan.getWears()));
+                                break;
+                            case "04":
+                                wears.setWarranty(wears.getWarranty().add(rollPlan.getWears()));
+                                break;
                         }
-                    })
+                    }
+                })
             );
             //组装款项明细
             if(!ClassUtils.isEmpty(htsnoMap)){
@@ -290,18 +290,18 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 htsnoMap.forEach((k,v)->{
                     StringBuilder sb = new StringBuilder();
                     BigDecimal amount = new BigDecimal("0.00");
-                    if(v.getBudget().compareTo(BigDecimal.ZERO)>0){
+                    if(v.getBudget().compareTo(BigDecimal.ZERO)!=0){
                         sb.append("预：").append(v.getBudget().toString());
                         amount = amount.add(v.getBudget());
                     }
-                    if(v.getSettlement().add(v.getProgress()).compareTo(BigDecimal.ZERO)>0){
+                    if(v.getSettlement().add(v.getProgress()).compareTo(BigDecimal.ZERO)!=0){
                         if(!Strings.isNullOrEmpty(sb.toString())){
                             sb.append("$");
                         }
                         sb.append("结：").append(v.getSettlement().add(v.getProgress()).toString());
                         amount = amount.add(v.getSettlement()).add(v.getProgress());
                     }
-                    if(v.getWarranty().compareTo(BigDecimal.ZERO)>0){
+                    if(v.getWarranty().compareTo(BigDecimal.ZERO)!=0){
                         if(!Strings.isNullOrEmpty(sb.toString())){
                             sb.append("$");
                         }
@@ -494,6 +494,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
     @Override
     public void updateCavalByPlanHeadIdAndZbartAndWears(Long planHeadId, String zbart, BigDecimal wears) throws Exception {
+        log.error("开始调整计算！planId：{}，zbart：{}，wears:{}",planHeadId, zbart, wears);
         Map<Long, List<RollPlanItemDataArchive>> itemMap = rollPlanArchiveService
                 .getItemDataByPlanHeadId(planHeadId).stream()
                 .collect(Collectors.groupingBy(RollPlanItemDataArchive::getId));
@@ -503,6 +504,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         PlanHeader planHeader = getById(planHeadId);
         List<PlanItem> planItemList = planItemService.getListByHeaderId(planHeadId);
         String jhval = planHeader.getJhval();//计划期间
+
         //统计当前计划金额
         BigDecimal sum = BigDecimal.ZERO;
         for(PlanItem item : planItemList){
@@ -510,12 +512,14 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 sum = sum.add(new BigDecimal(item.getZbval()));
             }
         }
+        log.error("当前计划金额，sum:{}", sum);
         //计划后延、提前标记，true=后延
         sum = sum.subtract(wears);
         if(sum.compareTo(BigDecimal.ZERO)==0){
             return;
         }
         boolean flag = sum.compareTo(BigDecimal.ZERO)>0;
+        log.error("差额，sum:{}", sum);
         //获取【付款支付完成时效】对应imnum号
         String c210Imnum = iePlanBusinessItemSetService.getAllByCaart("C210").get(0).getImnum();
         List<RollPlanItemDataArchive> itemList = new ArrayList<>();
@@ -525,6 +529,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             LocalDate start = LocalDate.parse(jhval+"-01");
             LocalDate end = ClassUtils.getLastDay(start);
             String firstDay = end.plusDays(1).toString().replaceAll("-","");
+            log.error("计划期间-jhval：{}，调整日期：firstDay：{}", jhval, firstDay);
             //获取本月计划列表
             List<RollPlanItemDataArchiveVO> itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
                     start.toString().replaceAll("-", ""),
@@ -536,7 +541,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     .collect(Collectors.toList());
             //从后往前凑金额，并将计划日期置为下个月的第一天
             for(RollPlanItemDataArchiveVO vo : itemVOList){
-                if(sum.subtract(vo.getWears()).compareTo(BigDecimal.ZERO)>0){
+                log.error("开始调整计划，差额sum:{}，计划金额：vo.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}", sum,vo.getWears(),vo.getRollId(),vo.getId());
+                sum = sum.subtract(vo.getWears());
+                if(sum.compareTo(BigDecimal.ZERO)>0){
                     RollPlanItemDataArchive item = itemMap.get(vo.getId()).get(0);
                     RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
                     item.setDtval(firstDay);
@@ -563,7 +570,8 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     .collect(Collectors.toList());
             //从后往前凑金额，并将计划日期置为当月的最后一天
             for(RollPlanItemDataArchiveVO vo : itemVOList){
-                if(sum.add(vo.getWears()).compareTo(BigDecimal.ZERO)<0){
+                sum = sum.add(vo.getWears());
+                if(sum.compareTo(BigDecimal.ZERO)<0){
                     RollPlanItemDataArchive item = itemMap.get(vo.getId()).get(0);
                     RollPlanHeadDataArchive head = headMap.get(vo.getHeadId()).get(0);
                     item.setDtval(lastDay);
@@ -575,6 +583,8 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 }
             }
         }
+        headList.forEach(h-> log.error("受影响的计划：{}",JSON.toJSONString(h)));
+        itemList.forEach(i-> log.error("受影响的行项目：{}",JSON.toJSONString(i)));
         //保存计划明细
         if(!ClassUtils.isEmpty(itemList)){
             rollPlanArchiveService.saveItemList(itemList);
