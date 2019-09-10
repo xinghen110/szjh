@@ -10,4 +10,5 @@ public interface UserInfoService extends UserDetailsService {
     UserInfo userLogin(String Loginname, String Password, String Aflag);
     UserInfo getUserByLoginName(String Loginname);
     List<CompanyModel> getCompanyModelList(String loginName, String phone);
+    boolean modifyPassword(String phone,String oldPassword, String newPassword) throws Exception;
 }
