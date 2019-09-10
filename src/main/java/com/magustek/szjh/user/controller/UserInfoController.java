@@ -12,6 +12,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -104,10 +105,17 @@ public class UserInfoController {
             throw new Exception("未登录异常");
         }
 
+        //原密码校验(md5加密)
+        UserInfo userInfo = userInfoServiceOdata.userLogin(user.getLoginname(), "" , "O001");
+        Md5PasswordEncoder md5 = new Md5PasswordEncoder();
+        if( ! md5.isPasswordValid(userInfo.getPassword().toLowerCase(), oldPassword, null ) ) {
+            return resp.setStateCode(BaseResponse.ERROR).setMsg("原密码输入错误，请重新输入原密码").toJson();
+        }
+
         //调用ODATA服务修改密码
         boolean modifyFlag = userInfoServiceOdata.modifyPassword(user.getPhone(), oldPassword, newPassword);
         if (modifyFlag) {
-            UserDetails newUser = userInfoServiceOdata.loadUserByUsername(user.getUsername());
+            UserDetails newUser = userInfoServiceOdata.loadUserByUsername(user.getLoginname());
             UsernamePasswordAuthenticationToken newAuthentication =
                     new UsernamePasswordAuthenticationToken(newUser, newUser.getPassword(), newUser.getAuthorities());
             newAuthentication.setDetails(currentuser.getDetails());
