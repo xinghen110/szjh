@@ -36,5 +36,6 @@ public class IEPlanScreenItemSet extends BaseEntity{
     @Column              private int zsort;         //排序
     @Column(length = 1) private String msgtype;     //消息类型
     @Column(length = 220) private String msgtext;   //消息文本
+    @Column(length = 1) private String stflg;       //排序标识字段
 
 }
