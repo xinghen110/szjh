@@ -138,7 +138,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         String bukrs = ContextUtils.getCompany().getOrgcode();
         IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, headSet.getRptyp(), headSet.getHview());
         List<IEPlanScreenItemSet> itemSetLists = iePlanScreenVO.getItemSetList().stream()
-                                                                                .filter(listItem -> listItem.getHiden().equals(""))
+                                                                                .filter(listItem -> Strings.isNullOrEmpty(listItem.getHiden()))
                                                                                 .collect(Collectors.toList());
         HSSFWorkbook workbook = new HSSFWorkbook();
         //sheet名称

@@ -346,7 +346,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         String bukrs = ContextUtils.getCompany().getOrgcode();
         IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, vo.getRptyp(), vo.getHview());
         iePlanScreenVO.getItemSetList().stream()
-                                       .filter(listItem -> listItem.getHiden().equals(""))
+                                       .filter(listItem -> Strings.isNullOrEmpty(listItem.getHiden()))
                                        .forEach(iePlanScreenItemSet -> {
             if (iePlanScreenItemSet.getVtype().equals("number")){
                 BigDecimal amount = new BigDecimal("0.00");
