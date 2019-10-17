@@ -1,5 +1,6 @@
 package com.magustek.szjh.plan.service;
 
+import com.magustek.szjh.configset.bean.IEPlanScreenHeadSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.vo.PlanHeaderVO;
@@ -22,6 +23,8 @@ public interface PlanHeaderService {
     IEPlanReportHeadVO getLayoutByHeaderId(Long headerId);
     //查看部门合同计划
     List<Map<String, String>> getHtsnoList(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable) throws Exception;
+    //部门合同计划金额合计
+    Map<String, String> getTotalAmountHtsnoList(PlanHeaderVO vo) throws Exception;
 
     List<Map<String, Object>> getCavalByPlanHeadIdAndCaartAndDmart(Long planHeadId, String caart, String dmart, String zbart);
     int updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(Long planHeadId, String caart, String dmart, String dmval, String zbart, Integer caval) throws Exception;

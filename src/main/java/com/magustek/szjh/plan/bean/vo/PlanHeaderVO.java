@@ -50,7 +50,8 @@ public class PlanHeaderVO extends PlanHeader{
     private String dtval;
     private String dmval;
 
-
+    private String hview;
+    private String rptyp;
 
 
 

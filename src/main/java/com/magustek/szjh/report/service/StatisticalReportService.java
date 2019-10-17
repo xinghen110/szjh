@@ -1,10 +1,13 @@
 package com.magustek.szjh.report.service;
 
+import com.magustek.szjh.configset.bean.IEPlanScreenHeadSet;
 import com.magustek.szjh.report.bean.vo.ReportVO;
 import com.magustek.szjh.report.bean.vo.DateVO;
 import com.magustek.szjh.utils.base.BasePage;
 import org.springframework.data.domain.Page;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -56,4 +59,12 @@ public interface StatisticalReportService {
      * @return 年度、月度计划对比
      */
     List<Map<String, String>> compareMRAndAR(Long arId, String zbart) throws Exception;
+
+    /**
+     * 销项发票跟踪数据导出为Excel
+     * @param response
+     * @param headSet
+     * @throws IOException
+     */
+    void exportTaxDetailByExcel(HttpServletResponse response, IEPlanScreenHeadSet headSet) throws Exception;
 }
