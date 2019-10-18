@@ -63,8 +63,9 @@ public interface StatisticalReportService {
     /**
      * 销项发票跟踪数据导出为Excel
      * @param response
-     * @param headSet
+     * @param rptyp
+     * @param hview
      * @throws IOException
      */
-    void exportTaxDetailByExcel(HttpServletResponse response, IEPlanScreenHeadSet headSet) throws Exception;
+    void exportTaxDetailByExcel(HttpServletResponse response, String rptyp, String hview) throws Exception;
 }
