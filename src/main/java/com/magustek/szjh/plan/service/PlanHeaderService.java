@@ -24,14 +24,14 @@ public interface PlanHeaderService {
     //查看部门合同计划
     List<Map<String, String>> getHtsnoList(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable) throws Exception;
     //部门合同计划金额合计
-    Map<String, String> getTotalAmountHtsnoList(PlanHeaderVO vo) throws Exception;
+    Map<String, String> getTotalAmountHtsnoList(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable, String searching, String hview, String rptyp) throws Exception;
 
     List<Map<String, Object>> getCavalByPlanHeadIdAndCaartAndDmart(Long planHeadId, String caart, String dmart, String zbart);
     int updateCavalByPlanHeadIdAndCaartAndDmartAndDmval(Long planHeadId, String caart, String dmart, String dmval, String zbart, Integer caval) throws Exception;
 
     void updateCavalByPlanHeadIdAndZbartAndWears(Long planHeadId, String zbart, BigDecimal wears) throws Exception;
     Map<String, String> getCavalByPlanHeadId(Long planHeadId, String zbart) throws Exception;
-
+    Page<Map<String, String>> getHtsnoListPage(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable, String searching, String hview, String rptyp) throws Exception;
     /**
      * 获取系统中ckdate最新的月度计划
      * @return 月度计划
