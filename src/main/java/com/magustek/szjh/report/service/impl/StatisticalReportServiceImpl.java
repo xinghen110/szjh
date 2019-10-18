@@ -134,9 +134,9 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     }
 
     @Override
-    public void exportTaxDetailByExcel(HttpServletResponse response, IEPlanScreenHeadSet headSet) throws Exception {
+    public void exportTaxDetailByExcel(HttpServletResponse response, String rptyp, String hview) throws Exception {
         String bukrs = ContextUtils.getCompany().getOrgcode();
-        IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, headSet.getRptyp(), headSet.getHview());
+        IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, rptyp, hview);
         List<IEPlanScreenItemSet> itemSetLists = iePlanScreenVO.getItemSetList().stream()
                                                                                 .filter(listItem -> Strings.isNullOrEmpty(listItem.getHiden()))
                                                                                 .collect(Collectors.toList());
@@ -172,8 +172,8 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
             sheet.autoSizeColumn(i);
             sheet.setColumnWidth(i, sheet.getColumnWidth(i) * 13 / 10);
         }
-        response.setContentType("application/octet-stream;charset=UTF-8");
-        response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "utf-8"));
+        response.setContentType("application/vnd.ms-excel");
+        response.setHeader("Content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
         workbook.write(response.getOutputStream());
 
     }

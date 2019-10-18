@@ -52,13 +52,6 @@ public class StatisticalReportController {
         return resp.setStateCode(BaseResponse.SUCCESS).setData(detail).setMsg("成功！").toJson();
     }
 
-    @ApiOperation(value="根据bukrs、rptyp、hview屏幕配置导出【销项发票】数据excel", notes = "参数：bukrs、rptyp、hview")
-    @RequestMapping("/exportTaxDetailByExcel")
-    public String exportTaxDetailByExcel(HttpServletResponse response, @RequestBody IEPlanScreenHeadSet headSet) throws Exception {
-        statisticalReportService.exportTaxDetailByExcel(response, headSet);
-        return resp.setStateCode(BaseResponse.SUCCESS).setMsg("成功！").toJson();
-    }
-
     @ApiOperation(value="根据version获取【履约待办工作】数据", notes = "参数：version")
     @RequestMapping("/getPendingItemListByDate")
     public String getPendingItemListByDate(@RequestBody DateVO dateVO) throws Exception{

@@ -52,6 +52,7 @@ public class PlanHeaderVO extends PlanHeader{
 
     private String hview;
     private String rptyp;
+    private String searching;
 
 
 
