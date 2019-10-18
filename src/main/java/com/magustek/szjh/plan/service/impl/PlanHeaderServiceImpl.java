@@ -2,6 +2,7 @@ package com.magustek.szjh.plan.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.magustek.szjh.approval.bean.ApprovalLog;
 import com.magustek.szjh.approval.dao.ApprovalLogDAO;
 import com.magustek.szjh.basedataset.entity.DmCalcStatistics;
@@ -340,15 +341,100 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     }
 
     @Override
-    public Map<String, String> getTotalAmountHtsnoList(PlanHeaderVO vo) throws Exception{
+    public Page<Map<String, String>> getHtsnoListPage(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable, String searching, String hview, String rptyp) throws Exception {
+        /*String bukrs = ContextUtils.getCompany().getOrgcode();
+        IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, rptyp, hview);*/
+        List<Map<String, String>> htsnoList = this.getHtsnoList(zbart,dmval,dtval,planHeadId,pageable);
+        String searchgStr = searching == null?null:searching.trim();
+        if (searchgStr != null && !searching.isEmpty()) {
+            htsnoList = htsnoList.stream().filter((obj) -> {
+                //log.warn("这是一条日志打印G118是："+obj.get("G118"));
+                if (obj.get("G118").contains(searchgStr)) {
+                    return true;
+                }
+                return false;
+            }).collect(Collectors.toList());
+        }
+        Page<Map<String, String>> page = null;
+        Map<String, String> map = this.getTotalAmountHtsnoList(zbart, dmval, dtval, planHeadId, pageable, searching, hview, rptyp);
+        if (pageable.getOffset() > htsnoList.size()) {
+            long total = 0L;
+            page = new PageImpl<>(Lists.newArrayList(), pageable, total);
+        } else if (pageable.getOffset() <= htsnoList.size() && pageable.getOffset() + pageable.getPageSize() > htsnoList.size()) {
+            List<Map<String, String>> splitHtsnoList = htsnoList.subList(pageable.getOffset(), htsnoList.size());
+            splitHtsnoList.add(map);
+            page = new PageImpl<>(splitHtsnoList, pageable, htsnoList.size());
+        } else {
+            List<Map<String, String>> splitHtsnoList = htsnoList.subList(pageable.getOffset(), pageable.getOffset() + pageable.getPageSize());
+            splitHtsnoList.add(map);
+            page = new PageImpl<>(splitHtsnoList, pageable, htsnoList.size());
+        }
+        return page;
+    }
+
+    @Override
+    public Map<String, String> getTotalAmountHtsnoList(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable, String searching, String hview, String rptyp) throws Exception{
         Map<String, String> totalAmountMap = new HashMap<>();
-        List<Map<String, String>> htsnoList = this.getHtsnoList(vo.getZbart(), vo.getDmval(), vo.getDtval(), vo.getId(), vo.initPageRequest());
-        String bukrs = ContextUtils.getCompany().getOrgcode();
-        IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, vo.getRptyp(), vo.getHview());
-        iePlanScreenVO.getItemSetList().stream()
-                                       .filter(listItem -> listItem.getHiden().equals(""))
-                                       .forEach(iePlanScreenItemSet -> {
-            if (iePlanScreenItemSet.getVtype().equals("number")){
+        List<Map<String, String>> htsnoList = this.getHtsnoList(zbart, dmval, dtval, planHeadId, pageable);
+        BigDecimal week1 = new BigDecimal("0.00");
+        BigDecimal week2 = new BigDecimal("0.00");
+        BigDecimal week3 = new BigDecimal("0.00");
+        BigDecimal week4 = new BigDecimal("0.00");
+        BigDecimal week5 = new BigDecimal("0.00");
+        BigDecimal week6 = new BigDecimal("0.00");
+        BigDecimal G115 = new BigDecimal("0.00");
+        BigDecimal G120 = new BigDecimal("0.00");
+        BigDecimal G131 = new BigDecimal("0.00");
+        BigDecimal G140 = new BigDecimal("0.00");
+
+        for (Map<String, String> obj : htsnoList) {
+            if (obj.containsKey("week1_amount")) {
+                week1 = week1.add(new BigDecimal(obj.get("week1_amount")));
+            }
+            if (obj.containsKey("week2_amount")) {
+                week2 = week2.add(new BigDecimal(obj.get("week2_amount")));
+            }
+            if (obj.containsKey("week3_amount")) {
+                week3 = week3.add(new BigDecimal(obj.get("week3_amount")));
+            }
+            if (obj.containsKey("week4_amount")) {
+                week4 = week4.add(new BigDecimal(obj.get("week4_amount")));
+            }
+            if (obj.containsKey("week5_amount")) {
+                week5 = week5.add(new BigDecimal(obj.get("week5_amount")));
+            }
+            if (obj.containsKey("week6_amount")) {
+                week6 = week6.add(new BigDecimal(obj.get("week6_amount")));
+            }
+            if (obj.containsKey("G115")) {
+                G115 = G115.add(new BigDecimal(obj.get("G115")));
+            }
+            if (obj.containsKey("G120")) {
+                G120 = G120.add(new BigDecimal(obj.get("G120")));
+            }
+            if (obj.containsKey("G131")) {
+                G131 = G131.add(new BigDecimal(obj.get("G131")));
+            }
+            if (obj.containsKey("G140")) {
+                G140 = G140.add(new BigDecimal(obj.get("G140")));
+            }
+        }
+
+        totalAmountMap.put("week1", week1.toString());
+        totalAmountMap.put("week2", week2.toString());
+        totalAmountMap.put("week3", week3.toString());
+        totalAmountMap.put("week4", week4.toString());
+        totalAmountMap.put("week5", week5.toString());
+        totalAmountMap.put("G115", G115.toString());
+        totalAmountMap.put("G120", G120.toString());
+        totalAmountMap.put("week6", week6.toString());
+        totalAmountMap.put("G131", G131.toString());
+        totalAmountMap.put("G140", G140.toString());
+
+        /*String bukrs = ContextUtils.getCompany().getOrgcode();
+        IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, rptyp, hview);
+        iePlanScreenVO.getItemSetList().forEach(iePlanScreenItemSet -> {
+            if (iePlanScreenItemSet.getVtype().equals("number") && Strings.isNullOrEmpty(iePlanScreenItemSet.getHiden())){
                 BigDecimal amount = new BigDecimal("0.00");
                 //week
                 if (!Strings.isNullOrEmpty(iePlanScreenItemSet.getSuvar())){
@@ -378,7 +464,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             }else {
                 totalAmountMap.put(iePlanScreenItemSet.getFdnam(), "");
             }
-        });
+        });*/
         return totalAmountMap;
     }
 
