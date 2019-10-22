@@ -348,7 +348,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         String searchgStr = searching == null?null:searching.trim();
         if (searchgStr != null && !searching.isEmpty()) {
             htsnoList = htsnoList.stream().filter((obj) -> {
-                //log.warn("这是一条日志打印G118是："+obj.get("G118"));
                 if (obj.get("G118").contains(searchgStr)) {
                     return true;
                 }
