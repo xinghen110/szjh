@@ -376,95 +376,43 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     public Map<String, String> getTotalAmountHtsnoList(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable, String searching, String hview, String rptyp) throws Exception{
         Map<String, String> totalAmountMap = new HashMap<>();
         List<Map<String, String>> htsnoList = this.getHtsnoList(zbart, dmval, dtval, planHeadId, pageable);
-        BigDecimal week1 = new BigDecimal("0.00");
-        BigDecimal week2 = new BigDecimal("0.00");
-        BigDecimal week3 = new BigDecimal("0.00");
-        BigDecimal week4 = new BigDecimal("0.00");
-        BigDecimal week5 = new BigDecimal("0.00");
-        BigDecimal week6 = new BigDecimal("0.00");
-        BigDecimal G115 = new BigDecimal("0.00");
-        BigDecimal G120 = new BigDecimal("0.00");
-        BigDecimal G131 = new BigDecimal("0.00");
-        BigDecimal G140 = new BigDecimal("0.00");
 
-        for (Map<String, String> obj : htsnoList) {
-            if (obj.containsKey("week1_amount")) {
-                week1 = week1.add(new BigDecimal(obj.get("week1_amount")));
-            }
-            if (obj.containsKey("week2_amount")) {
-                week2 = week2.add(new BigDecimal(obj.get("week2_amount")));
-            }
-            if (obj.containsKey("week3_amount")) {
-                week3 = week3.add(new BigDecimal(obj.get("week3_amount")));
-            }
-            if (obj.containsKey("week4_amount")) {
-                week4 = week4.add(new BigDecimal(obj.get("week4_amount")));
-            }
-            if (obj.containsKey("week5_amount")) {
-                week5 = week5.add(new BigDecimal(obj.get("week5_amount")));
-            }
-            if (obj.containsKey("week6_amount")) {
-                week6 = week6.add(new BigDecimal(obj.get("week6_amount")));
-            }
-            if (obj.containsKey("G115")) {
-                G115 = G115.add(new BigDecimal(obj.get("G115")));
-            }
-            if (obj.containsKey("G120")) {
-                G120 = G120.add(new BigDecimal(obj.get("G120")));
-            }
-            if (obj.containsKey("G131")) {
-                G131 = G131.add(new BigDecimal(obj.get("G131")));
-            }
-            if (obj.containsKey("G140")) {
-                G140 = G140.add(new BigDecimal(obj.get("G140")));
-            }
-        }
-
-        totalAmountMap.put("week1", week1.toString());
-        totalAmountMap.put("week2", week2.toString());
-        totalAmountMap.put("week3", week3.toString());
-        totalAmountMap.put("week4", week4.toString());
-        totalAmountMap.put("week5", week5.toString());
-        totalAmountMap.put("G115", G115.toString());
-        totalAmountMap.put("G120", G120.toString());
-        totalAmountMap.put("week6", week6.toString());
-        totalAmountMap.put("G131", G131.toString());
-        totalAmountMap.put("G140", G140.toString());
-
-        /*String bukrs = ContextUtils.getCompany().getOrgcode();
+        String bukrs = ContextUtils.getCompany().getOrgcode();
         IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, rptyp, hview);
-        iePlanScreenVO.getItemSetList().forEach(iePlanScreenItemSet -> {
-            if (iePlanScreenItemSet.getVtype().equals("number") && Strings.isNullOrEmpty(iePlanScreenItemSet.getHiden())){
+        //表头 过滤掉隐藏的表头
+        iePlanScreenVO.getItemSetList().stream()
+                                       .filter(item -> Strings.isNullOrEmpty(item.getHiden()))
+                                       .forEach(iePlanScreenItemSet -> {
+            //number类型 键：非week
+            if (iePlanScreenItemSet.getVtype().equals("number")) {
                 BigDecimal amount = new BigDecimal("0.00");
-                //week
-                if (!Strings.isNullOrEmpty(iePlanScreenItemSet.getSuvar())){
-                    //过滤无键的数据
-                    List<Map<String, String>> htsnoListCollect = htsnoList.stream()
-                                                                          .filter(map -> map.containsKey(iePlanScreenItemSet.getSdvar()))
-                                                                          .collect(Collectors.toList());
-                    if (!ClassUtils.isEmpty(htsnoListCollect)){
-                        for (Map<String, String> htsno : htsnoListCollect){
-                            amount = amount.add(new BigDecimal(htsno.get(iePlanScreenItemSet.getSuvar())));
-                        }
-                        totalAmountMap.put(iePlanScreenItemSet.getFdnam(), amount.toString());
+                //数据项 过滤无键的数据
+                List<Map<String, String>> htsnoListCollect = htsnoList.stream()
+                                                                      .filter(map -> map.containsKey(iePlanScreenItemSet.getSdvar()))
+                                                                      .collect(Collectors.toList());
+                if (!ClassUtils.isEmpty(htsnoListCollect)) {
+                    for (Map<String, String> htsno : htsnoListCollect) {
+                        amount = amount.add(new BigDecimal(htsno.get(iePlanScreenItemSet.getSdvar())));
                     }
-                }else {
-                    //非week
-                    //过滤无键的数据
-                    List<Map<String, String>> htsnoListCollect = htsnoList.stream()
-                                                                          .filter(map -> map.containsKey(iePlanScreenItemSet.getFdnam()))
-                                                                          .collect(Collectors.toList());
-                    if (!ClassUtils.isEmpty(htsnoListCollect)){
-                        for (Map<String, String> htsno : htsnoListCollect){
-                            amount = amount.add(new BigDecimal(htsno.get(iePlanScreenItemSet.getFdnam())));
-                        }
-                        totalAmountMap.put(iePlanScreenItemSet.getFdnam(), amount.toString());
-                    }
+                    totalAmountMap.put(iePlanScreenItemSet.getSdvar(), amount.toString());
                 }
-            }else {
-                totalAmountMap.put(iePlanScreenItemSet.getFdnam(), "");
             }
-        });*/
+            //string类型 键：week
+            if (iePlanScreenItemSet.getVtype().equals("string") && !Strings.isNullOrEmpty(iePlanScreenItemSet.getSuvar())){
+                BigDecimal amount = new BigDecimal("0.00");
+                //数据项 过滤无键的数据
+                List<Map<String, String>> htsnoListCollect = htsnoList.stream()
+                        .filter(map -> map.containsKey(iePlanScreenItemSet.getSdvar()))
+                        .collect(Collectors.toList());
+                if (!ClassUtils.isEmpty(htsnoListCollect)) {
+                    for (Map<String, String> htsno : htsnoListCollect) {
+                        amount = amount.add(new BigDecimal(htsno.get(iePlanScreenItemSet.getSuvar())));
+                    }
+                    totalAmountMap.put(iePlanScreenItemSet.getSdvar(), amount.toString());
+                }
+            }
+        });
+
         return totalAmountMap;
     }
 
