@@ -129,8 +129,19 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
 
         });
         log.warn("计算耗时{}秒", (System.currentTimeMillis()-start) / 1000.00);
-        detailLists= reportVO.filter(detailList);
-        return ClassUtils.constructPage(reportVO, reportVO.filter(detailList));
+        List<Map<String, String>> filter = reportVO.filter(detailList);
+        for (Map<String, String> map : filter){
+            if (map.containsKey("G430")){
+                BigDecimal bigDecimal;
+                //当数字是负数时，处理负号在最后的情况。
+                if(map.get("G430").endsWith("-")){
+                    bigDecimal = new BigDecimal(map.get("G430").substring(0,map.get("G430").length()-1)).negate();
+                    map.put("G430", bigDecimal.toString());
+                }
+            }
+        }
+        detailLists = filter;
+        return ClassUtils.constructPage(reportVO, filter);
     }
 
     @Override
@@ -162,7 +173,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
             index = 0;
             //表头
             for (IEPlanScreenItemSet itemSetList : itemSetLists){
-                row1.createCell(index).setCellValue(detailList.get((itemSetList.getFdnam())));
+                row1.createCell(index).setCellValue(detailList.get((itemSetList.getSdvar())));
                 index++;
             }
             rowNum++;
