@@ -32,7 +32,6 @@ public interface PlanHeaderService {
     void updateCavalByPlanHeadIdAndZbartAndWears(Long planHeadId, String zbart, BigDecimal wears) throws Exception;
     Map<String, String> getCavalByPlanHeadId(Long planHeadId, String zbart) throws Exception;
     Page<Map<String, String>> getHtsnoListPage(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable, String searching, String hview, String rptyp) throws Exception;
-
     /**
      * 获取系统中ckdate最新的月度计划
      * @return 月度计划
