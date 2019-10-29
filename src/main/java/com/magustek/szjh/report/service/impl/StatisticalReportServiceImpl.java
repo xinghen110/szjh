@@ -4,7 +4,9 @@ import com.google.common.base.Strings;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.configset.bean.IEPlanCalculationSet;
+import com.magustek.szjh.configset.bean.IEPlanScreenHeadSet;
 import com.magustek.szjh.configset.bean.IEPlanScreenItemSet;
+import com.magustek.szjh.configset.bean.vo.IEPlanScreenVO;
 import com.magustek.szjh.configset.service.IEPlanCalculationSetService;
 import com.magustek.szjh.configset.service.IEPlanScreenService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
@@ -18,14 +20,18 @@ import com.magustek.szjh.report.bean.vo.ReportVO;
 import com.magustek.szjh.report.bean.vo.DateVO;
 import com.magustek.szjh.report.service.StatisticalReportService;
 import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.KeyValueBean;
 import com.magustek.szjh.utils.constant.PlanheaderCons;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.hssf.usermodel.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -44,6 +50,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     private StatisticalReportCache statisticalReportCache;
     private OrganizationSetService organizationSetService;
     private IEPlanCalculationSetService iePlanCalculationSetService;
+    private List<Map<String, String>> detailLists;
 
     public StatisticalReportServiceImpl(IEPlanScreenService iePlanScreenService, IEPlanSelectValueSetService iePlanSelectValueSetService, PlanHeaderService planHeaderService, PlanItemService planItemService, RollPlanArchiveService rollPlanArchiveService, StatisticalReportCache statisticalReportCache, OrganizationSetService organizationSetService, IEPlanCalculationSetService iePlanCalculationSetService) {
         this.iePlanScreenService = iePlanScreenService;
@@ -122,8 +129,66 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
 
         });
         log.warn("计算耗时{}秒", (System.currentTimeMillis()-start) / 1000.00);
-        return ClassUtils.constructPage(reportVO, reportVO.filter(detailList));
+        List<Map<String, String>> filter = reportVO.filter(detailList);
+        for (Map<String, String> map : filter){
+            if (map.containsKey("G430")){
+                BigDecimal bigDecimal;
+                //当数字是负数时，处理负号在最后的情况。
+                if(map.get("G430").endsWith("-")){
+                    bigDecimal = new BigDecimal(map.get("G430").substring(0,map.get("G430").length()-1)).negate();
+                    map.put("G430", bigDecimal.toString());
+                }
+            }
+        }
+        detailLists = filter;
+        return ClassUtils.constructPage(reportVO, filter);
     }
+
+    @Override
+    public void exportTaxDetailByExcel(HttpServletResponse response, String rptyp, String hview) throws Exception {
+        String bukrs = ContextUtils.getCompany().getOrgcode();
+        IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, rptyp, hview);
+        List<IEPlanScreenItemSet> itemSetLists = iePlanScreenVO.getItemSetList().stream()
+                                                                                .filter(listItem -> Strings.isNullOrEmpty(listItem.getHiden()))
+                                                                                .collect(Collectors.toList());
+        HSSFWorkbook workbook = new HSSFWorkbook();
+        //sheet名称
+        HSSFSheet sheet = workbook.createSheet(iePlanScreenVO.getHdtxt());
+        HSSFRow row = sheet.createRow(0);
+        String fileName = iePlanScreenVO.getHdtxt() + ".xls";
+        int index = 0;
+        //新增数据行，并且设置单元格数据
+        int rowNum = 1;
+        //设置表头
+        for (IEPlanScreenItemSet itemSetList : itemSetLists){
+            HSSFCell cell = row.createCell(index);
+            HSSFRichTextString text = new HSSFRichTextString(itemSetList.getFdtxt());
+            cell.setCellValue(text);
+            index++;
+        }
+        //将数据放入对应的列
+        //数据项
+        for (Map<String, String> detailList : detailLists){
+            HSSFRow row1 = sheet.createRow(rowNum);
+            index = 0;
+            //表头
+            for (IEPlanScreenItemSet itemSetList : itemSetLists){
+                row1.createCell(index).setCellValue(detailList.get((itemSetList.getSdvar())));
+                index++;
+            }
+            rowNum++;
+        }
+        //设置自动列宽
+        for (int i = 0; i < itemSetLists.size(); i++) {
+            sheet.autoSizeColumn(i);
+            sheet.setColumnWidth(i, sheet.getColumnWidth(i) * 13 / 10);
+        }
+        response.setContentType("application/vnd.ms-excel");
+        response.setHeader("Content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+        workbook.write(response.getOutputStream());
+
+    }
+
 
     @Override
     public List<Map<String, String>> getPendingItemListByDate(DateVO dateVO){

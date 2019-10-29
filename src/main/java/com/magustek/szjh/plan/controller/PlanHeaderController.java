@@ -95,6 +95,14 @@ public class PlanHeaderController {
         return resp.setStateCode(BaseResponse.SUCCESS).setData(htsnoList).setMsg("成功！").toJson();
     }
 
+    @ApiOperation(value="根据参数获取合同信息分页列表，参数：zbart-指标值、dmval-维度值、dtval-时间（yyyy-MM）、id-月度计划id、searching-查询字段。")
+    @RequestMapping("/getHtsnoListPage")
+    public String getHtsnoListPage(@RequestBody PlanHeaderVO vo) throws Exception {
+        Page<Map<String, String>> page = planHeaderService.getHtsnoListPage(vo.getZbart(), vo.getDmval(), vo.getDtval(), vo.getId(), vo.initPageRequest(), vo.getSearching(), vo.getHview(), vo.getRptyp());
+        log.warn("根据参数获取合同信息列表：{}", JSON.toJSONString(page));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(page).setMsg("成功！").toJson();
+    }
+
     @ApiOperation(value="根据计划ID-planHeadId、业务计算指标-caart、维度-dmart、经营指标分类-zbart，获取账期列表。")
     @RequestMapping("/getCavalByPlanHeadIdAndCaartAndDmval")
     public String getCavalByPlanHeadIdAndCaartAndDmval(@RequestBody RollPlanHeadDataArchiveVO vo) {

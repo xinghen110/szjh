@@ -50,8 +50,9 @@ public class PlanHeaderVO extends PlanHeader{
     private String dtval;
     private String dmval;
 
-
-
+    private String hview;
+    private String rptyp;
+    private String searching; //搜索框内容
 
 
 

@@ -2,6 +2,7 @@ package com.magustek.szjh.plan.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.magustek.szjh.approval.bean.ApprovalLog;
 import com.magustek.szjh.approval.dao.ApprovalLogDAO;
 import com.magustek.szjh.basedataset.entity.DmCalcStatistics;
@@ -10,6 +11,7 @@ import com.magustek.szjh.basedataset.service.DmCalcStatisticsService;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.configset.bean.*;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
+import com.magustek.szjh.configset.bean.vo.IEPlanScreenVO;
 import com.magustek.szjh.configset.dao.IEPlanReleaseSetDAO;
 import com.magustek.szjh.configset.service.*;
 import com.magustek.szjh.plan.bean.*;
@@ -62,6 +64,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     private IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
     private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
     private DmCalcStatisticsService dmCalcStatisticsService;
+    private IEPlanScreenService iePlanScreenService;
     private final IEPlanReleaseSetDAO iePlanReleaseSetDAO;
     private ApprovalLogDAO approvalLogDAO;
     private final HttpUtils httpUtils;
@@ -73,6 +76,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                                  IEPlanReportHeadSetService iePlanReportHeadSetService,
                                  PlanLayoutDAO planLayoutDAO,
                                  RollPlanArchiveService rollPlanArchiveService,
+                                 IEPlanScreenService iePlanScreenService,
                                  IEPlanSelectValueSetService iePlanSelectValueSetService, IEPlanBusinessHeadSetService iePlanBusinessHeadSetService, IEPlanBusinessItemSetService iePlanBusinessItemSetService, DmCalcStatisticsService dmCalcStatisticsService, IEPlanReleaseSetDAO iePlanReleaseSetDAO, ApprovalLogDAO approvalLogDAO, HttpUtils httpUtils) {
         this.planHeaderDAO = planHeaderDAO;
         this.planItemService = planItemService;
@@ -85,6 +89,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         this.iePlanBusinessHeadSetService = iePlanBusinessHeadSetService;
         this.iePlanBusinessItemSetService = iePlanBusinessItemSetService;
         this.dmCalcStatisticsService = dmCalcStatisticsService;
+        this.iePlanScreenService = iePlanScreenService;
         this.iePlanReleaseSetDAO = iePlanReleaseSetDAO;
         this.approvalLogDAO = approvalLogDAO;
         this.httpUtils = httpUtils;
@@ -333,6 +338,81 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             sdartList.forEach(sdart-> htsno.put(sdart.getSdart(), sdart.getSdval()));
         });
         return htsnoList;
+    }
+
+    @Override
+    public Page<Map<String, String>> getHtsnoListPage(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable, String searching, String hview, String rptyp) throws Exception {
+        /*String bukrs = ContextUtils.getCompany().getOrgcode();
+        IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, rptyp, hview);*/
+        List<Map<String, String>> htsnoList = this.getHtsnoList(zbart,dmval,dtval,planHeadId,pageable);
+        String searchgStr = searching == null?null:searching.trim();
+        if (searchgStr != null && !searching.isEmpty()) {
+            htsnoList = htsnoList.stream().filter((obj) -> {
+                if (obj.get("G118").contains(searchgStr)) {
+                    return true;
+                }
+                return false;
+            }).collect(Collectors.toList());
+        }
+        Page<Map<String, String>> page = null;
+        Map<String, String> map = this.getTotalAmountHtsnoList(zbart, dmval, dtval, planHeadId, pageable, searching, hview, rptyp);
+        if (pageable.getOffset() > htsnoList.size()) {
+            long total = 0L;
+            page = new PageImpl<>(Lists.newArrayList(), pageable, total);
+        } else if (pageable.getOffset() <= htsnoList.size() && pageable.getOffset() + pageable.getPageSize() > htsnoList.size()) {
+            List<Map<String, String>> splitHtsnoList = htsnoList.subList(pageable.getOffset(), htsnoList.size());
+            splitHtsnoList.add(map);
+            page = new PageImpl<>(splitHtsnoList, pageable, htsnoList.size());
+        } else {
+            List<Map<String, String>> splitHtsnoList = htsnoList.subList(pageable.getOffset(), pageable.getOffset() + pageable.getPageSize());
+            splitHtsnoList.add(map);
+            page = new PageImpl<>(splitHtsnoList, pageable, htsnoList.size());
+        }
+        return page;
+    }
+
+    @Override
+    public Map<String, String> getTotalAmountHtsnoList(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable, String searching, String hview, String rptyp) throws Exception{
+        Map<String, String> totalAmountMap = new HashMap<>();
+        List<Map<String, String>> htsnoList = this.getHtsnoList(zbart, dmval, dtval, planHeadId, pageable);
+
+        String bukrs = ContextUtils.getCompany().getOrgcode();
+        IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, rptyp, hview);
+        //表头 过滤掉隐藏的表头
+        iePlanScreenVO.getItemSetList().stream()
+                                       .filter(item -> Strings.isNullOrEmpty(item.getHiden()))
+                                       .forEach(iePlanScreenItemSet -> {
+            //number类型 键：非week
+            if (iePlanScreenItemSet.getVtype().equals("number")) {
+                BigDecimal amount = new BigDecimal("0.00");
+                //数据项 过滤无键的数据
+                List<Map<String, String>> htsnoListCollect = htsnoList.stream()
+                                                                      .filter(map -> map.containsKey(iePlanScreenItemSet.getSdvar()))
+                                                                      .collect(Collectors.toList());
+                if (!ClassUtils.isEmpty(htsnoListCollect)) {
+                    for (Map<String, String> htsno : htsnoListCollect) {
+                        amount = amount.add(new BigDecimal(htsno.get(iePlanScreenItemSet.getSdvar())));
+                    }
+                    totalAmountMap.put(iePlanScreenItemSet.getSdvar(), amount.toString());
+                }
+            }
+            //string类型 键：week
+            if (iePlanScreenItemSet.getVtype().equals("string") && !Strings.isNullOrEmpty(iePlanScreenItemSet.getSuvar())){
+                BigDecimal amount = new BigDecimal("0.00");
+                //数据项 过滤无键的数据
+                List<Map<String, String>> htsnoListCollect = htsnoList.stream()
+                        .filter(map -> map.containsKey(iePlanScreenItemSet.getSdvar()))
+                        .collect(Collectors.toList());
+                if (!ClassUtils.isEmpty(htsnoListCollect)) {
+                    for (Map<String, String> htsno : htsnoListCollect) {
+                        amount = amount.add(new BigDecimal(htsno.get(iePlanScreenItemSet.getSuvar())));
+                    }
+                    totalAmountMap.put(iePlanScreenItemSet.getSdvar(), amount.toString());
+                }
+            }
+        });
+
+        return totalAmountMap;
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.magustek.szjh.report.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.magustek.szjh.configset.bean.IEPlanCalculationSet;
+import com.magustek.szjh.configset.bean.IEPlanScreenHeadSet;
 import com.magustek.szjh.configset.service.IEPlanCalculationSetService;
 import com.magustek.szjh.report.bean.vo.ReportVO;
 import com.magustek.szjh.report.bean.vo.DateVO;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
