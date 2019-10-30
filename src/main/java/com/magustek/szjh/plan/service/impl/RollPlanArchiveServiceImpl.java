@@ -166,6 +166,11 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     }
 
     @Override
+    public List<RollPlanHeadDataArchive> getHeadDataByPlanHeadIdAndZbart(Long planHeadId, String zbart) {
+        return rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndZbart(planHeadId, zbart);
+    }
+
+    @Override
     public List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String> imnumList) {
         return rollPlanItemDataArchiveDAO.findAllByHeadIdInAndImnumIn(headIdList, imnumList);
     }
