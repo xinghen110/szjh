@@ -160,19 +160,21 @@ public class CalculateResultServiceImpl implements CalculateResultService {
             Map<String, Object> binding = new HashMap<>();
             //根据htnum分组遍历取数明细列表，取出所有的指标，及指标值。
             value.forEach(i->{
-                String vtype = selectDataSetMap.get(i.getSdart()).getVtype();
-                if(!Strings.isNullOrEmpty(i.getSdval())){
-                    try {
-                        if(IEPlanSelectDataConstant.RESULT_TYPE_DATS.equals(vtype)){
-                            binding.put(i.getSdart(), ClassUtils.dfYMD.parse(i.getSdval()));
-                        }else{
-                            binding.put(i.getSdart(), i.getSdval());
+                if(selectDataSetMap.containsKey(i.getSdart())){
+                    String vtype = selectDataSetMap.get(i.getSdart()).getVtype();
+                    if (!Strings.isNullOrEmpty(i.getSdval())) {
+                        try {
+                            if (IEPlanSelectDataConstant.RESULT_TYPE_DATS.equals(vtype)) {
+                                binding.put(i.getSdart(), ClassUtils.dfYMD.parse(i.getSdval()));
+                            } else {
+                                binding.put(i.getSdart(), i.getSdval());
+                            }
+                        } catch (ParseException e) {
+                            log.error(e.getMessage() + JSON.toJSONString(i));
+                            e.printStackTrace();
+                        } catch (Exception e) {
+                            log.error(e.getMessage());
                         }
-                    } catch (ParseException e) {
-                        log.error(e.getMessage()+JSON.toJSONString(i));
-                        e.printStackTrace();
-                    } catch (Exception e) {
-                        log.error(e.getMessage());
                     }
                 }
             });

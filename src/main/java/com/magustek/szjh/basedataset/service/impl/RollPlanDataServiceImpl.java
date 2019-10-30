@@ -310,7 +310,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 IEPlanBusinessItemSetVO lastItemVO = null;
                 for(IEPlanBusinessItemSetVO itemVO : calcList) {
                     //遍历help列表，处理所有滚动计划条目
-                    RollPlanDataHelper helper;
+                    RollPlanDataHelper helper = null;
                     int i = 0;
 
                     while(true){
@@ -366,6 +366,20 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                         //设置上一个环节
                         lastItemVO = itemVO;
                         lastItemVO.setSdcutValue(sdcut);
+                    }
+                    //如果有待抵扣的预付款（金额是负数），则预付款的日期与抵扣款的最早日期一致
+                    if(helper!=null){
+                        RollPlanHeadData headData = helper.getHeadData();
+                        if(headData.getWears().compareTo(BigDecimal.ZERO) < 0){
+                            List<RollPlanHeadData> hList = localHelperList
+                                    .stream()
+                                    .map(RollPlanDataHelper::getHeadData).collect(Collectors.toList());
+                            List<RollPlanHeadData> notEmpty = hList.stream().filter(h -> !Strings.isNullOrEmpty(h.getDtval())).collect(Collectors.toList());
+                            if(!ClassUtils.isEmpty(notEmpty)) {
+                                notEmpty.stream().min(Comparator.comparing(RollPlanHeadData::getDtval))
+                                        .ifPresent(rollPlanHeadData -> headData.setDtval(rollPlanHeadData.getDtval()));
+                            }
+                        }
                     }
                 }
 
