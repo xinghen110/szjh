@@ -32,6 +32,7 @@ import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.constant.PlanheaderCons;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.hssf.usermodel.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -40,8 +41,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -231,6 +234,92 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     @Override
     public IEPlanReportHeadVO getLayoutByHeaderId(Long headerId) {
         return JSON.parseObject(planLayoutDAO.findTopByHeaderId(headerId).getLayout(), IEPlanReportHeadVO.class);
+    }
+
+    @Override
+    public List<Map<String, String>> getAllHtsnoList(String zbart, Long planHeadId) {
+        PlanHeader planHeader = new PlanHeader();
+        planHeader.setId(planHeadId);
+        planHeader = this.getById(planHeader.getId());
+        List<RollPlanHeadDataArchive> rollPlanHeadDataArchiveList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndZbart(planHeadId, zbart);
+
+        List<Map<String, String>> htsnoList = new ArrayList<>(rollPlanHeadDataArchiveList.size());
+        rollPlanHeadDataArchiveList.forEach(rollPlanHeadDataArchive -> {
+            Map<String, String> map = new HashMap<>();
+            htsnoList.add(map);
+            map.put("htsno", rollPlanHeadDataArchive.getHtsno());
+            map.put("dtval", rollPlanHeadDataArchive.getDtval());
+            map.put("wears", rollPlanHeadDataArchive.getWears().toString());
+        });
+        //补充htsno的取数指标数据iePlanSelectDataSetService
+        String ckdate = planHeader.getCkdate();
+        Set<String> htsnoSet = htsnoList.stream().map(i -> i.get("htsno")).collect(Collectors.toSet());
+        //根据版本号，及htsno获取所有取数指标
+        List<IEPlanSelectValueSet> selectValueSetList = iePlanSelectValueSetService.getContractByHtsnoSetAndVersion(htsnoSet, ckdate);
+        //取数指标根据sdart分组
+        Map<String, List<IEPlanSelectValueSet>> selectValueMapByHtsno = selectValueSetList
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtsno));
+
+        htsnoList.forEach(htsno->{
+            //根据合同流水号，获取取数指标及其值
+            List<IEPlanSelectValueSet> sdartList = selectValueMapByHtsno.get(htsno.get("htsno"));
+            sdartList.forEach(sdart-> htsno.put(sdart.getSdart(), sdart.getSdval()));
+        });
+        return htsnoList;
+    }
+
+    @Override
+    public void exportAllHtsnoListByExcel(HttpServletResponse response, String zbart, Long planHeadId) throws Exception{
+        List<Map<String, String>> allHtsnoList = this.getAllHtsnoList(zbart, planHeadId);
+        Map<String, String> excelHeadMap = new HashMap<>();
+        excelHeadMap.put("G202", "部门");
+        excelHeadMap.put("G203", "承办人");
+        excelHeadMap.put("G118", "合同编号");
+        excelHeadMap.put("G100", "合同名称");
+        excelHeadMap.put("G205", "相对方名称");
+        excelHeadMap.put("G204", "合同状态");
+        excelHeadMap.put("G115", "合同总金额");
+        excelHeadMap.put("G120", "期初实际发生");
+        excelHeadMap.put("G131", "期初已收金额");
+        excelHeadMap.put("G140", "收支平衡约束");
+        excelHeadMap.put("dtval", "计划日期");
+        excelHeadMap.put("wears", "金额");
+        HSSFWorkbook workbook = new HSSFWorkbook();
+        //sheet名称
+        HSSFSheet sheet = workbook.createSheet("月度计划报表");
+        HSSFRow row = sheet.createRow(0);
+        String fileName = "月度计划报表.xls";
+        int index = 0;
+        //新增数据行，并且设置单元格数据
+        int rowNum = 1;
+        //设置表头
+        for (String key : excelHeadMap.keySet()){
+            HSSFCell cell = row.createCell(index);
+            HSSFRichTextString text = new HSSFRichTextString(excelHeadMap.get(key));
+            cell.setCellValue(text);
+            index++;
+        }
+        //将数据放入对应的列
+        //数据项
+        for (Map<String, String> detailList : allHtsnoList){
+            HSSFRow row1 = sheet.createRow(rowNum);
+            index = 0;
+            //表头
+            for (String key : excelHeadMap.keySet()){
+                row1.createCell(index).setCellValue(detailList.get(key));
+                index++;
+            }
+            rowNum++;
+        }
+        //设置自动列宽
+        for (int i = 0; i < excelHeadMap.size(); i++) {
+            sheet.autoSizeColumn(i);
+            sheet.setColumnWidth(i, sheet.getColumnWidth(i) * 13 / 10);
+        }
+        response.setContentType("application/vnd.ms-excel");
+        response.setHeader("Content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+        workbook.write(response.getOutputStream());
     }
 
     @Override

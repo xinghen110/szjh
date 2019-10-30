@@ -13,7 +13,7 @@ public interface RollPlanArchiveService {
     List<RollPlanHeadDataArchive> getHeadDataArchiveList(Long PlanHeadId);
     List<RollPlanHeadDataArchive> getHeadData(String zbart, String dmval, String dtval, Long planHeadId, boolean firstMonth, boolean lastMonth);
     List<RollPlanHeadDataArchive> getHeadDataByPlanHeadIdAndDmvalAndZbart(String zbart, String dmval, Long planHeadId);
-
+    List<RollPlanHeadDataArchive> getHeadDataByPlanHeadIdAndZbart(Long planHeadId, String zbart);
 
     List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String>imnumList);
     List<RollPlanItemDataArchive> getItemDataByPlanHeadId(Long PlanHeadId);
