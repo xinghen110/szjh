@@ -439,24 +439,24 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         String searchgStr = searching == null?null:searching.trim();
         if (searchgStr != null && !searching.isEmpty()) {
             htsnoList = htsnoList.stream().filter((obj) -> {
-                if (obj.get("G118").contains(searchgStr)) {
-                    return true;
-                }
-                return false;
+                return obj.get("G118").contains(searchgStr);
             }).collect(Collectors.toList());
         }
         Page<Map<String, String>> page = null;
-        Map<String, String> map = this.getTotalAmountHtsnoList(zbart, dmval, dtval, planHeadId, pageable, searching, hview, rptyp);
         if (pageable.getOffset() > htsnoList.size()) {
             long total = 0L;
             page = new PageImpl<>(Lists.newArrayList(), pageable, total);
         } else if (pageable.getOffset() <= htsnoList.size() && pageable.getOffset() + pageable.getPageSize() > htsnoList.size()) {
             List<Map<String, String>> splitHtsnoList = htsnoList.subList(pageable.getOffset(), htsnoList.size());
-            splitHtsnoList.add(map);
+            if (Strings.isNullOrEmpty(searching)){
+                splitHtsnoList.add(this.getTotalAmountHtsnoList(zbart, dmval, dtval, planHeadId, pageable, searching, hview, rptyp));
+            }
             page = new PageImpl<>(splitHtsnoList, pageable, htsnoList.size());
         } else {
             List<Map<String, String>> splitHtsnoList = htsnoList.subList(pageable.getOffset(), pageable.getOffset() + pageable.getPageSize());
-            splitHtsnoList.add(map);
+            if (Strings.isNullOrEmpty(searching)){
+                splitHtsnoList.add(this.getTotalAmountHtsnoList(zbart, dmval, dtval, planHeadId, pageable, searching, hview, rptyp));
+            }
             page = new PageImpl<>(splitHtsnoList, pageable, htsnoList.size());
         }
         return page;
