@@ -244,7 +244,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         List<RollPlanHeadDataArchive> rollPlanHeadDataArchiveList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndZbart(planHeadId, zbart);
 
         List<Map<String, String>> htsnoList = new ArrayList<>(rollPlanHeadDataArchiveList.size());
-        rollPlanHeadDataArchiveList.forEach(rollPlanHeadDataArchive -> {
+        rollPlanHeadDataArchiveList.stream()
+                .filter(rollPlanHeadDataArchive -> !Strings.isNullOrEmpty(rollPlanHeadDataArchive.getDtval()))
+                .forEach(rollPlanHeadDataArchive -> {
             Map<String, String> map = new HashMap<>();
             htsnoList.add(map);
             map.put("htsno", rollPlanHeadDataArchive.getHtsno());
@@ -272,7 +274,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     @Override
     public void exportAllHtsnoListByExcel(HttpServletResponse response, String zbart, Long planHeadId) throws Exception{
         List<Map<String, String>> allHtsnoList = this.getAllHtsnoList(zbart, planHeadId);
-        Map<String, String> excelHeadMap = new HashMap<>();
+        Map<String, String> excelHeadMap = new LinkedHashMap<>();
         excelHeadMap.put("G202", "部门");
         excelHeadMap.put("G203", "承办人");
         excelHeadMap.put("G118", "合同编号");
@@ -284,7 +286,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         excelHeadMap.put("G131", "期初已收金额");
         excelHeadMap.put("G140", "收支平衡约束");
         excelHeadMap.put("dtval", "计划日期");
-        excelHeadMap.put("wears", "金额");
+        excelHeadMap.put("wears", "计划金额");
         HSSFWorkbook workbook = new HSSFWorkbook();
         //sheet名称
         HSSFSheet sheet = workbook.createSheet("月度计划报表");
