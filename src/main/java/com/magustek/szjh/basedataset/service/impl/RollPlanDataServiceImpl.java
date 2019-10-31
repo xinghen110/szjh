@@ -1,5 +1,6 @@
 package com.magustek.szjh.basedataset.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
 import com.magustek.szjh.Holiday.service.HolidayService;
 import com.magustek.szjh.basedataset.dao.RollPlanHeadDataDAO;
@@ -367,20 +368,6 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                         lastItemVO = itemVO;
                         lastItemVO.setSdcutValue(sdcut);
                     }
-                    //如果有待抵扣的预付款（金额是负数），则预付款的日期与抵扣款的最早日期一致
-                    if(helper!=null){
-                        RollPlanHeadData headData = helper.getHeadData();
-                        if(headData.getWears().compareTo(BigDecimal.ZERO) < 0){
-                            List<RollPlanHeadData> hList = localHelperList
-                                    .stream()
-                                    .map(RollPlanDataHelper::getHeadData).collect(Collectors.toList());
-                            List<RollPlanHeadData> notEmpty = hList.stream().filter(h -> !Strings.isNullOrEmpty(h.getDtval())).collect(Collectors.toList());
-                            if(!ClassUtils.isEmpty(notEmpty)) {
-                                notEmpty.stream().min(Comparator.comparing(RollPlanHeadData::getDtval))
-                                        .ifPresent(rollPlanHeadData -> headData.setDtval(rollPlanHeadData.getDtval()));
-                            }
-                        }
-                    }
                 }
 
                 //根据合同约定条款，调整计划日期。
@@ -414,6 +401,9 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 );
                 rollPlanDataHelperList.addAll(localHelperList);
             });
+            //处理抵扣款
+            //暂时不用
+            //handleNegative(rollPlanDataHelperList);
             rollPlanHeadDataList.addAll(
                     rollPlanDataHelperList
                             .stream()
@@ -895,5 +885,35 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
             }
         }
         return nextItemList;
+    }
+    //如果有待抵扣的预付款（金额是负数），则预付款的日期与抵扣款的最早日期一致
+    private void handleNegative(List<RollPlanDataHelper> rollPlanDataHelperList){
+        if(rollPlanDataHelperList!=null){
+            Map<String, List<RollPlanDataHelper>> helpMap = rollPlanDataHelperList.stream().collect(Collectors.groupingBy(h -> h.getHeadData().getHtsno()));
+            helpMap.forEach((htsno, helperList)->
+                helperList.forEach(helper->{
+                    RollPlanHeadData headData = helper.getHeadData();
+                    if(headData.getWears().compareTo(BigDecimal.ZERO) < 0){
+                        String htnum = headData.getHtnum();
+                        List<RollPlanHeadData> hList = helperList
+                                .stream()
+                                .map(RollPlanDataHelper::getHeadData).collect(Collectors.toList());
+                        List<RollPlanHeadData> notEmpty = hList
+                                .stream()
+                                .filter(h -> !Strings.isNullOrEmpty(h.getDtval())
+                                        && h.getWears().compareTo(BigDecimal.ZERO) > 0
+                                        && h.getHtnum().equals(htnum))
+                                .collect(Collectors.toList());
+                        if(!ClassUtils.isEmpty(notEmpty)) {
+                            notEmpty.stream()
+                                    .min(Comparator.comparing(RollPlanHeadData::getDtval))
+                                    .ifPresent(rollPlanHeadData -> {
+                                        headData.setDtval(rollPlanHeadData.getDtval());
+                                    });
+                        }
+                    }
+                })
+            );
+        }
     }
 }
