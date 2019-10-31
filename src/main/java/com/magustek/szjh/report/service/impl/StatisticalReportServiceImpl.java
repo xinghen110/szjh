@@ -4,7 +4,6 @@ import com.google.common.base.Strings;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.basedataset.service.IEPlanSelectValueSetService;
 import com.magustek.szjh.configset.bean.IEPlanCalculationSet;
-import com.magustek.szjh.configset.bean.IEPlanScreenHeadSet;
 import com.magustek.szjh.configset.bean.IEPlanScreenItemSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanScreenVO;
 import com.magustek.szjh.configset.service.IEPlanCalculationSetService;
@@ -22,17 +21,20 @@ import com.magustek.szjh.report.service.StatisticalReportService;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.ContextUtils;
 import com.magustek.szjh.utils.KeyValueBean;
+import com.magustek.szjh.utils.RedisUtil;
 import com.magustek.szjh.utils.constant.PlanheaderCons;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.hssf.usermodel.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -51,8 +53,10 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     private OrganizationSetService organizationSetService;
     private IEPlanCalculationSetService iePlanCalculationSetService;
     private List<Map<String, String>> detailLists;
+    private RedisUtil redisUtil;
+    private ValueOperations<String,Object> valueOperations;
 
-    public StatisticalReportServiceImpl(IEPlanScreenService iePlanScreenService, IEPlanSelectValueSetService iePlanSelectValueSetService, PlanHeaderService planHeaderService, PlanItemService planItemService, RollPlanArchiveService rollPlanArchiveService, StatisticalReportCache statisticalReportCache, OrganizationSetService organizationSetService, IEPlanCalculationSetService iePlanCalculationSetService) {
+    public StatisticalReportServiceImpl(IEPlanScreenService iePlanScreenService, IEPlanSelectValueSetService iePlanSelectValueSetService, PlanHeaderService planHeaderService, PlanItemService planItemService, RollPlanArchiveService rollPlanArchiveService, StatisticalReportCache statisticalReportCache, OrganizationSetService organizationSetService, IEPlanCalculationSetService iePlanCalculationSetService, RedisUtil redisUtil, ValueOperations<String, Object> valueOperations) {
         this.iePlanScreenService = iePlanScreenService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
         this.planHeaderService = planHeaderService;
@@ -61,12 +65,15 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         this.statisticalReportCache = statisticalReportCache;
         this.organizationSetService = organizationSetService;
         this.iePlanCalculationSetService = iePlanCalculationSetService;
+        this.redisUtil = redisUtil;
+        this.valueOperations = valueOperations;
     }
 
     //@Cacheable(value = "getOutputTaxDetailByVersion")
     @Override
     public Page<Map<String, String>> getOutputTaxDetailByVersion(ReportVO reportVO) throws Exception{
         Vector<Map<String, String>> detailList = new Vector<>();
+        List<Map<String, String>> filter;
         List<IEPlanSelectValueSet> selectValueSetList;
         //获取待使用取数指标集合
         String outputTax = "statisticalReport/getOutputTaxDetailByVersion";
@@ -84,52 +91,60 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         //根据serch过滤
         if(!ClassUtils.isEmpty(serchList)){
             //根据取数指标取出数据
-            selectValueSetList = iePlanSelectValueSetService.getAllByVersionAndSdvarIn(reportVO.getVersion(), serchList.get(0).getSdvar(), sdvarList);
+            if(redisUtil.existsKey(outputTax+"_cache")){
+                Vector<Map<String, String>> list = (Vector<Map<String, String>>) valueOperations.get(outputTax+"_cache");
+                filter = reportVO.filter(list);
+            }else{
+                selectValueSetList = iePlanSelectValueSetService.getAllByVersionAndSdvarIn(reportVO.getVersion(), serchList.get(0).getSdvar(), sdvarList);
+
+                if(ClassUtils.isEmpty(selectValueSetList)){
+                    return new PageImpl<>(new ArrayList<>());
+                }
+
+                Map<String, List<IEPlanSelectValueSet>> htnumList = selectValueSetList.stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtnum));
+                Map<String, List<IEPlanSelectValueSet>> htsnoList = selectValueSetList.stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtsno));
+
+                long start = System.currentTimeMillis();
+                log.warn("开始计算");
+                htnumList.entrySet().parallelStream().forEach(set->{
+                    Map<String, String> map = new HashMap<>(2);
+
+                    //根据htnum填充值
+                    set.getValue().forEach(item-> {
+                        if(htnumSdart.contains(item.getSdart())){
+                            ClassUtils.handleDate(map, sdvarMap, item);
+                        }
+                    });
+                    //如果取数指标没有包含检索项，则返回
+                    if(!map.containsKey(serchList.get(0).getSdvar())){
+                        return;
+                    }
+
+                    //补充其他字段值
+                    Map<String, List<IEPlanSelectValueSet>> sdartList = htsnoList.get(set.getValue().get(0).getHtsno())
+                            .stream()
+                            .collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
+                    sdartList.forEach((k,v)->{
+                        if(!map.containsKey(k) && htsnoSdart.contains(k)){
+                            ClassUtils.handleDate(map, sdvarMap, v.get(0));
+                        }
+                    });
+
+                    if(!ClassUtils.isEmpty(map)){
+                        map.put("htnum",set.getKey());
+                        detailList.add(map);
+                    }
+                });
+                log.warn("计算耗时{}秒", (System.currentTimeMillis()-start) / 1000.00);
+                //分页缓存
+                valueOperations.set(outputTax+"_cache", detailList);
+                redisUtil.expireKey(outputTax+"_cache", 1, TimeUnit.HOURS);
+                filter = reportVO.filter(detailList);
+            }
         }else{
             throw new Exception("屏幕配置出错，无【检索项标识】！");
         }
 
-        if(ClassUtils.isEmpty(selectValueSetList)){
-            return new PageImpl<>(new ArrayList<>());
-        }
-
-        Map<String, List<IEPlanSelectValueSet>> htnumList = selectValueSetList.stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtnum));
-        Map<String, List<IEPlanSelectValueSet>> htsnoList = selectValueSetList.stream().collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtsno));
-
-        long start = System.currentTimeMillis();
-        log.warn("开始计算");
-        htnumList.entrySet().parallelStream().forEach(set->{
-            Map<String, String> map = new HashMap<>(2);
-
-            //根据htnum填充值
-            set.getValue().forEach(item-> {
-                if(htnumSdart.contains(item.getSdart())){
-                    ClassUtils.handleDate(map, sdvarMap, item);
-                }
-            });
-            //如果取数指标没有包含检索项，则返回
-            if(!map.containsKey(serchList.get(0).getSdvar())){
-                return;
-            }
-
-            //补充其他字段值
-            Map<String, List<IEPlanSelectValueSet>> sdartList = htsnoList.get(set.getValue().get(0).getHtsno())
-                    .stream()
-                    .collect(Collectors.groupingBy(IEPlanSelectValueSet::getSdart));
-            sdartList.forEach((k,v)->{
-                if(!map.containsKey(k) && htsnoSdart.contains(k)){
-                    ClassUtils.handleDate(map, sdvarMap, v.get(0));
-                }
-            });
-
-            if(!ClassUtils.isEmpty(map)){
-                map.put("htnum",set.getKey());
-                detailList.add(map);
-            }
-
-        });
-        log.warn("计算耗时{}秒", (System.currentTimeMillis()-start) / 1000.00);
-        List<Map<String, String>> filter = reportVO.filter(detailList);
         for (Map<String, String> map : filter){
             if (map.containsKey("G430")){
                 BigDecimal bigDecimal;
@@ -145,7 +160,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     }
 
     @Override
-    public void exportTaxDetailByExcel(HttpServletResponse response, String rptyp, String hview) throws Exception {
+    public HSSFWorkbook exportTaxDetailByExcel(String rptyp, String hview) throws Exception {
         String bukrs = ContextUtils.getCompany().getOrgcode();
         IEPlanScreenVO iePlanScreenVO = iePlanScreenService.findHeadByBukrsAndRptypAndHview(bukrs, rptyp, hview);
         List<IEPlanScreenItemSet> itemSetLists = iePlanScreenVO.getItemSetList().stream()
@@ -155,7 +170,6 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         //sheet名称
         HSSFSheet sheet = workbook.createSheet(iePlanScreenVO.getHdtxt());
         HSSFRow row = sheet.createRow(0);
-        String fileName = iePlanScreenVO.getHdtxt() + ".xls";
         int index = 0;
         //新增数据行，并且设置单元格数据
         int rowNum = 1;
@@ -183,10 +197,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
             sheet.autoSizeColumn(i);
             sheet.setColumnWidth(i, sheet.getColumnWidth(i) * 13 / 10);
         }
-        response.setContentType("application/vnd.ms-excel");
-        response.setHeader("Content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
-        workbook.write(response.getOutputStream());
-
+        return workbook;
     }
 
 

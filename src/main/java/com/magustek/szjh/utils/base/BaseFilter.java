@@ -77,7 +77,7 @@ public class BaseFilter {
                             break;
                         // number 处理
                         case "=":
-                            if(flag && value.toLowerCase().equals(domain.value[0].toLowerCase())){
+                            if(flag && value.toLowerCase().compareTo(domain.value[0].toLowerCase())==0){
                                 domainList.add(map);
                             }
                             break;

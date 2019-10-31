@@ -4,6 +4,7 @@ import com.magustek.szjh.configset.bean.IEPlanScreenHeadSet;
 import com.magustek.szjh.report.bean.vo.ReportVO;
 import com.magustek.szjh.report.bean.vo.DateVO;
 import com.magustek.szjh.utils.base.BasePage;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.data.domain.Page;
 
 import javax.servlet.http.HttpServletResponse;
@@ -62,10 +63,9 @@ public interface StatisticalReportService {
 
     /**
      * 销项发票跟踪数据导出为Excel
-     * @param response
      * @param rptyp
      * @param hview
      * @throws IOException
      */
-    void exportTaxDetailByExcel(HttpServletResponse response, String rptyp, String hview) throws Exception;
+    HSSFWorkbook exportTaxDetailByExcel(String rptyp, String hview) throws Exception;
 }

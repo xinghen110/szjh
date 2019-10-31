@@ -1,26 +1,22 @@
 package com.magustek.szjh.config;
 
-import com.alibaba.fastjson.parser.ParserConfig;
-import com.alibaba.fastjson.support.spring.GenericFastJsonRedisSerializer;
 import com.magustek.szjh.utils.constant.RedisKeys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Configuration
+@EnableCaching
 public class RedisConfig  extends CachingConfigurerSupport {
 
     @Bean
@@ -63,5 +59,44 @@ public class RedisConfig  extends CachingConfigurerSupport {
         redisCacheManager.setExpires(RedisKeys.getKeys());
 
         return redisCacheManager;
+    }
+    /**
+     * 对hash类型的数据操作
+     */
+    @Bean
+    public HashOperations<String, String, Object> hashOperations(RedisTemplate<String, Object> redisTemplate) {
+        return redisTemplate.opsForHash();
+    }
+
+    /**
+     * 对redis字符串类型数据操作
+     */
+    @Bean
+    public ValueOperations<String, Object> valueOperations(RedisTemplate<String, Object> redisTemplate) {
+        return redisTemplate.opsForValue();
+    }
+
+    /**
+     * 对链表类型的数据操作
+     */
+    @Bean
+    public ListOperations<String, Object> listOperations(RedisTemplate<String, Object> redisTemplate) {
+        return redisTemplate.opsForList();
+    }
+
+    /**
+     * 对无序集合类型的数据操作
+     */
+    @Bean
+    public SetOperations<String, Object> setOperations(RedisTemplate<String, Object> redisTemplate) {
+        return redisTemplate.opsForSet();
+    }
+
+    /**
+     * 对有序集合类型的数据操作
+     */
+    @Bean
+    public ZSetOperations<String, Object> zSetOperations(RedisTemplate<String, Object> redisTemplate) {
+        return redisTemplate.opsForZSet();
     }
 }
