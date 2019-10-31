@@ -97,8 +97,14 @@ public class PlanHeaderController {
 
     @ApiOperation(value="根据参数获取合同信息分页列表，参数：zbart-指标值、dmval-维度值、dtval-时间（yyyy-MM）、id-月度计划id、searching-查询字段。")
     @RequestMapping("/getHtsnoListPage")
-    public String getHtsnoListPage(@RequestBody PlanHeaderVO vo) throws Exception {
-        Page<Map<String, String>> page = planHeaderService.getHtsnoListPage(vo.getZbart(), vo.getDmval(), vo.getDtval(), vo.getId(), vo.initPageRequest(), vo.getSearching(), vo.getHview(), vo.getRptyp());
+    public String getHtsnoListPage(@RequestBody PlanHeaderVO vo) {
+        Page<Map<String, String>> page = null;
+        try {
+            page = planHeaderService.getHtsnoListPage(vo.getZbart(), vo.getDmval(), vo.getDtval(), vo.getId(), vo.initPageRequest(), vo.getSearching(), vo.getHview(), vo.getRptyp());
+        } catch (Exception e) {
+            log.error(e.toString());
+            e.printStackTrace();
+        }
         log.warn("根据参数获取合同信息列表：{}", JSON.toJSONString(page));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(page).setMsg("成功！").toJson();
     }

@@ -1,6 +1,7 @@
 package com.magustek.szjh.utils;
 
 import com.google.common.base.Strings;
+import com.magustek.szjh.basedataset.entity.DmCalcStatistics;
 import com.magustek.szjh.basedataset.entity.IEPlanSelectValueSet;
 import com.magustek.szjh.configset.bean.IEPlanScreenItemSet;
 import com.magustek.szjh.utils.base.BasePage;
@@ -446,5 +447,13 @@ public class ClassUtils {
      * */
     public static LocalDate getLastDay(LocalDate date){
         return date.withDayOfMonth(1).plusMonths(1).minusDays(1);
+    }
+
+    public static String version(DmCalcStatistics result){
+        if(result == null || Strings.isNullOrEmpty(result.getVersion())){
+            return LocalDate.now().toString();
+        }else{
+            return result.getVersion();
+        }
     }
 }

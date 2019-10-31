@@ -90,7 +90,7 @@ public class BasedataSetController {
     @ApiOperation(value="根据取数明细及业务计算指标，进行计算并保存结果。")
     @RequestMapping("/calculate")
     public String calculate(@RequestBody DmCalcStatistics result) {
-        String version = version(result);
+        String version = ClassUtils.version(result);
         List<CalculateResult> list = calculateResultService.calculateByVersion(version);
         log.warn("计算版本为【{}】的取数明细结果为：{}", version, list.size());
         return resp.setStateCode(BaseResponse.SUCCESS).setData(list.size()).setMsg("成功！").toJson();
@@ -99,7 +99,7 @@ public class BasedataSetController {
     @ApiOperation(value="根据维度明细及计算指标进行计算，并保存结果。")
     @RequestMapping("/statisticByVersion")
     public String statisticByVersion(@RequestBody DmCalcStatistics result) {
-        String version = version(result);
+        String version = ClassUtils.version(result);
         int size = dmCalcStatisticsService.statisticByVersion(version);
         log.warn("计算版本为【{}】的取数明细结果为：{}", version, JSON.toJSONString(size));
         return resp.setStateCode(BaseResponse.SUCCESS).setData(size).setMsg("成功！").toJson();
@@ -124,7 +124,7 @@ public class BasedataSetController {
     @ApiOperation(value="根据版本号，计算滚动计划数据。")
     @RequestMapping("/calcRollPlanData")
     public String calcRollPlanData(@RequestBody DmCalcStatistics result) throws Exception{
-        String version = version(result);
+        String version = ClassUtils.version(result);
 
         List<RollPlanHeadData> list = rollPlanDataService.calculateByVersion(version);
         log.warn("根据版本号，计算滚动计划数据：{}", JSON.toJSONString(list));
@@ -134,7 +134,7 @@ public class BasedataSetController {
     @ApiOperation(value="根据版本号、维度值获取历史账期。")
     @RequestMapping("/getStatisticsByDmartAndVersion")
     public String getStatisticsByDmartAndVersion(@RequestBody DmCalcStatistics result){
-        String version = version(result);
+        String version = ClassUtils.version(result);
 
         List<Map<String, Object>> list = dmCalcStatisticsService.getStatisticsByDmartAndVersion(result.getDmart(), version);
         log.warn("根据版本号、维度值获取历史账期：{}", JSON.toJSONString(list));
@@ -162,13 +162,5 @@ public class BasedataSetController {
         calculate(result);//计算合同指标
         statisticByVersion(result);//将合同指标的计算结果，根据维度进行统计，形成历史能力值
         calcRollPlanData(result);//根据历史能力值，计算滚动计划
-    }
-
-    private String version(DmCalcStatistics result){
-        if(result == null || Strings.isNullOrEmpty(result.getVersion())){
-            return LocalDate.now().toString();
-        }else{
-            return result.getVersion();
-        }
     }
 }

@@ -56,6 +56,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
     private RedisUtil redisUtil;
     private ValueOperations<String,Object> valueOperations;
 
+
     public StatisticalReportServiceImpl(IEPlanScreenService iePlanScreenService, IEPlanSelectValueSetService iePlanSelectValueSetService, PlanHeaderService planHeaderService, PlanItemService planItemService, RollPlanArchiveService rollPlanArchiveService, StatisticalReportCache statisticalReportCache, OrganizationSetService organizationSetService, IEPlanCalculationSetService iePlanCalculationSetService, RedisUtil redisUtil, ValueOperations<String, Object> valueOperations) {
         this.iePlanScreenService = iePlanScreenService;
         this.iePlanSelectValueSetService = iePlanSelectValueSetService;
@@ -76,8 +77,8 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         List<Map<String, String>> filter;
         List<IEPlanSelectValueSet> selectValueSetList;
         //获取待使用取数指标集合
-        String outputTax = "statisticalReport/getOutputTaxDetailByVersion";
-        List<IEPlanScreenItemSet> itemListByIntfa = iePlanScreenService.getItemListByIntfa(outputTax);
+
+        List<IEPlanScreenItemSet> itemListByIntfa = iePlanScreenService.getItemListByIntfa(getOutputTaxDetailByVersion);
         Map<String, List<IEPlanScreenItemSet>> sdvarMap = itemListByIntfa.stream().collect(Collectors.groupingBy(IEPlanScreenItemSet::getSdvar));
         if(ClassUtils.isEmpty(itemListByIntfa)){
             return new PageImpl<>(new ArrayList<>());
@@ -91,8 +92,8 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         //根据serch过滤
         if(!ClassUtils.isEmpty(serchList)){
             //根据取数指标取出数据
-            if(redisUtil.existsKey(outputTax+"_cache")){
-                Vector<Map<String, String>> list = (Vector<Map<String, String>>) valueOperations.get(outputTax+"_cache");
+            if(redisUtil.existsKey(getOutputTaxDetailByVersion+"_cache")){
+                Vector<Map<String, String>> list = (Vector<Map<String, String>>) valueOperations.get(getOutputTaxDetailByVersion+"_cache");
                 filter = reportVO.filter(list);
             }else{
                 selectValueSetList = iePlanSelectValueSetService.getAllByVersionAndSdvarIn(reportVO.getVersion(), serchList.get(0).getSdvar(), sdvarList);
@@ -137,8 +138,8 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
                 });
                 log.warn("计算耗时{}秒", (System.currentTimeMillis()-start) / 1000.00);
                 //分页缓存
-                valueOperations.set(outputTax+"_cache", detailList);
-                redisUtil.expireKey(outputTax+"_cache", 1, TimeUnit.HOURS);
+                valueOperations.set(getOutputTaxDetailByVersion+"_cache", detailList);
+                redisUtil.expireKey(getOutputTaxDetailByVersion+"_cache", 1, TimeUnit.HOURS);
                 filter = reportVO.filter(detailList);
             }
         }else{

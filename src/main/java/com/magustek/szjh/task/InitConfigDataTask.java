@@ -1,6 +1,10 @@
 package com.magustek.szjh.task;
 
 import com.magustek.szjh.basedataset.controller.BasedataSetController;
+import com.magustek.szjh.report.bean.vo.ReportVO;
+import com.magustek.szjh.report.service.StatisticalReportService;
+import com.magustek.szjh.utils.ClassUtils;
+import com.magustek.szjh.utils.RedisUtil;
 import com.magustek.szjh.utils.SpringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
@@ -20,11 +24,15 @@ public class InitConfigDataTask implements DisposableBean {
     public String executeFetchBaseData;
     private BasedataSetController basedataSetController;
     private RedisTemplate<String, String> redisTemplate;
+    private StatisticalReportService statisticalReportService;
+    private RedisUtil redisUtil;
 
 
-    public InitConfigDataTask(BasedataSetController basedataSetController, RedisTemplate<String, String> redisTemplate) {
+    public InitConfigDataTask(BasedataSetController basedataSetController, RedisTemplate<String, String> redisTemplate, StatisticalReportService statisticalReportService, RedisUtil redisUtil) {
         this.basedataSetController = basedataSetController;
         this.redisTemplate = redisTemplate;
+        this.statisticalReportService = statisticalReportService;
+        this.redisUtil = redisUtil;
     }
 
     //@Scheduled(cron = "10 * * * * ?")
@@ -63,6 +71,17 @@ public class InitConfigDataTask implements DisposableBean {
                 e.printStackTrace();
             }
             System.gc();
+        }
+
+        try {
+            //更新缓存
+            ReportVO reportVO = new ReportVO();
+            reportVO.setVersion(ClassUtils.version(null));
+            redisUtil.deleteKey(StatisticalReportService.getOutputTaxDetailByVersion);
+            statisticalReportService.getOutputTaxDetailByVersion(reportVO);
+        } catch (Exception e) {
+            log.error(e.toString());
+            e.printStackTrace();
         }
     }
 

@@ -16,6 +16,8 @@ import java.util.Map;
  * @author hexin
  */
 public interface StatisticalReportService {
+    String getOutputTaxDetailByVersion = "statisticalReport/getOutputTaxDetailByVersion";
+
     /**
      * 销项发票跟踪
      * @param reportVO 版本号及分页信息
