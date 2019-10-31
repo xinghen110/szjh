@@ -27,7 +27,7 @@ public interface IEPlanSelectValueSetDAO extends CrudRepository<IEPlanSelectValu
     int updateReferenced(@Param("referenced")String referenced,@Param("version")String version);
 
     @Query("from IEPlanSelectValueSet where version=?1 and " +
-            "htsno in (select distinct(htsno) from IEPlanSelectValueSet where version=?1 and sdart=?2 and sdval is not null and sdval <> '') " +
+            "exists (select distinct(htsno) from IEPlanSelectValueSet where version=?1 and sdart=?2 and sdval is not null and sdval <> '') " +
             "and sdart in ?3")
     List<IEPlanSelectValueSet> findAllByVersionAndSdartInWithSerch(String version, String serch, List<String> sdartList);
 }

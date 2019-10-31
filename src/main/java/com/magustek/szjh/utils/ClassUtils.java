@@ -428,7 +428,7 @@ public class ClassUtils {
      * */
     public static synchronized void handleDate(Map<String, String> map, Map<String, List<IEPlanScreenItemSet>> sdvarMap, IEPlanSelectValueSet item ){
         if(IEPlanSelectDataConstant.RESULT_TYPE_DATS.equals(sdvarMap.get(item.getSdart()).get(0).getVtype())){
-            map.put(item.getSdart(), ClassUtils.StringToLocalDateString(item.getSdval()));
+            map.put(item.getSdart(), Strings.isNullOrEmpty(item.getSdval())?"":ClassUtils.StringToLocalDateString(item.getSdval()));
         }else{
             map.put(item.getSdart(), item.getSdval());
         }
