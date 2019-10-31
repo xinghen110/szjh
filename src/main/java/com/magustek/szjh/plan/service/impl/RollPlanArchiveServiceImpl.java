@@ -150,9 +150,8 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
         }
         //月计划最后一个月，需要包含之后所有数据
         if(lastMonth){
-            LocalDate firstday = localDate.with(TemporalAdjusters.lastDayOfMonth());
             return rollPlanHeadDataArchiveDAO.findAllByPlanHeadIdAndDtvalGreaterThanAndDmvalContainsAndZbart(planHeadId,
-                    firstday.toString().replace("-", ""),
+                    dtval+"01",
                     "D110:"+dmval,
                     zbart);
         }
