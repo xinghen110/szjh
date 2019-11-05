@@ -11,6 +11,7 @@ import com.magustek.szjh.configset.service.IEPlanScreenService;
 import com.magustek.szjh.configset.service.OrganizationSetService;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.PlanItem;
+import com.magustek.szjh.plan.bean.vo.RollPlanHeadDataArchiveVO;
 import com.magustek.szjh.plan.bean.vo.RollPlanItemDataArchiveVO;
 import com.magustek.szjh.plan.service.PlanHeaderService;
 import com.magustek.szjh.plan.service.PlanItemService;
@@ -33,9 +34,12 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.codehaus.groovy.runtime.DefaultGroovyMethods.collect;
 
 /**
  * @author hexin
@@ -315,6 +319,80 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
             });
         });
         return statisticsList;
+    }
+
+    @Override
+    public List<Map<String, String>> getPlanReport(Long id, String zbart) throws Exception {
+        //未完成计划
+        List<RollPlanHeadDataArchiveVO> unCompleteRollPlanHeadList = rollPlanArchiveService.getListByPlanHeaderId(id);
+        PlanHeader planHeader = planHeaderService.getById(id);
+        String jhval = planHeader.getJhval().replaceAll("-","");
+        unCompleteRollPlanHeadList = unCompleteRollPlanHeadList.stream().filter(head->
+                (!Strings.isNullOrEmpty(head.getDtval())) &&
+                (zbart.equals(head.getZbart())) &&
+                (head.getDtval().startsWith(jhval))
+        ).collect(Collectors.toList());
+
+        //获取待使用取数指标集合
+        String outputTax = "statisticalReport/getPendingItemListByDate";
+        Map<String, List<IEPlanScreenItemSet>> sdvarMap = iePlanScreenService
+                .getItemListByIntfa(outputTax)
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanScreenItemSet::getSdvar));
+
+        //组装selectValue数据
+        Map<String, List<IEPlanSelectValueSet>> selectValueMap = iePlanSelectValueSetService
+                .getAllByVersion(planHeader.getCkdate())
+                .stream()
+                .collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtsno));
+
+
+        //已完成计划
+        String ckdate = planHeader.getCkdate();
+        List<RollPlanHeadDataArchiveVO> completeList = new ArrayList<>();
+        if(!ckdate.endsWith("-01")){
+            ckdate = LocalDate.parse(ckdate).minusDays(1).toString();
+            Map<String, List<IEPlanSelectValueSet>> completeValueMap = iePlanSelectValueSetService
+                    .getAllByVersion(ckdate)
+                    .stream()
+                    .collect(Collectors.groupingBy(IEPlanSelectValueSet::getHtsno));
+            completeValueMap.forEach((k,v)->{
+                RollPlanHeadDataArchiveVO roll = new RollPlanHeadDataArchiveVO();
+                //获取日期
+                v.forEach(value->{
+                    if(zbart.equals("K100")){
+                        if("G410".equals(value.getSdart())){
+                            roll.setDtval(value.getSdart());
+                            roll.setHtsno(value.getHtsno());
+                            completeList.add(roll);
+                        }
+                    }
+                    if(zbart.equals("K200")){
+                        if("G459".equals(value.getSdart())){
+                            roll.setDtval(value.getSdval());
+                            roll.setHtsno(value.getHtsno());
+                            completeList.add(roll);
+                        }
+                    }
+                });
+                //获取金额
+                v.forEach(value->{
+                    if(zbart.equals("K100")){
+                        if("G400".equals(value.getSdart())){
+                            roll.setWears(ClassUtils.coverToBigDecimal(value.getSdval()));
+                        }
+                    }
+                    if(zbart.equals("K200")){
+                        if("G460".equals(value.getSdart())){
+                            roll.setWears(ClassUtils.coverToBigDecimal(value.getSdval()));
+                        }
+                    }
+                });
+            });
+        }
+        unCompleteRollPlanHeadList.addAll(completeList);
+        //将所有数据打散组装map
+        return ClassUtils.coverBeanToMapWithSdvarMap(unCompleteRollPlanHeadList, selectValueMap, sdvarMap);
     }
 
     @Override

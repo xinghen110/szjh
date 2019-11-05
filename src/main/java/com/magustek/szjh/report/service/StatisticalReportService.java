@@ -56,6 +56,14 @@ public interface StatisticalReportService {
     List<Map<String, String>> getExecutionByPlanAndDpnum(Long id, String version, String dpnum, String caart) throws Exception;
 
     /**
+     * 根据计划id-id，计划分类-zbart，获取【计划报表】
+     * @param id 计划id
+     * @param zbart 费用类型
+     * @throws Exception    无
+     */
+    List<Map<String, String>> getPlanReport(Long id, String zbart) throws Exception;
+
+    /**
      * 年度、月度计划对比
      * @param arId 年度计划id
      * @param zbart 对比指标

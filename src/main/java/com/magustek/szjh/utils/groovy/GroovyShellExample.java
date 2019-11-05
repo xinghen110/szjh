@@ -21,6 +21,7 @@ public class GroovyShellExample {
     public static void main(String[] args) {
         try {
             System.out.println(ClassUtils.getLastDay(LocalDate.now()));
+            c();
         } catch (Exception e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
@@ -74,7 +75,8 @@ public class GroovyShellExample {
             binding.setVariable("G393", g393);
             GroovyShell shell = new GroovyShell(binding);
             //Object value = shell.evaluate("G393 instanceof Collection");
-            Object value = shell.evaluate("(G201=='01'||G201=='04' ) && (G393 instanceof Collection ? G393.max():G393).toBigDecimal().compareTo(G180.toBigDecimal())>0 && G111=='ICM09'");
+            Object value = shell.evaluate("(G201=='01'||G201=='04' ) && (G393 instanceof Collection ? G393*.toBigDecimal().sum():G393).toBigDecimal().compareTo(G180.toBigDecimal())>0 && G111=='ICM09'");
+            //Object value = shell.evaluate(" G393*.toBigDecimal().sum()");
 
             System.err.println(value);
         } catch (Exception e) {

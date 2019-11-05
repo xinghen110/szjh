@@ -1,7 +1,6 @@
 package com.magustek.szjh.basedataset.controller;
 
 import com.alibaba.fastjson.JSON;
-import com.google.common.base.Strings;
 import com.magustek.szjh.basedataset.entity.*;
 import com.magustek.szjh.basedataset.entity.vo.IEPlanDimenValueSetVO;
 import com.magustek.szjh.basedataset.entity.vo.IEPlanSelectValueSetVO;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -151,7 +149,7 @@ public class BasedataSetController {
         getIEPlanSelectValueSet();
         getIEPlanDimenValueSet();
         //getIEPlanPaymentSet();
-        getIEPlanTermsSet();
+        //getIEPlanTermsSet();
         executeAllCalc(result);
         log.warn("从Odata获取所有配置及业务数据耗时{}", (System.currentTimeMillis()-l)/1000.00);
     }

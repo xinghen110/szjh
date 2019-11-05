@@ -67,6 +67,15 @@ public class PlanHeaderController {
         return resp.setStateCode(BaseResponse.SUCCESS).setData(header).setMsg("成功！").toJson();
     }
 
+    @ApiOperation(value="根据年-月，获取该月最新的计划", notes = "参数：yyyy-MM")
+    @RequestMapping("/getLastPlanByMonth")
+    public String getLastPlanByMonth(@RequestBody PlanHeaderVO vo) {
+        PlanHeader header = planHeaderService.getLastPlanByMonth(vo.getDtval());
+        String userName = ContextUtils.getUserName();
+        log.warn("{}根据月份获取最新的计划：{}", userName, JSON.toJSONString(header));
+        return resp.setStateCode(BaseResponse.SUCCESS).setData(header).setMsg("成功！").toJson();
+    }
+
     @ApiOperation(value="根据公司获取计划列表", notes = "参数：rporg、rptyp、powerModel")
     @RequestMapping("/getPlanHeaderByBukrs")
     public String getPlanHeaderByBukrs(@RequestBody PlanHeaderVO vo) throws Exception {

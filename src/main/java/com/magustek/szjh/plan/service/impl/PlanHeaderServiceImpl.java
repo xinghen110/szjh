@@ -179,6 +179,11 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         return vo;
     }
 
+    @Override
+    public PlanHeader getLastPlanByMonth(String month) {
+        return planHeaderDAO.findTopByCkdateStartsWithOrderByCkdateDesc(month);
+    }
+
     @SuppressWarnings("unused")
     @Override
     public Page<Map<String, String>> getListByBukrs(PlanHeaderVO vo, Pageable pageable) throws Exception{
