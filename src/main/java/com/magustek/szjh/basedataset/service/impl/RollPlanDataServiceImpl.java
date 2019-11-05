@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -528,13 +529,27 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
             //当前项目的取值指标
             String sdart = c.getSdart();
             String sdtyp = c.getVtype();
+
             List<IEPlanSelectValueSet> sdartValue = sdartValueMap.get(sdart);
+
             if(!ClassUtils.isEmpty(sdartValue)){
                 OptionalInt maxInt;
                 RollPlanItemData itemData = new RollPlanItemData();
                 itemData.setImnum(c.getImnum());
                 itemData.setCtdtp("G");
                 itemData.setSdart(sdart);
+                //处理金额取数
+                String sdcur = c.getSdcur();
+                if(!Strings.isNullOrEmpty(sdcur)){
+                    List<IEPlanSelectValueSet> sdcurValue = sdartValueMap.get(sdcur);
+                    if(!ClassUtils.isEmpty(sdcurValue)){
+                        String wears = sdcurValue
+                                .stream()
+                                .map(IEPlanSelectValueSet::getSdval)
+                                .reduce((s, s2) -> ClassUtils.coverToBigDecimal(s).add(ClassUtils.coverStringToBigDecimal(s2)).toString()).orElse("");
+                        plan.setWears(ClassUtils.coverStringToBigDecimal(wears));
+                    }
+                }
                 switch (sdtyp){
                     //日期
                     case IEPlanSelectDataConstant.RESULT_TYPE_DATS:
@@ -552,6 +567,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                             itemData.setDtval("");
                         }
                         //加入明细表
+                        plan.setDtval(itemData.getDtval());
                         itemData.setHeadId(plan);
                         itemDataList.add(itemData);
                         break;
@@ -574,7 +590,7 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                     case IEPlanSelectDataConstant.RESULT_TYPE_CURR:
                         IEPlanSelectValueSet v = sdartValue.get(0);
                         if(v!=null){
-                            plan.setWears(new BigDecimal(v.getSdval()));
+                            plan.setWears(ClassUtils.coverStringToBigDecimal(v.getSdval()));
                             plan.setHtnum(v.getHtnum());
                         }else {
                             plan.setWears(new BigDecimal(0));

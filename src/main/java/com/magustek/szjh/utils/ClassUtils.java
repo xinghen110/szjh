@@ -22,8 +22,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAmount;
-import java.time.temporal.TemporalUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -456,4 +454,29 @@ public class ClassUtils {
             return result.getVersion();
         }
     }
+    /**
+     * 将字符串转换为BigDecimal，包括处理ABAP负号问题
+     * */
+    public static BigDecimal coverToBigDecimal(String wears){
+        boolean flag = false;
+        if(Strings.isNullOrEmpty(wears)){
+            return BigDecimal.ZERO;
+        }
+        if(wears.endsWith("-")){
+            wears = wears.substring(0,wears.length()-1);
+            flag = true;
+        }
+
+        try{
+            BigDecimal decimal = new BigDecimal(wears);
+            if(flag){
+                decimal = decimal.negate();
+            }
+            return decimal;
+        }catch (Exception e){
+            return BigDecimal.ZERO;
+        }
+
+    }
+
 }
