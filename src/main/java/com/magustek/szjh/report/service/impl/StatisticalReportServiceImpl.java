@@ -334,7 +334,7 @@ public class StatisticalReportServiceImpl implements StatisticalReportService {
         ).collect(Collectors.toList());
 
         //获取待使用取数指标集合
-        String outputTax = "statisticalReport/getPendingItemListByDate";
+        String outputTax = "statisticalReport/getPlanReport";
         Map<String, List<IEPlanScreenItemSet>> sdvarMap = iePlanScreenService
                 .getItemListByIntfa(outputTax)
                 .stream()
