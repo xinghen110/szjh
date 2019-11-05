@@ -19,7 +19,7 @@ public interface PlanHeaderService {
     PlanHeader save(PlanHeader header) throws Exception;
     PlanHeader delete(PlanHeader header);
     PlanHeader getById(Long id);
-    PlanHeader getLastPlanByMonth(String month);
+    PlanHeader getLastPlanByMonth(String jhval);
     Page<Map<String, String>> getListByBukrs(PlanHeaderVO vo, Pageable pageable) throws Exception;
     //获取布局信息
     IEPlanReportHeadVO getLayoutByHeaderId(Long headerId);

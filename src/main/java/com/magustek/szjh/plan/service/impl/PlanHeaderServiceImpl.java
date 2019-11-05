@@ -180,8 +180,8 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     }
 
     @Override
-    public PlanHeader getLastPlanByMonth(String month) {
-        return planHeaderDAO.findTopByCkdateStartsWithOrderByCkdateDesc(month);
+    public PlanHeader getLastPlanByMonth(String jhval) {
+        return planHeaderDAO.findTopByJhvalOrderByCkdateDesc(jhval);
     }
 
     @SuppressWarnings("unused")
