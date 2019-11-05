@@ -205,9 +205,14 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 Map<String, List<IEPlanBusinessItemSetVO>> groupBySdtyp = itemVOList
                         .stream()
                         .collect(Collectors.groupingBy(IEPlanBusinessItemSetVO::getSdtyp));
+                boolean completeFlag = false;//未完成、已完成标记
+                if(Objects.equals(head.getBusta(), "02") || Objects.equals(head.getBusta(), "04")){
+                    completeFlag = true;
+                }
 
                 //处理类型为【G】的指标
-                GetPlanData(groupBySdtyp,
+                GetPlanData(completeFlag,
+                        groupBySdtyp,
                         htsno,
                         head,
                         sdartValueMap,
@@ -505,7 +510,8 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
     }
 
     //处理类型为【G】的指标
-    private void GetPlanData(Map<String, List<IEPlanBusinessItemSetVO>> groupBySdtyp,
+    private void GetPlanData(boolean completeFlag,
+                             Map<String, List<IEPlanBusinessItemSetVO>> groupBySdtyp,
                              String htsno,
                              IEPlanBusinessHeadSetVO head,
                              Map<String, List<IEPlanSelectValueSet>> sdartValueMap,
@@ -599,6 +605,9 @@ public class RollPlanDataServiceImpl implements RollPlanDataService {
                 }
             }
         });
+        if(completeFlag){
+            plan.setDtval("");
+        }
     }
 
     //根据版本，维度代码获取【计划能力值】
