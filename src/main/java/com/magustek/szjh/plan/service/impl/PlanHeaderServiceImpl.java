@@ -599,6 +599,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         //获取节点及后续节点列表
         Map<String, List<IEPlanBusinessItemSet>> itemMap = new HashMap<>(imnumMap.size());
         Set<String> itemSet = new HashSet<>();
+        if(ClassUtils.isEmpty(imnumMap)){
+            log.error("imnumMap is null!");
+            return 0;
+        }
         imnumMap.forEach((key,value)-> {
             List<IEPlanBusinessItemSet> nextItemList = iePlanBusinessItemSetService.getNextItemList(key);
             itemMap.put(key, nextItemList);
@@ -614,9 +618,17 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             return 0;
         }
 
+        if(ClassUtils.isEmpty(itemMap)){
+            log.error("itemMap is null!");
+            return 0;
+        }
         //更新当前节点能力值以及后续节点日期
         itemMap.forEach((imnum, item)->{
             if (Strings.isNullOrEmpty(imnum)) {
+                return;
+            }
+            if(ClassUtils.isEmpty(itemArchiveMap)){
+                log.error("itemArchiveMap is null!");
                 return;
             }
             itemArchiveMap.forEach((headId, itemList)->{
@@ -624,6 +636,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 Map<String, List<RollPlanItemDataArchive>> itemGroup = itemList.stream().collect(Collectors.groupingBy(RollPlanItemDataArchive::getImnum));
                 //处理当前节点
                 List<RollPlanItemDataArchive> imnumItemList = itemGroup.get(imnum);
+                if(ClassUtils.isEmpty(imnumItemList)){
+                    log.error("imnumItemList is null!");
+                    return;
+                }
                 imnumItemList.forEach(i->{
                     if(IEPlanBusinessItemSet.GET.equals(i.getCtdtp())){
                         return;
@@ -638,6 +654,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     //更新后续节点日期
                     if(!ClassUtils.isEmpty(item)){
                         item.remove(0);//去掉当前已处理的节点
+                        if(ClassUtils.isEmpty(item)){
+                            log.error("item is null!");
+                            return;
+                        }
                         item.forEach(nextItem->{
                             List<RollPlanItemDataArchive> nextItemList = itemGroup.get(nextItem.getImnum());
                             if(!ClassUtils.isEmpty(nextItemList)){
