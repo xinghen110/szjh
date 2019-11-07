@@ -558,11 +558,11 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
             //计划笔数
             List<RollPlanHeadDataArchive> rollList = headList.stream()
-                    .filter(h -> !Strings.isNullOrEmpty(h.getDtval()) && h.getDtval().startsWith(jhval))
+                    .filter(h -> !Strings.isNullOrEmpty(h.getDtval()))
                     .collect(Collectors.toList());
             BigDecimal wears = rollList.stream().map(RollPlanHeadDataArchive::getWears).reduce(BigDecimal.ZERO, BigDecimal::add);
             map.put("count", rollList.size());
-            //本月计划金额
+            //计划金额
             map.put("wears", wears.doubleValue());
 
 /*             //合同数量
