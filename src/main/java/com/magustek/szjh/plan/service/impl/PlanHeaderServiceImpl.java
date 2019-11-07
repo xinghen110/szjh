@@ -531,11 +531,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             organizationSetService.fillMap(orgMap, map, dmart, k);
             //本次统计相关的滚动计划列表
             List<RollPlanHeadDataArchive> headList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndDmvalAndZbart(zbart, dmart + ":" + k, planHeadId);
-            //TODO debug point
-            if(Objects.equals(k,"50003525")){
-                System.out.println("planHeadId:"+planHeadId);
-                System.out.println("zbart:"+zbart);
-            }
             if(ClassUtils.isEmpty(headList)){
                 return;
             }
@@ -569,11 +564,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             map.put("count", rollList.size());
             //计划金额
             map.put("wears", wears.doubleValue());
-
-            //TODO debug point
-            if(Objects.equals(k,"50003525")){
-                System.out.println("headList:"+JSON.toJSONString(headList));
-            }
 
 /*             //合同数量
            List<Long> rollIdList = itemList.stream().map(RollPlanItemDataArchive::getHeadId).collect(Collectors.toList());
