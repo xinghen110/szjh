@@ -443,11 +443,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         List<Map<String, String>> htsnoList = this.getHtsnoList(zbart,dmval,dtval,planHeadId,pageable);
         String searchgStr = searching == null?null:searching.trim();
         if (searchgStr != null && !searching.isEmpty()) {
-            htsnoList = htsnoList.stream().filter((obj) -> {
-                return obj.get("G118").contains(searchgStr);
-            }).collect(Collectors.toList());
+            htsnoList = htsnoList.stream().filter((obj) -> obj.containsKey("G118") && obj.get("G118").contains(searchgStr)).collect(Collectors.toList());
         }
-        Page<Map<String, String>> page = null;
+        Page<Map<String, String>> page;
         if (pageable.getOffset() > htsnoList.size()) {
             long total = 0L;
             page = new PageImpl<>(Lists.newArrayList(), pageable, total);
@@ -516,13 +514,14 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         List<Map<String, Object>> list = new ArrayList<>();
         PlanHeader planHeader = getById(planHeadId);
         String jhval = planHeader.getJhval().replaceAll("-","");
-        //维度列表
+        //组织机构列表，根据组织机构分组
         Map<String, List<OrganizationSet>> orgMap = organizationSetService.getOrgMapByDmart(dmart);
         if(orgMap==null){
             return list;
         }
+        //获取历史能力值
         Map<String, List<DmCalcStatistics>> statisticsMap = dmCalcStatisticsService
-                .getStatisticsByDmartAndCaartAndVersion(dmart, caart, planHeaderDAO.findOne(planHeadId).getCkdate())
+                .getStatisticsByDmartAndCaartAndVersion(dmart, caart, planHeader.getCkdate())
                 .stream()
                 .collect(Collectors.groupingBy(DmCalcStatistics::getDmval));
         //计划能力值相关项目编号列表
@@ -530,22 +529,23 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 .getAllByCaart(caart)
                 .stream()
                 .collect(Collectors.groupingBy(IEPlanBusinessItemSet::getImnum));
-        orgMap.forEach((k, v)->{
+
+        orgMap.keySet().forEach(k->{
             Map<String, Object> map = new HashMap<>();
-            //填充组织信息
+            //填充组织信息（名称、代码、排序码的key、value）
             organizationSetService.fillMap(orgMap, map, dmart, k);
-            //待统计抬头列表
+            //本次统计相关的滚动计划列表
             List<RollPlanHeadDataArchive> headList = rollPlanArchiveService.getHeadDataByPlanHeadIdAndDmvalAndZbart(zbart, dmart + ":" + k, planHeadId);
             if(ClassUtils.isEmpty(headList)){
                 return;
             }
-            //根据抬头ID列表，以及项目编号列表获取相关环节列表
+            //根据抬头ID列表，以及项目编号列表获取相关滚动计划环节列表
             List<RollPlanItemDataArchive> itemList = rollPlanArchiveService.getItemDataByHeadIdAndImnum(
                     headList.stream().map(RollPlanHeadDataArchive::getRollId).collect(Collectors.toList()),
                     new ArrayList<>(imnumMap.keySet())
             );
 
-            //获取待计算账期列表
+            //去除历史能力值为空的环节
             itemList = itemList.stream().filter(i->i.getCaval()!=null).collect(Collectors.toList());
             //取账期平均值
             OptionalDouble opt = itemList.stream().mapToInt(RollPlanItemDataArchive::getCaval).average();
@@ -554,19 +554,16 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 map.put("cavalNew",map.get("caval"));
             }else{
                 return;
-                // map.put("caval",0);
             }
 
-            if(statisticsMap.get(k) == null || statisticsMap.get(k).size() < 1){
+            if(ClassUtils.isEmpty(statisticsMap.get(k))){
                 return;
             }
             map.put("cavalHis", statisticsMap.get(k).get(0).getHisval());
 
             //计划笔数
             List<RollPlanHeadDataArchive> rollList = headList.stream()
-                    .filter(h -> zbart.equals(h.getZbart())
-                            && !Strings.isNullOrEmpty(h.getDtval())
-                            && h.getDtval().startsWith(jhval))
+                    .filter(h -> !Strings.isNullOrEmpty(h.getDtval()) && h.getDtval().startsWith(jhval))
                     .collect(Collectors.toList());
             BigDecimal wears = rollList.stream().map(RollPlanHeadDataArchive::getWears).reduce(BigDecimal.ZERO, BigDecimal::add);
             map.put("count", rollList.size());
