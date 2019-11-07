@@ -49,8 +49,10 @@ public class ExportStatisticalReportController {
 
     @ApiOperation(value="根据zbart、planHeadId导出【所有部门计划】数据excel", notes = "参数：zbart、planHeadId")
     @RequestMapping("/exportAllHtsnoListByExcel")
-    public String exportAllHtsnoListByExcel(HttpServletResponse response, @RequestParam(value = "zbart") String zbart, @RequestParam(value = "headerId") Long headerId ) throws Exception {
-        planHeaderService.exportAllHtsnoListByExcel(response, zbart, headerId);
-        return resp.setStateCode(BaseResponse.SUCCESS).setMsg("成功！").toJson();
+    public void exportAllHtsnoListByExcel(HttpServletResponse response, @RequestParam(value = "zbart") String zbart, @RequestParam(value = "headerId") Long headerId ) throws Exception {
+        HSSFWorkbook workbook = planHeaderService.exportAllHtsnoListByExcel(zbart, headerId);
+        response.setContentType("application/vnd.ms-excel");
+        response.setHeader("Content-disposition", "attachment;filename=" + URLEncoder.encode("月度计划报表.xls", "UTF-8"));
+        workbook.write(response.getOutputStream());
     }
 }

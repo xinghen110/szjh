@@ -4,10 +4,10 @@ import com.magustek.szjh.configset.bean.IEPlanScreenHeadSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanReportHeadVO;
 import com.magustek.szjh.plan.bean.PlanHeader;
 import com.magustek.szjh.plan.bean.vo.PlanHeaderVO;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +26,7 @@ public interface PlanHeaderService {
     //查看所有部门合同计划
     List<Map<String, String>> getAllHtsnoList(String zbart, Long planHeadId);
     //导出所有部门合同计划为excel
-    void exportAllHtsnoListByExcel(HttpServletResponse response, String zbart, Long planHeadId) throws Exception;
+    HSSFWorkbook exportAllHtsnoListByExcel(String zbart, Long planHeadId) throws Exception;
     //查看部门合同计划
     List<Map<String, String>> getHtsnoList(String zbart, String dmval, String dtval, Long planHeadId, Pageable pageable) throws Exception;
     //部门合同计划金额合计

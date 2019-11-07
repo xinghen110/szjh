@@ -41,10 +41,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
-import java.net.URLEncoder;
 import java.text.ParseException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -250,7 +248,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
         List<Map<String, String>> htsnoList = new ArrayList<>(rollPlanHeadDataArchiveList.size());
         rollPlanHeadDataArchiveList.stream()
-                .filter(rollPlanHeadDataArchive -> !Strings.isNullOrEmpty(rollPlanHeadDataArchive.getDtval()))
+                .filter(rollPlanHeadDataArchive -> !Strings.isNullOrEmpty(rollPlanHeadDataArchive.getDtval()) || !rollPlanHeadDataArchive.getDtval().equals("0") )
                 .forEach(rollPlanHeadDataArchive -> {
             Map<String, String> map = new HashMap<>();
             htsnoList.add(map);
@@ -277,7 +275,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     }
 
     @Override
-    public void exportAllHtsnoListByExcel(HttpServletResponse response, String zbart, Long planHeadId) throws Exception{
+    public HSSFWorkbook exportAllHtsnoListByExcel(String zbart, Long planHeadId) throws Exception{
         List<Map<String, String>> allHtsnoList = this.getAllHtsnoList(zbart, planHeadId);
         Map<String, String> excelHeadMap = new LinkedHashMap<>();
         excelHeadMap.put("G202", "部门");
@@ -296,7 +294,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         //sheet名称
         HSSFSheet sheet = workbook.createSheet("月度计划报表");
         HSSFRow row = sheet.createRow(0);
-        String fileName = "月度计划报表.xls";
         int index = 0;
         //新增数据行，并且设置单元格数据
         int rowNum = 1;
@@ -324,9 +321,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             sheet.autoSizeColumn(i);
             sheet.setColumnWidth(i, sheet.getColumnWidth(i) * 13 / 10);
         }
-        response.setContentType("application/vnd.ms-excel");
-        response.setHeader("Content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
-        workbook.write(response.getOutputStream());
+        return workbook;
     }
 
     @Override
