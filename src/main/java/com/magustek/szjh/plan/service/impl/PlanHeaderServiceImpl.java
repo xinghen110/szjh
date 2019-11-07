@@ -275,7 +275,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     }
 
     @Override
-    public HSSFWorkbook exportAllHtsnoListByExcel(String zbart, Long planHeadId) throws Exception{
+    public HSSFWorkbook exportAllHtsnoListByExcel(String zbart, Long planHeadId) {
         List<Map<String, String>> allHtsnoList = this.getAllHtsnoList(zbart, planHeadId);
         Map<String, String> excelHeadMap = new LinkedHashMap<>();
         excelHeadMap.put("G202", "部门");
@@ -508,7 +508,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     public List<Map<String, Object>> getCavalByPlanHeadIdAndCaartAndDmart(Long planHeadId, String caart, String dmart, String zbart) {
         List<Map<String, Object>> list = new ArrayList<>();
         PlanHeader planHeader = getById(planHeadId);
-        String jhval = planHeader.getJhval().replaceAll("-","");
+        //String jhval = planHeader.getJhval().replaceAll("-","");
         //组织机构列表，根据组织机构分组
         Map<String, List<OrganizationSet>> orgMap = organizationSetService.getOrgMapByDmart(dmart);
         if(orgMap==null){
@@ -589,6 +589,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         if(ClassUtils.isEmpty(headList)){
             return 0;
         }
+        //待更新抬头列表
+        Map<Long, List<RollPlanHeadDataArchive>> headMap = headList.stream().collect(Collectors.groupingBy(RollPlanHeadDataArchive::getRollId));
+        //待更新行项目列表
         List<RollPlanItemDataArchive> changedList = new ArrayList<>();
         //计划能力值相关项目编号列表
         Map<String, List<IEPlanBusinessItemSet>> imnumMap = iePlanBusinessItemSetService
@@ -641,6 +644,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     return;
                 }
                 imnumItemList.forEach(i->{
+                    //如果不是计算节点，则不调整
                     if(IEPlanBusinessItemSet.GET.equals(i.getCtdtp())){
                         return;
                     }
@@ -648,9 +652,13 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     int days = caval + i.getCaval() > 0 ? caval:0-i.getCaval();
                     //更新历史能力值
                     i.setCaval(i.getCaval()+days);
-                    //调整计划日期
+                    //调整行项目计划日期
                     adjustDtval(i, days);
                     changedList.add(i);
+                    //调整抬头计划日期
+                    if(headMap.containsKey(headId)){
+                        headMap.get(headId).get(0).setDtval(i.getDtval());
+                    }
                     //更新后续节点日期
                     if(!ClassUtils.isEmpty(item)){
                         item.remove(0);//去掉当前已处理的节点
@@ -663,6 +671,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                             if(!ClassUtils.isEmpty(nextItemList)){
                                 nextItemList.forEach(l-> adjustDtval(l, days));
                                 changedList.addAll(nextItemList);
+                                //调整抬头计划日期----如果有后续环节，则以最后一个环节的日期为准
+                                if(headMap.containsKey(headId)){
+                                    headMap.get(headId).get(0).setDtval(nextItemList.get(nextItemList.size()-1).getDtval());
+                                }
                             }
                         });
                     }
@@ -672,6 +684,12 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         //更新计划明细
         if(!ClassUtils.isEmpty(changedList)){
             rollPlanArchiveService.saveItemList(changedList);
+        }
+        //更新计划抬头
+        if(!ClassUtils.isEmpty(headMap)){
+            ArrayList<RollPlanHeadDataArchive> hList = new ArrayList<>();
+            headMap.forEach((k,v)-> hList.addAll(v));
+            rollPlanArchiveService.saveHeadList(hList);
         }
         //更新报表明细
         List<PlanItem> planItemList = planItemService.getListByHeaderId(planHeadId);
