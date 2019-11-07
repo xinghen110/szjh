@@ -248,7 +248,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
         List<Map<String, String>> htsnoList = new ArrayList<>(rollPlanHeadDataArchiveList.size());
         rollPlanHeadDataArchiveList.stream()
-                .filter(rollPlanHeadDataArchive -> !Strings.isNullOrEmpty(rollPlanHeadDataArchive.getDtval()) || !rollPlanHeadDataArchive.getDtval().equals("0") )
+                .filter(rollPlanHeadDataArchive -> !Strings.isNullOrEmpty(rollPlanHeadDataArchive.getDtval()) && !rollPlanHeadDataArchive.getDtval().equals("0") )
                 .forEach(rollPlanHeadDataArchive -> {
             Map<String, String> map = new HashMap<>();
             htsnoList.add(map);
