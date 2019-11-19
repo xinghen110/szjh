@@ -973,7 +973,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         List<RollPlanHeadDataArchiveVO> rollPlanHeadDataArchiveList = rollPlanArchiveService
                 .getListByPlanHeaderId(id)
                 .stream()
-                .filter(i->!Strings.isNullOrEmpty(i.getDtval()))
+                .filter(i->!Strings.isNullOrEmpty(i.getDtval()) && !i.getDtval().equals("0"))
                 .collect(Collectors.toList());
         //滚动计划-行项目列表
         Map<String, List<IEPlanBusinessItemSet>> imnumMap = iePlanBusinessItemSetService.getMap();
@@ -989,7 +989,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             //遍历行项目，过滤需要回传的行项目
             for (RollPlanItemDataArchiveVO item : itemList) {
                 //计划日期为空，不回传
-                if (!Strings.isNullOrEmpty(item.getDtval())) {
+                if (!Strings.isNullOrEmpty(item.getDtval()) && !item.getDtval().equals("0")) {
                     // 回传【rflag】为【X】的行项目，以及计划类型为【C】的行项目
                     if (IEPlanBusinessItemSet.CALC.equals(item.getCtdtp())
                         || "X".equals(imnumMap.get(item.getImnum()).get(0).getRflag())) {
@@ -1064,7 +1064,12 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             itemMap.put("ritid", i.getId().toString());
             itemMap.put("plaid", plan.getId().toString());
             itemMap.put("rheid", i.getHeadId().toString());
-            itemMap.put("caval", i.getCaval().toString());
+            if (i.getCaval() == null) {
+                itemMap.put("caval", "0");
+                log.warn("滚动计划行项目参考能力值为null:"+JSON.toJSONString(i));
+            }else {
+                itemMap.put("caval", i.getCaval().toString());
+            }
             itemMap.put("ctdtp", i.getCtdtp());
             itemMap.put("dtval", dtval);
             itemMap.put("imnum", i.getImnum());
