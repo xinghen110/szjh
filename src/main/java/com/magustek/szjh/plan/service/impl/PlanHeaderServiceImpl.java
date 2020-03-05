@@ -727,6 +727,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         boolean flag = sum.compareTo(BigDecimal.ZERO)>0;
         log.error("差额，sum:{}", sum);
         //获取【付款支付完成时效】对应imnum号
+        //根据收支类型，确定使用的日期指标
         String code;
         if("K100".equals(zbart)){
             code = "C380";
