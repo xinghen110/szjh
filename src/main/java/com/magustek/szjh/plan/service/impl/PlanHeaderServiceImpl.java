@@ -727,7 +727,16 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         boolean flag = sum.compareTo(BigDecimal.ZERO)>0;
         log.error("差额，sum:{}", sum);
         //获取【付款支付完成时效】对应imnum号
-        String c210Imnum = iePlanBusinessItemSetService.getAllByCaart("C210").get(0).getImnum();
+        String code;
+        if("K100".equals(zbart)){
+            code = "C380";
+        }else if("K200".equals(zbart)){
+            code = "C210";
+        }else{
+            throw new Exception("计划类型错误："+zbart+"！");
+        }
+
+        String c210Imnum = iePlanBusinessItemSetService.getAllByCaart(code).get(0).getImnum();
         List<RollPlanItemDataArchive> itemList = new ArrayList<>();
         List<RollPlanHeadDataArchive> headList = new ArrayList<>();
         if(flag){
