@@ -1,6 +1,5 @@
 package com.magustek.szjh.utils.groovy;
 
-import com.google.common.collect.Lists;
 import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.KeyValueBean;
 import groovy.lang.Binding;
@@ -8,7 +7,6 @@ import groovy.lang.GroovyShell;
 import org.springframework.beans.BeanUtils;
 
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.text.ParseException;
