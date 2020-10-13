@@ -53,6 +53,8 @@ spring:
       host: 10.154.70.121
       database: szjh
       port: 27017
+      username: szjhadmin
+      password: S@p123
   jpa:
     database: MYSQL
     show-sql: true
