@@ -54,20 +54,20 @@ import java.util.stream.Collectors;
 @Service("PlanHeaderService")
 public class PlanHeaderServiceImpl implements PlanHeaderService {
 
-    private PlanHeaderDAO planHeaderDAO;
-    private PlanItemService planItemService;
-    private OrganizationSetService organizationSetService;
-    private ConfigDataSourceSetService configDataSourceSetService;
-    private IEPlanReportHeadSetService iePlanReportHeadSetService;
-    private PlanLayoutDAO planLayoutDAO;
-    private RollPlanArchiveService rollPlanArchiveService;
-    private IEPlanSelectValueSetService iePlanSelectValueSetService;
-    private IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
-    private IEPlanBusinessItemSetService iePlanBusinessItemSetService;
-    private DmCalcStatisticsService dmCalcStatisticsService;
-    private IEPlanScreenService iePlanScreenService;
+    private final PlanHeaderDAO planHeaderDAO;
+    private final PlanItemService planItemService;
+    private final OrganizationSetService organizationSetService;
+    private final ConfigDataSourceSetService configDataSourceSetService;
+    private final IEPlanReportHeadSetService iePlanReportHeadSetService;
+    private final PlanLayoutDAO planLayoutDAO;
+    private final RollPlanArchiveService rollPlanArchiveService;
+    private final IEPlanSelectValueSetService iePlanSelectValueSetService;
+    private final IEPlanBusinessHeadSetService iePlanBusinessHeadSetService;
+    private final IEPlanBusinessItemSetService iePlanBusinessItemSetService;
+    private final DmCalcStatisticsService dmCalcStatisticsService;
+    private final IEPlanScreenService iePlanScreenService;
     private final IEPlanReleaseSetDAO iePlanReleaseSetDAO;
-    private ApprovalLogDAO approvalLogDAO;
+    private final ApprovalLogDAO approvalLogDAO;
     private final HttpUtils httpUtils;
 
     public PlanHeaderServiceImpl(PlanHeaderDAO planHeaderDAO,
@@ -545,7 +545,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             //取账期平均值
             OptionalDouble opt = itemList.stream().mapToInt(RollPlanItemDataArchive::getCaval).average();
             if(opt.isPresent()){
-                map.put("caval",new BigDecimal(opt.getAsDouble()).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue());
+                map.put("caval", BigDecimal.valueOf(opt.getAsDouble()).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue());
                 map.put("cavalNew",map.get("caval"));
             }else{
                 return;
@@ -649,7 +649,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                         return;
                     }
                     //如果调减的天数大于能力值，则调减能力值天数
-                    int days = caval + i.getCaval() > 0 ? caval:0-i.getCaval();
+                    int days = caval + i.getCaval() > 0 ? caval:-i.getCaval();
                     //更新历史能力值
                     i.setCaval(i.getCaval()+days);
                     //调整行项目计划日期
@@ -755,17 +755,24 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     .filter(vo-> c210Imnum.equals(vo.getImnum()))
                     .sorted(Comparator.comparing(RollPlanItemDataArchiveVO::getDtval).reversed())
                     .collect(Collectors.toList());
+
+            //获取同一个合同管理编号下所有的计划
+            Map<String, List<RollPlanItemDataArchiveVO>> htnumMap = itemVOList.stream().collect(Collectors.groupingBy(RollPlanItemDataArchiveVO::getHtnum));
+
             //从后往前凑金额，并将计划日期置为下个月的第一天
             for(RollPlanItemDataArchiveVO vo : itemVOList){
                 log.error("开始调整计划，差额sum:{}，计划金额：vo.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}", sum,vo.getWears(),vo.getRollId(),vo.getId());
                 sum = sum.subtract(vo.getWears());
                 if(sum.compareTo(BigDecimal.ZERO)>0){
-                    RollPlanItemDataArchive item = itemMap.get(vo.getId()).get(0);
-                    RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
-                    item.setDtval(firstDay);
-                    head.setDtval(item.getDtval());
-                    itemList.add(item);
-                    headList.add(head);
+                    //同一个合同管理编号一起排计划
+                    htnumMap.get(vo.getHtnum()).forEach(voItem->{
+                        RollPlanItemDataArchive item = itemMap.get(vo.getId()).get(0);
+                        RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
+                        item.setDtval(firstDay);
+                        head.setDtval(item.getDtval());
+                        itemList.add(item);
+                        headList.add(head);
+                    });
                 }else{
                     break;
                 }
@@ -784,16 +791,24 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     .filter(vo-> c210Imnum.equals(vo.getImnum()))
                     .sorted(Comparator.comparing(RollPlanItemDataArchiveVO::getDtval))
                     .collect(Collectors.toList());
+
+            //获取同一个合同管理编号下所有的计划
+            Map<String, List<RollPlanItemDataArchiveVO>> htnumMap = itemVOList.stream().collect(Collectors.groupingBy(RollPlanItemDataArchiveVO::getHtnum));
+
             //从后往前凑金额，并将计划日期置为当月的最后一天
             for(RollPlanItemDataArchiveVO vo : itemVOList){
+                log.error("开始调整计划，差额sum:{}，计划金额：vo.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}", sum,vo.getWears(),vo.getRollId(),vo.getId());
                 sum = sum.add(vo.getWears());
                 if(sum.compareTo(BigDecimal.ZERO)<0){
-                    RollPlanItemDataArchive item = itemMap.get(vo.getId()).get(0);
-                    RollPlanHeadDataArchive head = headMap.get(vo.getHeadId()).get(0);
-                    item.setDtval(lastDay);
-                    head.setDtval(item.getDtval());
-                    itemList.add(item);
-                    headList.add(head);
+                    //同一个合同管理编号一起排计划
+                    htnumMap.get(vo.getHtnum()).forEach(voItem-> {
+                        RollPlanItemDataArchive item = itemMap.get(vo.getId()).get(0);
+                        RollPlanHeadDataArchive head = headMap.get(vo.getHeadId()).get(0);
+                        head.setDtval(item.getDtval());
+                        item.setDtval(lastDay);
+                        itemList.add(item);
+                        headList.add(head);
+                    });
                 }else{
                     break;
                 }
