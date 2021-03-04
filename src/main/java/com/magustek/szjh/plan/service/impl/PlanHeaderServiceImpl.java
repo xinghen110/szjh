@@ -761,18 +761,19 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
             //从后往前凑金额，并将计划日期置为下个月的第一天
             for(RollPlanItemDataArchiveVO vo : itemVOList){
-                log.error("开始调整计划，差额sum:{}，计划金额：vo.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}", sum,vo.getWears(),vo.getRollId(),vo.getId());
-                sum = sum.subtract(vo.getWears());
                 if(sum.compareTo(BigDecimal.ZERO)>0){
                     //同一个合同管理编号一起排计划
-                    htnumMap.get(vo.getHtnum()).forEach(voItem->{
-                        RollPlanItemDataArchive item = itemMap.get(vo.getId()).get(0);
+                    for (RollPlanItemDataArchiveVO voItem : htnumMap.get(vo.getHtnum())) {
+                        log.error("开始调整计划，差额sum:{}，计划金额：voItem.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}，滚动计划htnum：{}",
+                                sum,voItem.getWears(),voItem.getRollId(),voItem.getId(), voItem.getHtnum());
+                        RollPlanItemDataArchive item = itemMap.get(voItem.getId()).get(0);
                         RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
                         item.setDtval(firstDay);
                         head.setDtval(item.getDtval());
                         itemList.add(item);
                         headList.add(head);
-                    });
+                        sum = sum.subtract(voItem.getWears());
+                    }
                 }else{
                     break;
                 }
@@ -797,18 +798,19 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
 
             //从后往前凑金额，并将计划日期置为当月的最后一天
             for(RollPlanItemDataArchiveVO vo : itemVOList){
-                log.error("开始调整计划，差额sum:{}，计划金额：vo.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}", sum,vo.getWears(),vo.getRollId(),vo.getId());
-                sum = sum.add(vo.getWears());
                 if(sum.compareTo(BigDecimal.ZERO)<0){
                     //同一个合同管理编号一起排计划
-                    htnumMap.get(vo.getHtnum()).forEach(voItem-> {
-                        RollPlanItemDataArchive item = itemMap.get(vo.getId()).get(0);
-                        RollPlanHeadDataArchive head = headMap.get(vo.getHeadId()).get(0);
+                    for (RollPlanItemDataArchiveVO voItem : htnumMap.get(vo.getHtnum())) {
+                        log.error("开始调整计划，差额sum:{}，计划金额：voItem.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}，滚动计划htnum：{}",
+                                sum,voItem.getWears(),voItem.getRollId(),voItem.getId(), voItem.getHtnum());
+                        RollPlanItemDataArchive item = itemMap.get(voItem.getId()).get(0);
+                        RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
                         head.setDtval(item.getDtval());
                         item.setDtval(lastDay);
                         itemList.add(item);
                         headList.add(head);
-                    });
+                        sum = sum.add(voItem.getWears());
+                    }
                 }else{
                     break;
                 }
