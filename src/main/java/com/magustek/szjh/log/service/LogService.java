@@ -12,9 +12,9 @@ import org.springframework.stereotype.Component;
 import java.util.Calendar;
 import java.util.Date;
 
-@Component
+//@Component
 public class LogService {
-    private final LogDao logDao;
+    /*private final LogDao logDao;
 
     public LogService(LogDao logDao) {
         this.logDao = logDao;
@@ -56,6 +56,6 @@ public class LogService {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.WEEK_OF_YEAR, -1);
         System.out.println(ClassUtils.dfFullTime.format(cal.getTime()));
-    }
+    }*/
 
 }

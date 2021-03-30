@@ -12,7 +12,7 @@ import org.springframework.data.annotation.Id;
 @AllArgsConstructor
 public class LogEntity {
 
-    @Id
+    //@Id
     private String _id;
     private String loginName;
     private String userName;

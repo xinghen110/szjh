@@ -1,17 +1,13 @@
 package com.magustek.szjh.log.appender;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.UnsynchronizedAppenderBase;
-import org.springframework.stereotype.Component;
-
 /**
  * log appender，用于向MongoDB记录日志
  *
  * 由于日志功能初始化时，Spring容器尚未完成初始化，该类无法使用任何Spring容器提供的功能，
  * 无法便捷的使用【配置文件】或【数据库】进行配置，该问题待解决。
  * */
-@Component
-public class MongoDBAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+//@Component
+public class MongoDBAppender {//extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
 //    @Value("${logger.mongodb.host}")
 //    private String host = "10.154.70.121";
@@ -22,9 +18,9 @@ public class MongoDBAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     //private MongoTemplate mongoTemplate;
 
-    @Override
+/*    @Override
     protected void append(ILoggingEvent eventObject) {
-/*        MongoTemplate mongoTemplate = SpringUtils.getBean(MongoTemplate.class);
+        MongoTemplate mongoTemplate = SpringUtils.getBean(MongoTemplate.class);
         if (mongoTemplate != null) {
             LogEntity doc = new LogEntity();
             String time = ClassUtils.dfFullTime.format(new Date(eventObject.getTimeStamp()));
@@ -37,7 +33,7 @@ public class MongoDBAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
             mongoTemplate.insert(doc, "logEntity");
         }*/
-    }
+    //}
 
     /*
      * 由于MongoDB在创建连接的时候，会向MongoDB写日志，造成死循环，在初始化日志Appender的时候，手动创建连接。
