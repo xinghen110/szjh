@@ -48,11 +48,11 @@ spring:
       connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=1000
 
 
-  data:
-    mongodb:
-      host: 10.154.70.121
-      database: szjh
-      port: 27017
+#  data:
+#    mongodb:
+#      host: 10.154.70.121
+#      database: szjh
+#      port: 27017
       #username: szjhadmin
       #password: S@p123
   jpa:

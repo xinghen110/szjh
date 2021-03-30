@@ -2,19 +2,7 @@ package com.magustek.szjh.log.appender;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
-import com.magustek.szjh.log.entity.LogEntity;
-import com.magustek.szjh.utils.ClassUtils;
-import com.magustek.szjh.utils.ContextUtils;
-import com.magustek.szjh.utils.SpringUtils;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.ServerAddress;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
-
-import java.util.Calendar;
-import java.util.Date;
 
 /**
  * log appender，用于向MongoDB记录日志
@@ -32,11 +20,11 @@ public class MongoDBAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 //    @Value("${logger.mongodb.database}")
 //    private String database = "szjh";
 
-    private MongoTemplate mongoTemplate;
+    //private MongoTemplate mongoTemplate;
 
     @Override
     protected void append(ILoggingEvent eventObject) {
-        MongoTemplate mongoTemplate = SpringUtils.getBean(MongoTemplate.class);
+/*        MongoTemplate mongoTemplate = SpringUtils.getBean(MongoTemplate.class);
         if (mongoTemplate != null) {
             LogEntity doc = new LogEntity();
             String time = ClassUtils.dfFullTime.format(new Date(eventObject.getTimeStamp()));
@@ -48,10 +36,10 @@ public class MongoDBAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             doc.setMessage(eventObject.getFormattedMessage());
 
             mongoTemplate.insert(doc, "logEntity");
-        }
+        }*/
     }
 
-    /**
+    /*
      * 由于MongoDB在创建连接的时候，会向MongoDB写日志，造成死循环，在初始化日志Appender的时候，手动创建连接。
      * */
 //    @Override
