@@ -91,8 +91,8 @@ zconnection:
   type: odata
   odataIp: http://10.154.96.65
   odataPort: 8000
-  odataUser: cg_fangwei
-  odataPasswd: siemens
+  odataUser: cg_lianh
+  odataPasswd: Tiamo521012$
   odataClient: 103
   esbIp: http://10.154.97.1:8010/
 schedule:
