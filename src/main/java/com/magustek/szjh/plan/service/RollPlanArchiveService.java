@@ -16,6 +16,7 @@ public interface RollPlanArchiveService {
     List<RollPlanHeadDataArchive> getHeadDataByPlanHeadIdAndZbart(Long planHeadId, String zbart);
 
     List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String>imnumList);
+    List<RollPlanItemDataArchive> getItemDataByHeadIdIn(List<Long> headIdList);
     List<RollPlanItemDataArchive> getItemDataByPlanHeadId(Long PlanHeadId);
 
     void saveItemList(List<RollPlanItemDataArchive> changedList);
@@ -29,6 +30,7 @@ public interface RollPlanArchiveService {
      * @return      相关Item列表
      */
     List<RollPlanItemDataArchiveVO> getItemListByPlanHeaderIdAndStartEndDate(Long id, String start, String end);
+    List<RollPlanItemDataArchiveVO> getItemListByHeaderIdInAndStartEndDate(List<Long> ids, String start, String end);
 
     /**
      * 根据计划ID获取所有滚动计划head及其Item

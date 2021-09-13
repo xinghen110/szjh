@@ -24,6 +24,7 @@ public class RollPlanHeadDataArchiveVO extends RollPlanHeadDataArchive {
 
     private String caart;   //业务计算指标
     private String dmart;   //维度指标
+    private String dmval;   //维度指标
     private Integer caval;   //历史能力值
 
     transient private List<RollPlanItemDataArchiveVO> itemList;

@@ -699,16 +699,37 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
     }
 
     @Override
-    public void updateCavalByPlanHeadIdAndZbartAndWears(Long planHeadId, String zbart, BigDecimal wears) throws Exception {
+    public void updateCavalByPlanHeadIdAndZbartAndWears(Long planHeadId, String zbart, BigDecimal wears, String dmart, String dmval) throws Exception {
         log.error("开始调整计算！planId：{}，zbart：{}，wears:{}",planHeadId, zbart, wears);
-        Map<Long, List<RollPlanItemDataArchive>> itemMap = rollPlanArchiveService
-                .getItemDataByPlanHeadId(planHeadId).stream()
-                .collect(Collectors.groupingBy(RollPlanItemDataArchive::getId));
-        Map<Long, List<RollPlanHeadDataArchive>> headMap = rollPlanArchiveService
-                .getHeadDataArchiveList(planHeadId).stream()
-                .collect(Collectors.groupingBy(RollPlanHeadDataArchive::getRollId));
+        Map<Long, List<RollPlanItemDataArchive>> itemMap;
+        Map<Long, List<RollPlanHeadDataArchive>> headMap;
         PlanHeader planHeader = getById(planHeadId);
-        List<PlanItem> planItemList = planItemService.getListByHeaderId(planHeadId);
+        List<PlanItem> planItemList;
+        List<Long> rollHeaderIds = new ArrayList<>();
+        //根据部门调整金额
+        boolean dmartFlag = "D110".equals(dmart);
+        if(dmartFlag){
+            List<RollPlanHeadDataArchive> headerList = rollPlanArchiveService
+                    .getHeadDataArchiveList(planHeadId).stream()
+                    .filter(h -> h.getDmval().contains(dmart + ":" + dmval)).collect(Collectors.toList());
+            headMap = headerList.stream()
+                    .collect(Collectors.groupingBy(RollPlanHeadDataArchive::getRollId));
+            rollHeaderIds = headerList.stream().map(RollPlanHeadDataArchive::getId).collect(Collectors.toList());
+            itemMap = rollPlanArchiveService
+                    .getItemDataByHeadIdIn(rollHeaderIds).stream()
+                    .collect(Collectors.groupingBy(RollPlanItemDataArchive::getId));
+            planItemList = planItemService.getListByHeaderIdAndDmartAndDmval(planHeadId, dmart, dmval);
+        }else {
+        //根据公司调整金额
+            itemMap = rollPlanArchiveService
+                    .getItemDataByPlanHeadId(planHeadId).stream()
+                    .collect(Collectors.groupingBy(RollPlanItemDataArchive::getId));
+            headMap = rollPlanArchiveService
+                    .getHeadDataArchiveList(planHeadId).stream()
+                    .collect(Collectors.groupingBy(RollPlanHeadDataArchive::getRollId));
+            planItemList = planItemService.getListByHeaderId(planHeadId);
+        }
+
         String jhval = planHeader.getJhval();//计划期间
 
         //统计当前计划金额
@@ -747,9 +768,16 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             String firstDay = end.plusDays(1).toString().replaceAll("-","");
             log.error("计划期间-jhval：{}，调整日期：firstDay：{}", jhval, firstDay);
             //获取本月计划列表
-            List<RollPlanItemDataArchiveVO> itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
-                    start.toString().replaceAll("-", ""),
-                    end.toString().replaceAll("-", ""));
+            List<RollPlanItemDataArchiveVO> itemVOList;
+            if(dmartFlag){
+                itemVOList = rollPlanArchiveService.getItemListByHeaderIdInAndStartEndDate(rollHeaderIds,
+                        start.toString().replaceAll("-", ""),
+                        end.toString().replaceAll("-", ""));
+            } else{
+                itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
+                        start.toString().replaceAll("-", ""),
+                        end.toString().replaceAll("-", ""));
+            }
             //过滤出时间范围内的行项目，并按照时间倒序
             itemVOList = itemVOList.stream()
                     .filter(vo-> c210Imnum.equals(vo.getImnum()))
@@ -784,9 +812,16 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             LocalDate end = start.plusYears(1);
             String lastDay = start.minusDays(1).toString().replaceAll("-","");
             //获取本月后【一年】计划列表
-            List<RollPlanItemDataArchiveVO> itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
-                    start.toString().replaceAll("-", ""),
-                    end.toString().replaceAll("-", ""));
+            List<RollPlanItemDataArchiveVO> itemVOList;
+            if(dmartFlag){
+                itemVOList = rollPlanArchiveService.getItemListByHeaderIdInAndStartEndDate(rollHeaderIds,
+                        start.toString().replaceAll("-", ""),
+                        end.toString().replaceAll("-", ""));
+            } else{
+                itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
+                        start.toString().replaceAll("-", ""),
+                        end.toString().replaceAll("-", ""));
+            }
             //过滤出时间范围内的行项目，并按照时间倒序
             itemVOList = itemVOList.stream()
                     .filter(vo-> c210Imnum.equals(vo.getImnum()))

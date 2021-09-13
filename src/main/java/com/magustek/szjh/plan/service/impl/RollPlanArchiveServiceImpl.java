@@ -175,6 +175,11 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     }
 
     @Override
+    public List<RollPlanItemDataArchive> getItemDataByHeadIdIn(List<Long> headIdList) {
+        return rollPlanItemDataArchiveDAO.findAllByHeadIdIn(headIdList);
+    }
+
+    @Override
     public List<RollPlanItemDataArchive> getItemDataByPlanHeadId(Long PlanHeadId) {
         return rollPlanItemDataArchiveDAO.findAllByPlanHeadId(PlanHeadId);
     }
@@ -195,8 +200,16 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
 
     @Override
     public List<RollPlanItemDataArchiveVO> getItemListByPlanHeaderIdAndStartEndDate(Long id, String start, String end) {
-        Map<String, List<IEPlanBusinessItemSet>> businessItemMap = iePlanBusinessItemSetService.getAll().stream().collect(Collectors.groupingBy(IEPlanBusinessItemSet::getImnum));
+        Map<String, List<IEPlanBusinessItemSet>> businessItemMap = iePlanBusinessItemSetService.getAll().stream()
+                .collect(Collectors.groupingBy(IEPlanBusinessItemSet::getImnum));
         return RollPlanItemDataArchiveVO.cover(rollPlanItemDataArchiveDAO.findAllByPlanHeadIdAndCtdtpAndDtvalBetween(id, start, end),businessItemMap);
+    }
+
+    @Override
+    public List<RollPlanItemDataArchiveVO> getItemListByHeaderIdInAndStartEndDate(List<Long> ids, String start, String end) {
+        Map<String, List<IEPlanBusinessItemSet>> businessItemMap = iePlanBusinessItemSetService.getAll().stream()
+                .collect(Collectors.groupingBy(IEPlanBusinessItemSet::getImnum));
+        return RollPlanItemDataArchiveVO.cover(rollPlanItemDataArchiveDAO.findAllByHeadIdInAndCtdtpAndDtvalBetween(ids, start, end),businessItemMap);
     }
 
     @Cacheable(value = "RollPlanHeadDataArchiveVOList")

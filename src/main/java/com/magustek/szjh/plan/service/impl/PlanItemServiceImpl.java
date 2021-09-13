@@ -111,6 +111,11 @@ public class PlanItemServiceImpl implements PlanItemService {
     }
 
     @Override
+    public List<PlanItem> getListByHeaderIdAndDmartAndDmval(Long headerId, String dmart, String dmval) throws Exception {
+        return planItemDAO.findAllByHeaderIdAndDmartAndDmval(headerId, dmart, dmval);
+    }
+
+    @Override
     public List<PlanItem> getListByHeaderIdAndZtvalContains(Long headerId, String zvalue, String ztval) {
         return planItemDAO.findAllByHeaderIdAndZbartAndZtvalContains(headerId, zvalue, ztval);
     }
