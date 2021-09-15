@@ -9,7 +9,6 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,8 +23,9 @@ public class RollPlanHeadDataArchiveVO extends RollPlanHeadDataArchive {
 
     private String caart;   //业务计算指标
     private String dmart;   //维度指标
-    private String dmval;   //维度指标
     private Integer caval;   //历史能力值
+
+    private List<DM> dmList;
 
     transient private List<RollPlanItemDataArchiveVO> itemList;
 
@@ -70,5 +70,23 @@ public class RollPlanHeadDataArchiveVO extends RollPlanHeadDataArchive {
             });
         });
         return voList;
+    }
+
+    public static class DM{
+        String dmart;
+        String dmval;
+
+        public String getDmart() {
+            return dmart;
+        }
+        public void setDmart(String dmart) {
+            this.dmart = dmart;
+        }
+        public String getDmval() {
+            return dmval;
+        }
+        public void setDmval(String dmval) {
+            this.dmval = dmval;
+        }
     }
 }

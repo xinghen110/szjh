@@ -161,7 +161,19 @@ public class PlanHeaderController {
     @ApiOperation(value="根据计划ID-planHeadId、经营指标分类-zbart、目标金额-wears，更新月度计划。")
     @RequestMapping("/updateCavalByPlanHeadIdAndWears")
     public String updateCavalByPlanHeadIdAndWears(@RequestBody RollPlanHeadDataArchiveVO vo) throws Exception {
-        planHeaderService.updateCavalByPlanHeadIdAndZbartAndWears(vo.getPlanHeadId(), vo.getZbart(), vo.getWears(), vo.getDmart(), vo.getDmval());
+        if(vo.getDmList()!=null && !vo.getDmList().isEmpty()){
+            for (RollPlanHeadDataArchiveVO.DM dm : vo.getDmList()) {
+                planHeaderService.updateCavalByPlanHeadIdAndZbartAndWears(
+                        vo.getPlanHeadId(),
+                        vo.getZbart(),
+                        vo.getWears(),
+                        dm.getDmart(),
+                        dm.getDmval());
+            }
+        }else{
+            planHeaderService.updateCavalByPlanHeadIdAndZbartAndWears(vo.getPlanHeadId(), vo.getZbart(), vo.getWears(), null, null);
+        }
+
         log.warn("用户-{}，根据计划ID-planHeadId-{}、经营指标分类-zbart-{}、目标金额-wears-{}，更新月度计划。",
                 ContextUtils.getUserName(),
                 vo.getPlanHeadId(),
