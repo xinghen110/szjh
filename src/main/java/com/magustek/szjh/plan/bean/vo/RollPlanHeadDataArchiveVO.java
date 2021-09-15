@@ -75,7 +75,14 @@ public class RollPlanHeadDataArchiveVO extends RollPlanHeadDataArchive {
     public static class DM{
         String dmart;
         String dmval;
+        String wears;
 
+        public String getWears() {
+            return wears;
+        }
+        public void setWears(String wears) {
+            this.wears = wears;
+        }
         public String getDmart() {
             return dmart;
         }
