@@ -75,13 +75,13 @@ public class RollPlanHeadDataArchiveVO extends RollPlanHeadDataArchive {
     public static class DM{
         String dmart;
         String dmval;
-        BigDecimal wears;
+        BigDecimal target;
 
-        public BigDecimal getWears() {
-            return wears;
+        public BigDecimal getTarget() {
+            return target;
         }
-        public void setWears(BigDecimal wears) {
-            this.wears = wears;
+        public void setTarget(BigDecimal target) {
+            this.target = target;
         }
         public String getDmart() {
             return dmart;

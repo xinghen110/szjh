@@ -166,7 +166,7 @@ public class PlanHeaderController {
                 planHeaderService.updateCavalByPlanHeadIdAndZbartAndWears(
                         vo.getPlanHeadId(),
                         vo.getZbart(),
-                        dm.getWears(),
+                        dm.getTarget(),
                         dm.getDmart(),
                         dm.getDmval());
             }
