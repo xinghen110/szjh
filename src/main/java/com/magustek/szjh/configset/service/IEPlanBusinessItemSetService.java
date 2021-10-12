@@ -15,6 +15,7 @@ public interface IEPlanBusinessItemSetService {
     List<IEPlanBusinessItemSet> getAllFromDatasource() throws Exception;
 
     List<IEPlanBusinessItemSet> getAllByCaart(String caart);
+    List<IEPlanBusinessItemSet> getAllByCaartIn(List<String> caartList);
 
     List<IEPlanBusinessItemSet> getNextItemList(String imnum);
 }

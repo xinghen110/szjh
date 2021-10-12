@@ -742,16 +742,16 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         log.error("差额，sum:{}", sum);
         //获取【付款支付完成时效】对应imnum号
         //根据收支类型，确定使用的日期指标
-        String code;
+        List<String> c210Imnum;
         if("K100".equals(zbart)){
-            code = "C380";
+            String code = "C380";
+            c210Imnum = iePlanBusinessItemSetService.getAllByCaart(code).stream().map(IEPlanBusinessItemSet::getImnum).collect(Collectors.toList());
         }else if("K200".equals(zbart)){
-            code = "C210";
+            ArrayList<String> codes = Lists.newArrayList("C210", "C212", "C214");
+            c210Imnum = iePlanBusinessItemSetService.getAllByCaartIn(codes).stream().map(IEPlanBusinessItemSet::getImnum).collect(Collectors.toList());
         }else{
             throw new Exception("计划类型错误："+zbart+"！");
         }
-
-        List<String> c210Imnum = iePlanBusinessItemSetService.getAllByCaart(code).stream().map(IEPlanBusinessItemSet::getImnum).collect(Collectors.toList());
         List<RollPlanItemDataArchive> itemList = new ArrayList<>();
         List<RollPlanHeadDataArchive> headList = new ArrayList<>();
         if(flag){

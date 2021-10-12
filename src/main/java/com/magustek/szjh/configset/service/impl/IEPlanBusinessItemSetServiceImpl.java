@@ -6,7 +6,6 @@ import com.magustek.szjh.configset.bean.IEPlanBusinessItemSet;
 import com.magustek.szjh.configset.bean.vo.IEPlanBusinessItemSetVO;
 import com.magustek.szjh.configset.dao.IEPlanBusinessItemSetDAO;
 import com.magustek.szjh.configset.service.IEPlanBusinessItemSetService;
-import com.magustek.szjh.utils.ClassUtils;
 import com.magustek.szjh.utils.OdataUtils;
 import com.magustek.szjh.utils.http.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -82,6 +81,11 @@ public class IEPlanBusinessItemSetServiceImpl implements IEPlanBusinessItemSetSe
     @Override
     public List<IEPlanBusinessItemSet> getAllByCaart(String caart) {
         return iePlanBusinessItemSetDAO.findAllByCaart(caart);
+    }
+
+    @Override
+    public List<IEPlanBusinessItemSet> getAllByCaartIn(List<String> caartList) {
+        return iePlanBusinessItemSetDAO.findAllByCaartIn(caartList);
     }
 
     //获取imnum节点以及所有后续节点
