@@ -751,7 +751,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             throw new Exception("计划类型错误："+zbart+"！");
         }
 
-        String c210Imnum = iePlanBusinessItemSetService.getAllByCaart(code).get(0).getImnum();
+        List<String> c210Imnum = iePlanBusinessItemSetService.getAllByCaart(code).stream().map(IEPlanBusinessItemSet::getImnum).collect(Collectors.toList());
         List<RollPlanItemDataArchive> itemList = new ArrayList<>();
         List<RollPlanHeadDataArchive> headList = new ArrayList<>();
         if(flag){
@@ -768,7 +768,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             log.error("c210Imnum:{}",c210Imnum);
             //过滤出时间范围内的行项目，并按照时间倒序
             itemVOList = itemVOList.stream()
-                    .filter(vo-> c210Imnum.equals(vo.getImnum()))
+                    .filter(vo-> c210Imnum.contains(vo.getImnum()))
                     .sorted(Comparator.comparing(RollPlanItemDataArchiveVO::getDtval).reversed())
                     .collect(Collectors.toList());
             log.error("itemVOList filter:{}",itemVOList.size());
@@ -806,7 +806,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     end.toString().replaceAll("-", ""));
             //过滤出时间范围内的行项目，并按照时间倒序
             itemVOList = itemVOList.stream()
-                    .filter(vo-> c210Imnum.equals(vo.getImnum()))
+                    .filter(vo-> c210Imnum.contains(vo.getImnum()))
                     .sorted(Comparator.comparing(RollPlanItemDataArchiveVO::getDtval))
                     .collect(Collectors.toList());
 
