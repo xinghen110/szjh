@@ -175,7 +175,7 @@ public class RollPlanArchiveServiceImpl implements RollPlanArchiveService {
     }
 
     @Override
-    public List<RollPlanItemDataArchive> getItemDataByHeadIdIn(List<Long> headIdList) {
+    public List<RollPlanItemDataArchive> getItemDataByHeadIdIn(List<Long> headIdList, String start, String end) {
         return rollPlanItemDataArchiveDAO.findAllByHeadIdIn(headIdList);
     }
 

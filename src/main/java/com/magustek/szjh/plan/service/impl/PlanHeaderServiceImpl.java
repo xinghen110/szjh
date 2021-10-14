@@ -705,12 +705,14 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         Map<Long, List<RollPlanHeadDataArchive>> headMap;
         PlanHeader planHeader = getById(planHeadId);
         List<PlanItem> planItemList;
+        List<RollPlanItemDataArchiveVO> itemVOList;
+        List<Long> headerList = new ArrayList<>();
         //根据部门调整金额
         boolean dmartFlag = "D110".equals(dmart);
         if(dmartFlag){
-            List<RollPlanHeadDataArchive> headerList = rollPlanArchiveService
+            headerList.addAll(rollPlanArchiveService
                     .getHeadDataArchiveList(planHeadId).stream()
-                    .filter(h -> h.getDmval().contains(dmart + ":" + dmval)).collect(Collectors.toList());
+                    .filter(h -> h.getDmval().contains(dmart + ":" + dmval)).map(RollPlanHeadDataArchive::getId).collect(Collectors.toList()));
             planItemList = planItemService.getListByHeaderIdAndDmartAndDmval(planHeadId, dmart, dmval);
         }else {
             //根据公司调整金额
@@ -761,9 +763,14 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             String firstDay = end.plusDays(1).toString().replaceAll("-","");
             log.error("计划期间-jhval：{}，调整日期：firstDay：{}", jhval, firstDay);
             //获取本月计划列表
-            List<RollPlanItemDataArchiveVO> itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
+            itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
                     start.toString().replaceAll("-", ""),
                     end.toString().replaceAll("-", ""));
+
+            if(dmartFlag){
+                itemVOList = itemVOList.stream().filter(i->headerList.contains(i.getRollId())).collect(Collectors.toList());
+            }
+
             log.error("itemVOList:{}",itemVOList.size());
             log.error("c210Imnum:{}",c210Imnum);
             //过滤出时间范围内的行项目，并按照时间倒序
@@ -800,7 +807,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             LocalDate end = start.plusYears(1);
             String lastDay = start.minusDays(1).toString().replaceAll("-","");
             //获取本月后【一年】计划列表
-            List<RollPlanItemDataArchiveVO> itemVOList;
             itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
                     start.toString().replaceAll("-", ""),
                     end.toString().replaceAll("-", ""));

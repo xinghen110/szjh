@@ -16,7 +16,7 @@ public interface RollPlanArchiveService {
     List<RollPlanHeadDataArchive> getHeadDataByPlanHeadIdAndZbart(Long planHeadId, String zbart);
 
     List<RollPlanItemDataArchive> getItemDataByHeadIdAndImnum(List<Long> headIdList, List<String>imnumList);
-    List<RollPlanItemDataArchive> getItemDataByHeadIdIn(List<Long> headIdList);
+    List<RollPlanItemDataArchive> getItemDataByHeadIdIn(List<Long> headIdList, String start, String end);
     List<RollPlanItemDataArchive> getItemDataByPlanHeadId(Long PlanHeadId);
 
     void saveItemList(List<RollPlanItemDataArchive> changedList);
