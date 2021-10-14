@@ -766,9 +766,10 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
                     start.toString().replaceAll("-", ""),
                     end.toString().replaceAll("-", ""));
-
+            log.error("itemVOList-start:{}",itemVOList.size());
             if(dmartFlag){
-                itemVOList = itemVOList.stream().filter(i->headerList.contains(i.getRollId())).collect(Collectors.toList());
+                log.error("headerList:{}",JSON.toJSONString(headerList));
+                itemVOList = itemVOList.stream().filter(i->headerList.contains(i.getHeadId())).collect(Collectors.toList());
             }
 
             log.error("itemVOList:{}",itemVOList.size());
