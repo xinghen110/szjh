@@ -766,19 +766,8 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
                     start.toString().replaceAll("-", ""),
                     end.toString().replaceAll("-", ""));
-            log.error("itemVOList-start:{}",itemVOList.size());
             if(dmartFlag){
-                log.error("headerList:{}",JSON.toJSONString(headerList));
-                List<RollPlanItemDataArchiveVO> list = new ArrayList<>();
-                for (RollPlanItemDataArchiveVO i : itemVOList) {
-                    System.out.print("i:"+i.getHeadId());
-                    if (headerList.contains(i.getHeadId())) {
-                        System.out.println("    add");
-                        list.add(i);
-                    }
-                    System.out.println("----------");
-                }
-                itemVOList = list;
+                itemVOList = itemVOList.stream().filter(i->headerList.contains(i.getHeadId())).collect(Collectors.toList());
             }
 
             log.error("itemVOList:{}",itemVOList.size());
@@ -820,6 +809,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
                     start.toString().replaceAll("-", ""),
                     end.toString().replaceAll("-", ""));
+            if(dmartFlag){
+                itemVOList = itemVOList.stream().filter(i->headerList.contains(i.getHeadId())).collect(Collectors.toList());
+            }
             //过滤出时间范围内的行项目，并按照时间倒序
             itemVOList = itemVOList.stream()
                     .filter(vo-> c210Imnum.contains(vo.getImnum()))
