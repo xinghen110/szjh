@@ -42,7 +42,7 @@ public class RollPlanItemDataArchiveVO extends RollPlanItemDataArchive implement
     public static RollPlanItemDataArchiveVO cover(Object[] o, Map<String, List<IEPlanBusinessItemSet>> businessItemMap){
         RollPlanItemDataArchiveVO vo = new RollPlanItemDataArchiveVO();
         //head.htsno, head.htnum, head.stval, head.wears, head.dmval, head.bukrs, head.hdnum, head.zbart, head.version
-        //item.caval, item.dtval, item.imnum, item.odue, item.sdart
+        //item.caval, item.dtval, item.imnum, item.odue, item.sdart, item.head_id
         vo.setHtsno((String)o[0]);
         vo.setHtnum((String)o[1]);
         vo.setWears((BigDecimal)o[3]);
@@ -56,7 +56,9 @@ public class RollPlanItemDataArchiveVO extends RollPlanItemDataArchive implement
         vo.setImtxt(businessItemMap.get(vo.getImnum()).get(0).getImtxt());
         vo.setOdue((String)o[12]);
         vo.setSdart((String)o[13]);
-        vo.setId(((BigInteger)o[14]).longValue());
+        vo.setHeadId(((BigInteger)o[14]).longValue());
+        vo.setId(((BigInteger)o[15]).longValue());
+
         return vo;
     }
 

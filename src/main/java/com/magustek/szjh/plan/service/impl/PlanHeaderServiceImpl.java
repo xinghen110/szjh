@@ -769,7 +769,16 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             log.error("itemVOList-start:{}",itemVOList.size());
             if(dmartFlag){
                 log.error("headerList:{}",JSON.toJSONString(headerList));
-                itemVOList = itemVOList.stream().filter(i->headerList.contains(i.getHeadId())).collect(Collectors.toList());
+                List<RollPlanItemDataArchiveVO> list = new ArrayList<>();
+                for (RollPlanItemDataArchiveVO i : itemVOList) {
+                    System.out.print("i:"+i.getHeadId());
+                    if (headerList.contains(i.getHeadId())) {
+                        System.out.println("    add");
+                        list.add(i);
+                    }
+                    System.out.println("----------");
+                }
+                itemVOList = list;
             }
 
             log.error("itemVOList:{}",itemVOList.size());
