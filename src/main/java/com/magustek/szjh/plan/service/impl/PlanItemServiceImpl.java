@@ -408,6 +408,7 @@ public class PlanItemServiceImpl implements PlanItemService {
                     if(ClassUtils.isEmpty(headList)){
                         return;
                     }
+                    log.info("item:"+JSON.toJSONString(item));
                     headList.forEach(head->{
                         //如果维度相同，滚动计划时间如果在item日期范围内，则加总金额
                         if(!Strings.isNullOrEmpty(head.getDmval())
@@ -605,6 +606,7 @@ public class PlanItemServiceImpl implements PlanItemService {
         if(start <= headTime && headTime <= end){
             BigDecimal zbval = new BigDecimal(item.getZbval());
             item.setZbval(zbval.add(head.getWears()).toString());
+            log.info("head:"+JSON.toJSONString(head));
         }
     }
     //调整布局，增加对比列
