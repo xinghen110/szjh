@@ -822,7 +822,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                                 sum,voItem.getWears(),voItem.getRollId(),voItem.getId(), voItem.getHtnum());
                         RollPlanItemDataArchive item = itemMap.get(voItem.getId()).get(0);
                         RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
-                        head.setDtval(item.getDtval());
+                        head.setDtval(lastDay);
                         item.setDtval(lastDay);
                         itemList.add(item);
                         headList.add(head);
