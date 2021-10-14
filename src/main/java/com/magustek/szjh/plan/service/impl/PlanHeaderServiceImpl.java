@@ -712,7 +712,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         if(dmartFlag){
             headerList.addAll(rollPlanArchiveService
                     .getHeadDataArchiveList(planHeadId).stream()
-                    .filter(h -> h.getDmval().contains(dmart + ":" + dmval)).map(RollPlanHeadDataArchive::getId).collect(Collectors.toList()));
+                    .filter(h -> h.getDmval().contains(dmart + ":" + dmval)).map(RollPlanHeadDataArchive::getRollId).collect(Collectors.toList()));
             planItemList = planItemService.getListByHeaderIdAndDmartAndDmval(planHeadId, dmart, dmval);
         }else {
             //根据公司调整金额
