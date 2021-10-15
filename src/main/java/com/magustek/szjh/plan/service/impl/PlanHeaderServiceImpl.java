@@ -766,9 +766,19 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
                     start.toString().replaceAll("-", ""),
                     end.toString().replaceAll("-", ""));
+            itemVOList.forEach(i->{
+                if("24000000303094".equals(i.getHtnum())){
+                    System.out.println("存在1!");
+                }
+            });
             if(dmartFlag){
                 itemVOList = itemVOList.stream().filter(i->headerList.contains(i.getHeadId())).collect(Collectors.toList());
             }
+            itemVOList.forEach(i->{
+                if("24000000303094".equals(i.getHtnum())){
+                    System.out.println("存在2!");
+                }
+            });
 
             log.error("itemVOList:{}",itemVOList.size());
             log.error("c210Imnum:{}",c210Imnum);
@@ -777,6 +787,11 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     .filter(vo-> c210Imnum.contains(vo.getImnum()))
                     .sorted(Comparator.comparing(RollPlanItemDataArchiveVO::getDtval).reversed())
                     .collect(Collectors.toList());
+            itemVOList.forEach(i->{
+                if("24000000303094".equals(i.getHtnum())){
+                    System.out.println("存在3!");
+                }
+            });
             log.error("itemVOList filter:{}",itemVOList.size());
             //获取同一个合同管理编号下所有的计划
             Map<String, List<RollPlanItemDataArchiveVO>> htnumMap = itemVOList.stream().collect(Collectors.groupingBy(RollPlanItemDataArchiveVO::getHtnum));
@@ -797,7 +812,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                         sum = sum.subtract(voItem.getWears());
                     }
                 }else{
-                    break;
+                    for (RollPlanItemDataArchiveVO voItem : htnumMap.get(vo.getHtnum())) {
+                        System.out.println("未排计划 htnum:"+vo.getHtnum()+" 计划金额 wears:"+voItem.getWears());
+                    }
                 }
             }
         }else{
