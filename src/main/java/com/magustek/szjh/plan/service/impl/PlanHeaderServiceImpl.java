@@ -785,6 +785,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             for(RollPlanItemDataArchiveVO vo : itemVOList){
                 if(sum.compareTo(BigDecimal.ZERO)>0){
                     //同一个合同管理编号一起排计划
+                    List<RollPlanItemDataArchiveVO> list = new ArrayList<>(htnumMap.get(vo.getHtnum()));
                     for (RollPlanItemDataArchiveVO voItem : htnumMap.get(vo.getHtnum())) {
                         if(voItem.getDtval().equals(vo.getDtval())) {
                             log.error("开始调整计划，差额sum:{}，计划金额：voItem.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}，滚动计划htnum：{}",
@@ -796,13 +797,12 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                             itemList.add(item);
                             headList.add(head);
                             sum = sum.subtract(voItem.getWears());
-                            htnumMap.get(vo.getHtnum()).remove(voItem);
+                            list.remove(voItem);
                         }
                     }
+                    htnumMap.put(vo.getHtnum(), list);
                 }else{
-                    for (RollPlanItemDataArchiveVO voItem : htnumMap.get(vo.getHtnum())) {
-                        System.out.println("未排计划 htnum:"+vo.getHtnum()+" 计划金额 wears:"+voItem.getWears());
-                    }
+                    System.out.println("未排计划 htnum:"+vo.getHtnum()+" 计划金额 wears:"+vo.getWears());
                 }
             }
         }else{
@@ -830,6 +830,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             for(RollPlanItemDataArchiveVO vo : itemVOList){
                 if(sum.compareTo(BigDecimal.ZERO)<0){
                     //同一个合同管理编号一起排计划
+                    List<RollPlanItemDataArchiveVO> list = new ArrayList<>(htnumMap.get(vo.getHtnum()));
                     for (RollPlanItemDataArchiveVO voItem : htnumMap.get(vo.getHtnum())) {
                         if(voItem.getDtval().equals(vo.getDtval())) {
                             log.error("开始调整计划，差额sum:{}，计划金额：voItem.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}，滚动计划htnum：{}",
@@ -841,11 +842,12 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                             itemList.add(item);
                             headList.add(head);
                             sum = sum.add(voItem.getWears());
-                            htnumMap.get(vo.getHtnum()).remove(voItem);
+                            list.remove(voItem);
                         }
                     }
+                    htnumMap.put(vo.getHtnum(), list);
                 }else{
-                    break;
+                    System.out.println("未排计划 htnum:"+vo.getHtnum()+" 计划金额 wears:"+vo.getWears());
                 }
             }
         }
