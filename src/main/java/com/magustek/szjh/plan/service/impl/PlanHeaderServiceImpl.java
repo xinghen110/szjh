@@ -766,19 +766,9 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             itemVOList = rollPlanArchiveService.getItemListByPlanHeaderIdAndStartEndDate(planHeadId,
                     start.toString().replaceAll("-", ""),
                     end.toString().replaceAll("-", ""));
-            itemVOList.forEach(i->{
-                if("24000000303094".equals(i.getHtnum())){
-                    System.out.println("存在1!");
-                }
-            });
             if(dmartFlag){
                 itemVOList = itemVOList.stream().filter(i->headerList.contains(i.getHeadId())).collect(Collectors.toList());
             }
-            itemVOList.forEach(i->{
-                if("24000000303094".equals(i.getHtnum())){
-                    System.out.println("存在2!");
-                }
-            });
 
             log.error("itemVOList:{}",itemVOList.size());
             log.error("c210Imnum:{}",c210Imnum);
@@ -787,11 +777,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                     .filter(vo-> c210Imnum.contains(vo.getImnum()))
                     .sorted(Comparator.comparing(RollPlanItemDataArchiveVO::getDtval).reversed())
                     .collect(Collectors.toList());
-            itemVOList.forEach(i->{
-                if("24000000303094".equals(i.getHtnum())){
-                    System.out.println("存在3!");
-                }
-            });
             log.error("itemVOList filter:{}",itemVOList.size());
             //获取同一个合同管理编号下所有的计划
             Map<String, List<RollPlanItemDataArchiveVO>> htnumMap = itemVOList.stream().collect(Collectors.groupingBy(RollPlanItemDataArchiveVO::getHtnum));
@@ -801,15 +786,18 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 if(sum.compareTo(BigDecimal.ZERO)>0){
                     //同一个合同管理编号一起排计划
                     for (RollPlanItemDataArchiveVO voItem : htnumMap.get(vo.getHtnum())) {
-                        log.error("开始调整计划，差额sum:{}，计划金额：voItem.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}，滚动计划htnum：{}",
-                                sum,voItem.getWears(),voItem.getRollId(),voItem.getId(), voItem.getHtnum());
-                        RollPlanItemDataArchive item = itemMap.get(voItem.getId()).get(0);
-                        RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
-                        item.setDtval(firstDay);
-                        head.setDtval(item.getDtval());
-                        itemList.add(item);
-                        headList.add(head);
-                        sum = sum.subtract(voItem.getWears());
+                        if(voItem.getDtval().equals(vo.getDtval())) {
+                            log.error("开始调整计划，差额sum:{}，计划金额：voItem.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}，滚动计划htnum：{}",
+                                    sum, voItem.getWears(), voItem.getRollId(), voItem.getId(), voItem.getHtnum());
+                            RollPlanItemDataArchive item = itemMap.get(voItem.getId()).get(0);
+                            RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
+                            item.setDtval(firstDay);
+                            head.setDtval(item.getDtval());
+                            itemList.add(item);
+                            headList.add(head);
+                            sum = sum.subtract(voItem.getWears());
+                            htnumMap.get(vo.getHtnum()).remove(voItem);
+                        }
                     }
                 }else{
                     for (RollPlanItemDataArchiveVO voItem : htnumMap.get(vo.getHtnum())) {
@@ -843,15 +831,18 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
                 if(sum.compareTo(BigDecimal.ZERO)<0){
                     //同一个合同管理编号一起排计划
                     for (RollPlanItemDataArchiveVO voItem : htnumMap.get(vo.getHtnum())) {
-                        log.error("开始调整计划，差额sum:{}，计划金额：voItem.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}，滚动计划htnum：{}",
-                                sum,voItem.getWears(),voItem.getRollId(),voItem.getId(), voItem.getHtnum());
-                        RollPlanItemDataArchive item = itemMap.get(voItem.getId()).get(0);
-                        RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
-                        head.setDtval(lastDay);
-                        item.setDtval(lastDay);
-                        itemList.add(item);
-                        headList.add(head);
-                        sum = sum.add(voItem.getWears());
+                        if(voItem.getDtval().equals(vo.getDtval())) {
+                            log.error("开始调整计划，差额sum:{}，计划金额：voItem.getWears：{}，滚动计划ID：{}，滚动计划行项目ID：{}，滚动计划htnum：{}",
+                                    sum, voItem.getWears(), voItem.getRollId(), voItem.getId(), voItem.getHtnum());
+                            RollPlanItemDataArchive item = itemMap.get(voItem.getId()).get(0);
+                            RollPlanHeadDataArchive head = headMap.get(item.getHeadId()).get(0);
+                            head.setDtval(lastDay);
+                            item.setDtval(lastDay);
+                            itemList.add(item);
+                            headList.add(head);
+                            sum = sum.add(voItem.getWears());
+                            htnumMap.get(vo.getHtnum()).remove(voItem);
+                        }
                     }
                 }else{
                     break;
