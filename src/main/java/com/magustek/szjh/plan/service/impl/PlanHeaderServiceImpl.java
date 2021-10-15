@@ -754,6 +754,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         }else{
             throw new Exception("计划类型错误："+zbart+"！");
         }
+        log.error("c210Imnum:{}",c210Imnum);
         List<RollPlanItemDataArchive> itemList = new ArrayList<>();
         List<RollPlanHeadDataArchive> headList = new ArrayList<>();
         if(flag){
@@ -771,7 +772,6 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
             }
 
             log.error("itemVOList:{}",itemVOList.size());
-            log.error("c210Imnum:{}",c210Imnum);
             //过滤出时间范围内的行项目，并按照时间倒序
             itemVOList = itemVOList.stream()
                     .filter(vo-> c210Imnum.contains(vo.getImnum()))
@@ -860,7 +860,7 @@ public class PlanHeaderServiceImpl implements PlanHeaderService {
         //重新计算报表明细并保存
         planItemService.initCalcData(planItemList, getById(planHeadId));
         planItemService.save(planItemList);
-        log.error("计算完成2！headList-{}，itemList-{}",headList.size(), itemList.size());
+        log.error("计算完成2！planItemList-{}",planItemList.size());
     }
 
     @Override
